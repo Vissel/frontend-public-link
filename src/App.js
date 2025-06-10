@@ -1,24 +1,32 @@
-import logo from './logo.svg';
-import './App.css';
+// src/App.js (or your main routing component)
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import LoginPage from './page/LoginPage';
+import HomePage from './page/HomePage';
+import GenerationPage from './page/GenerationPage';
+
+import { AuthProvider } from './AuthContext';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AuthProvider> {/* Wrap your entire app with AuthProvider */}
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<LoginPage />} />
+
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute />}> {/* Use ProtectedRoute as a wrapper */}
+            <Route path="/home" element={<HomePage />} />
+          <Route path="/generationPage" element={<GenerationPage />} />
+          </Route>
+
+          {/* Default/Catch-all route */}
+          <Route path="*" element={<LoginPage />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 }
 

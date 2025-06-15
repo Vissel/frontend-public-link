@@ -1,13 +1,15 @@
 // src/HomePage.js (updated)
 import React, { useEffect, useState } from "react";
 // import { Button, Box } from "@mui/material";
+import { format, parseISO, toDate } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext"; // Import useAuth
 import api from "../api";
 
 import SellerForm from "../form/SellerForm";
-import { Table, Button, Box, Container } from "react-bootstrap";
+import { Table, Button, Row, Container, Col } from "react-bootstrap";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -16,22 +18,30 @@ const HomePage = () => {
   const [message, setMessage] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [entries, setEntries] = useState([]);
-  useEffect(() => {
-    // You can make an API call to a protected endpoint here
-    // to display user-specific data, verifying the session is still active.
-    // For example:
-    // api.get('/api/user-info').then(res => setMessage(`Hello, ${res.data.username}!`));
-    setMessage("Welcome to the Home Page!");
-    const state = location.state;
-    if (state?.sellerName && state?.publicLink) {
-      const newRecord = {
-        sellerName: state.sellerName,
-        publicLink: state.publicLink,
-      };
-      setEntries((prev) => [newRecord, ...prev]);
+  
+  const currentHost = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
+  const fetchEntries = async () => {
+    try {
+      const res = await api.get("/admin/generator/home");
+      if (res.status === 200) {
+        
+        setEntries(res.data || []);
+        
+        // const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      }
+    } catch (err) {
+      console.error("Failed to fetch records", err);
     }
-  }, [location.state]);
+  };
 
+  useEffect(() => {
+    setMessage("Welcome to the Home Page!");
+    fetchEntries();
+   
+  }, []);
+  const handleAddRecord = (newRecord) => {
+    setEntries((prev) => [newRecord, ...prev]);
+  };
   const handleLogout = async () => {
     const result = await logout();
     if (result.success) {
@@ -45,28 +55,37 @@ const HomePage = () => {
   };
 
   return (
-    <Container className="mt-4">
-      <div className="">
-        <Button variant="contained" onClick={() => setOpenDialog(true)}>
+    <Container className="mt-4" fluid="md">
+      {/* SellerForm */}
+      <Row style={styles.cusMargin} >
+        <Col>
+        <Button variant="primary" onClick={() => setOpenDialog(true)}>
           Generate product link
         </Button>
-        <Button variant="outlined" sx={{ mt: 2 }}>
-          Button B
-        </Button>
-        <SellerForm open={openDialog} onClose={() => setOpenDialog(false)} />
-        <Button onClick={handleLogout}></Button>
-      </div>
+        </Col>
+        <SellerForm
+          open={openDialog}
+          onClose={() => setOpenDialog(false)}
+          onSuccess={handleAddRecord}
+        />
+        <Button hidden onClick={handleLogout}>Logout</Button>
+      </Row>
       {/* 📝 Show record list */}
-      <div className="table-responsive">
+      <Row >
         {" "}
         {/* Keep this div for responsive table behavior */}
-        <Table bordered>
+        <Table responsive="sm" bordered>
           {" "}
           {/* 'bordered' prop for table-bordered class */}
           <thead className="table-light">
             <tr>
+              <th >Created At</th>
               <th>Seller Name</th>
+              <th>Product Name</th>
+              <th>Seller Authentication</th>
               <th>Public Link</th>
+              <th>Created By</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -79,24 +98,50 @@ const HomePage = () => {
             ) : (
               entries.map((entry, idx) => (
                 <tr key={idx}>
-                  <td>{entry.sellerName}</td>
+                  <td>{entry.createdAt}
+                  </td>
+                  <td>
+                    <a
+                      href={entry.sellerLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {entry.sellerName}{" "}
+                    </a>
+                  </td>
+                  <td>{entry.productName}</td>
+                  <td>
+                    <a
+                      href={currentHost+entry.sellerAuthLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Seller Authentication Link
+                    </a>
+                  </td>
                   <td>
                     <a
                       href={entry.publicLink}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {entry.publicLink}
+                      Public Link
                     </a>
                   </td>
+                  <td>{entry.createdBy}</td>
+                  <td>{entry.envStatus ? "Active" : "In-active"}</td>
                 </tr>
               ))
             )}
           </tbody>
         </Table>
-      </div>
+      </Row>
     </Container>
   );
 };
-
+const styles = {
+    cusMargin: {
+        margin: "0 0 10px 0"
+    }
+}
 export default HomePage;

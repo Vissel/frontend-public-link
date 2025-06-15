@@ -3,11 +3,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
 
 import api from "../api";
+import { useAuth } from "../AuthContext";
 
 const GenerationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { requestData } = location.state || {};
+  const { logout } = useAuth();
 
   const [seller, setSeller] = useState({
     name: requestData?.seller.username || "",
@@ -40,43 +42,55 @@ const GenerationPage = () => {
 
   const handleCancel = () => navigate("/home");
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // You can send to backend here
     try {
-        // handle 1 product - n images as currently
-    //   const requestData = {
-    //     seller,
-    //     product,
-    //     images,
-    //   };
+      // handle 1 product - n images as currently
+      //   const requestData = {
+      //     seller,
+      //     product,
+      //     images,
+      //   };
       //
       const payload = {
-        seller:{
-            'username':seller.name,
-            'link':seller.link
+        accessToken: localStorage.getItem("token"),
+
+        seller: {
+          username: seller.name,
+          link: seller.link,
         },
-        'createdBy':requestData.createdBy,
-        'authenticated': seller.authenticated,
-        'products':[{
-            'productName':product.name,
-            'amount':product.amount,
-            'unit': product.unit,
-            'price':product.price,
-            'total_amount':product.total_amount,
-            'listPicProMap':images
-        }]
-      }
+        createdBy: requestData.createdBy,
+        authenticated: seller.authenticated,
+        products: [
+          {
+            productName: product.name,
+            amount: product.amount,
+            unit: product.unit,
+            price: product.price,
+            total_amount: product.total_amount,
+            listPicProMap: images,
+          },
+        ],
+      };
       console.log("Saving:", payload);
 
-      const response = api.post("/api/generator/generatePublicLink", payload);
-       if (response.status === 200) {
-                console.log('Generate public link successful!');
-                alert("Saved successfully!");
-                navigate('/home',{
-                    sellerName:seller.username,
-                    publicLink:response.data
-                }); // Navigate after state is updated
-            }
+      const response = await api.post(
+        "/api/generator/generatePublicLink",
+        payload
+      );
+      if (response.status === 200) {
+        console.log("Generate public link successful!");
+        alert("Saved successfully!");
+        navigate("/home", {
+          state: {
+            sellerName: seller.name,
+            publicLink: response.data,
+          },
+        }); // Navigate after state is updated
+      }
+      if (response.status === 403) {
+        logout();
+      }
     } catch (err) {
       console.error(err);
       alert("Error saving data");
@@ -172,7 +186,9 @@ const GenerationPage = () => {
             {/* <input type="textarea" className="form-control" name="name" value={product.name} onChange={handleProductChange} /> */}
           </div>
           <div className="form-group mb-2">
-            <label>Amount in unit in price (example: amount is 1 >> 1/kg/10k)</label>
+            <label>
+              Amount in unit in price (example: amount is 1 >> 1/kg/10k)
+            </label>
             <input
               type="number"
               className="form-control"

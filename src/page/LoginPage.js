@@ -28,7 +28,7 @@ const LoginPage = () => {
 
             if (response.status === 200) {
                 console.log('Login successful!', response.data);
-                login(response.data.accessToken);
+                login(response.data);
                 navigate('/home'); // Navigate after state is updated
             }
         } catch (err) {

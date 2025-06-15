@@ -8,21 +8,33 @@ import {
   Button,
 } from "@mui/material";
 import api from "../api";
+import { useAuth } from "../AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const SellerForm = ({ open, onClose }) => {
+const SellerForm = ({ open, onClose, onSuccess }) => {
   const [form, setForm] = useState({ username: "", link: "" });
   const navigate = useNavigate();
-
+  const logout = useAuth();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async () => {
     try {
-      const res = await api.post("/admin/generator/generationPage", form);
+      const payload = {
+        accessToken: localStorage.getItem("token"),
+        username: form.username,
+        link: form.link,
+        productName: form.productName,
+      };
+      const res = await api.post("/api/generator/generatePublicLink", payload);
       if (res.status === 200) {
-        navigate("/generationPage", { state: { requestData: res.data } });
+        // navigate("/home", { state: { requestData: res.data } });
+        onSuccess(res.data);
+        onClose();
+      }
+      if (res.status === 403) {
+        logout();
       }
     } catch (error) {
       console.error("API Error:", error);
@@ -49,6 +61,15 @@ const SellerForm = ({ open, onClose }) => {
           fullWidth
           variant="outlined"
           value={form.link}
+          onChange={handleChange}
+        />
+        <TextField
+          margin="dense"
+          label="ProductName"
+          name="productName"
+          fullWidth
+          variant="outlined"
+          value={form.productName}
           onChange={handleChange}
         />
       </DialogContent>

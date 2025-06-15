@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // To indicate if auth status is being checked
+  const [userRole, setUserRole] = useState("anonymousUser");
 
   const [auth, setAuth] = useState(() => {
     const token = localStorage.getItem("token");
@@ -30,6 +31,11 @@ export const AuthProvider = ({ children }) => {
       if (auth.status === 200) {
         console.info("Authenticated.");
         setIsAuthenticated(true);
+        // set role
+        setUserRole({
+          userName: auth.data.userName,
+          role: auth.data.role,
+        });
       }
     } catch (error) {
       setIsAuthenticated(false);
@@ -53,11 +59,18 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  const login = (token) => {
+  const login = (data) => {
     setIsAuthenticated(true);
-    localStorage.setItem("token", token);
+    localStorage.setItem("token", data.accessToken);
     localStorage.setItem("loginTime", Date.now().toString());
-    setAuth({ token });
+    setAuth({
+      token: data.accessToken,
+      timestamp : localStorage.getItem("loginTime")
+    } );
+    setUserRole({
+          userName: data.userName,
+          role: data.role,
+        });
   };
   const logout = () => {
     setIsAuthenticated(false);
@@ -66,7 +79,15 @@ export const AuthProvider = ({ children }) => {
   };
   return (
     <AuthContext.Provider
-      value={{ auth, isAuthenticated, loading, login, logout, checkAuthStatus }}
+      value={{
+        auth,
+        isAuthenticated,
+        loading,
+        login,
+        logout,
+        checkAuthStatus,
+        userRole,
+      }}
     >
       {children}
     </AuthContext.Provider>

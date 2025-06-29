@@ -4,31 +4,48 @@ import React, { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import {
+  Button,
+  Table,
+  Container,
+  Row,
+  Col,
+  Form,
+  InputGroup,
+  FormLabel,
+  Stack,
+} from "react-bootstrap";
 
 import api from "../api";
 import { useAuth } from "../AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const SaleEnvPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const queryParam = new URLSearchParams(location.search);
   const paramValue = queryParam.get("token");
-  const { userRole, checkAuthStatus } = useAuth();
+  const { userRole,userName, checkAuthStatus } = useAuth();
 
   const [isSeller, setIsSeller] = useState(userRole === "Seller");
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(false);
   const [orderList, setOrderList] = useState([]);
   const [buyer, setBuyer] = useState(null);
+  const [apartCode, setApartCode] = useState("");
+  const [amount, setAmount] = useState(0);
+  const [note, setNote] = useState("");
+
   const [saleEnv, setSaleEnv] = useState({
     sellerName: "",
     productName: "",
   });
 
-  const handleChange = (e) => {
-    setBuyer({ ...buyer, [e.target.name]: e.target.value });
-  };
+  // const handleChange = (e) => {
+  //   setBuyer({ ...buyer, [e.target.name]: e.target.value });
+  // };
 
   const handleOrder = (e) => {
     console.log("Click Order");
@@ -37,42 +54,61 @@ const SaleEnvPage = () => {
       try {
         const requestNewOrder = {
           orderedTime: "",
-          buyer: buyer.buyer,
+          buyer: buyer,
           token: paramValue,
+          amount: amount,
+          note: note,
         };
         const resNewOrder = await api.post("/public/order", requestNewOrder);
         if (resNewOrder.status === 200) {
           console.log("Added new order.");
           setOrderList((prevList) => [resNewOrder.data, ...prevList]);
+          setBuyer("");
+          setAmount(0);
+          setNote("");
+          tableChange(isSeller, orderList);
         }
       } catch (error) {
         // console.error(error);
         setError(error);
       } finally {
         setLoading(false);
-        setBuyer("");
+        setError("");
       }
     };
 
     addNewOrder();
   };
 
+  var [totalAmount, setTotalAmount] = useState(0);
+  var [totalOrder, setTotalOrder] = useState(0);
+  const tableChange = (checkSeller, orders) => {
+    // Sumarize
+  if (checkSeller) {
+      setTotalAmount(orders.reduce((sum, item) => sum + item.amount, 0));
+      setTotalOrder(orders.length);
+    }
+  };
+
   useEffect(() => {
+    console.log("Sale environment page");
     if (paramValue) {
       setLoading(true);
       // get check authtication
       // checkAuthStatus();
-      setIsSeller(userRole==="Seller");
+      // setIsSeller(userRole === "Seller");
 
       // get sale environment and orders
       const fetchData = async () => {
         try {
+          console.log("Fetching data");
           const response = await api.get(`/public/link?token=${paramValue}`);
+          console.log("Response status:", response.status);
           if (response.status !== 200) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error! status: ${response.status}`);
+            navigate('/error');
           }
-          const result = await response.data;
-          // setData(result);
+          const result = response.data;
           console.log(result.sellerName);
           console.log(result.productName);
           setSaleEnv({
@@ -80,6 +116,10 @@ const SaleEnvPage = () => {
             productName: result.productName,
           });
           setOrderList(result.orders);
+          const checkedSeller = result.sellerName === userName && userRole === "Seller";
+          // for seller checking
+          setIsSeller(checkedSeller)
+          tableChange(checkedSeller, result.orders);
         } catch (e) {
           setError(e);
         } finally {
@@ -89,7 +129,7 @@ const SaleEnvPage = () => {
 
       fetchData();
     }
-  }, [paramValue,checkAuthStatus, userRole]);
+  }, [paramValue, checkAuthStatus, userRole]);
 
   // Handle delivered
   const handleDelivered = async (index, event) => {
@@ -187,7 +227,9 @@ const SaleEnvPage = () => {
     setLoading(true);
     const worksheetData = orderList.map((order) => ({
       "Thời gian order": order.orderedTime,
-      Order: order.buyer,
+      "Căn hô": order.buyer,
+      "Số lương": order.amount,
+      "Order note": order.note,
       Giao: order.delivered ? "Có" : "Chưa",
       "Thu tiền": order.getMoney ? "Có" : "Chưa",
       "Ghi chú": order.sellerNote,
@@ -216,56 +258,104 @@ const SaleEnvPage = () => {
   };
 
   return (
-    <div className="container mt-6">
+    <Container className="container mt-5">
       <h1>
         Trang đặt hàng: {saleEnv.productName} của {saleEnv.sellerName}
       </h1>
-      <h2>Thông tin đặt hàng</h2>
+      <h2>Thông tin đặt hàng:</h2>
       {loading && <p>Loading data...</p>}
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      {error && <p>Error: error</p>}
+      {/* {error && <p style={{ color: "red" }}>Error: {error}</p>}
       {data && (
         <div>
           <h3>Data from Backend:</h3>
-          {/* <pre>{JSON.stringify(data, null, 2)}</pre> */}
+         
         </div>
-      )}
+      )} */}
 
-      <div className="row align-items-end">
+      <Row className="justify-content-start">
         {/* Area 2: Product Info */}
-        <div className="col-md-6 mb-4">
-          <div className="form-group col-mb-2">
-            <label>Thông tin order:</label>
-            <input
-              className="form-control"
-              maxLength={250}
-              name="buyer"
-              onChange={handleChange}
+        <Col className="d-flex flex-column align-items-start" xs={6}>
+          <InputGroup className="mb-3">
+            <InputGroup.Text>Căn hộ</InputGroup.Text>
+            <Form.Control
+              type="text"
+              value={buyer}
+              onChange={(e) => setBuyer(e.target.value.toUpperCase())}
+              aria-label="apartment"
+              aria-describedby="basic-addon2"
             />
-          </div>
-        </div>
-        <div className="col-md-2 mb-4">
-          <button className="btn btn-primary me-2" onClick={handleOrder}>
-            Đặt
-          </button>
-        </div>
-      </div>
-      <div className="row"></div>
-      <div className="row">
-        <div className="mb-3 d-flex gap-2">
-          {/* ✅ Export Excel: Only for Seller */}
-          {isSeller && (
-            <button onClick={exportToExcel} className="btn btn-success">
+          </InputGroup>
+        </Col>
+        <Col className="d-flex flex-column align-items-start" xs={6}>
+          <InputGroup className="mb-3">
+            <InputGroup.Text>Số lượng:</InputGroup.Text>
+            <Form.Control
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              aria-label="amount"
+              aria-describedby="basic-addon2"
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row className="justify-content-start">
+        <Col className="d-flex flex-column align-items-start" xs={12}>
+          <InputGroup className="mb-12">
+            <InputGroup.Text>Ghi chú:</InputGroup.Text>
+            <Form.Control
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              aria-label="apartment"
+              aria-describedby="basic-addon2"
+            />
+            <Button variant="primary" onClick={handleOrder}>
+              Đặt
+            </Button>
+          </InputGroup>
+        </Col>
+      </Row>
+      <Row className="justify-content-start">
+        {/* Export Excel: Only for Seller */}
+        {isSeller && (
+          <Col>
+            <Button
+              onClick={exportToExcel}
+              variant="success"
+              className="cus-btn"
+            >
               Xuất Excel
-            </button>
-          )}
-        </div>
-
-        <div className="col-md-10 mb-4">
-          <table className="table table-bordered">
-            <thead className="table-light">
+            </Button>
+          </Col>
+        )}
+        {isSeller && (
+          <Col className="justify-content-center" xs={3}>
+            <FormLabel>Total amount: {totalAmount}</FormLabel>
+          </Col>
+        )}
+        {isSeller && (
+          <Col className="justify-content-center" xs={3}>
+            <FormLabel>Total apartment: {totalOrder}</FormLabel>
+          </Col>
+        )}
+        {/* {isSeller && (
+        <Col className="justify-content-center" xs={4}>
+          <FormLabel>Total estimated money: 500000000 vnd</FormLabel>
+        </Col>
+        )} */}
+      </Row>
+      <Row className="justify-content-start" id="cus-table">
+        <Col xs={12}>
+          <FormLabel>Thông tin order:</FormLabel>
+          <Table striped bordered hover size="sm">
+            <thead>
               <tr>
-                <th>Thời gian order</th>
-                <th>Order</th>
+                <th>Thời gian</th>
+                <th>Căn hô</th>
+                <th>Số lượng</th>
+                <th>Ghi chú</th>
                 {isSeller && <th>Giao</th>}
                 {isSeller && <th>Thu tiền</th>}
                 {isSeller && <th>Ghi chú</th>}
@@ -276,6 +366,8 @@ const SaleEnvPage = () => {
                 <tr key={idx}>
                   <td>{order.orderedTime}</td>
                   <td>{order.buyer}</td>
+                  <td>{order.amount}</td>
+                  <td>{order.note}</td>
                   {/* ✅ Role-based columns */}
                   {isSeller && (
                     <>
@@ -301,7 +393,6 @@ const SaleEnvPage = () => {
                           onChange={(e) =>
                             handleNoteChange(idx, e.target.value)
                           }
-                          className="form-control"
                         />
                       </td>
                     </>
@@ -309,10 +400,10 @@ const SaleEnvPage = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+          </Table>
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

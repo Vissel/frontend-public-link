@@ -1,8 +1,11 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
+const currentHost = `${window.location.protocol}//${window.location.hostname}`;
+const localHost = "http://localhost:9080";
 const api = axios.create({
-  baseURL: 'http://localhost:8080/publiclink', // Update with your backend base URL
+  
+  baseURL: `${localHost}/publiclink`, // Update with your backend base URL
   // withCredentials: true
 });
 api.interceptors.request.use(config => {

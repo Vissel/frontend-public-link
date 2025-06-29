@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true); // To indicate if auth status is being checked
   const [userRole, setUserRole] = useState("anonymousUser");
+  const [userName, setUserName] = useState("anonymousUser");
 
   const [auth, setAuth] = useState(() => {
     const token = localStorage.getItem("token");
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(true);
         // set role
         setUserRole(auth.data.role);
+        setUserName(auth.data.username);
       }
     } catch (error) {
       setIsAuthenticated(false);
@@ -65,6 +67,7 @@ export const AuthProvider = ({ children }) => {
       timestamp: localStorage.getItem("loginTime"),
     });
     setUserRole(data.role);
+    setUserName(data.username);
   };
   const logout = () => {
     setIsAuthenticated(false);
@@ -81,6 +84,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         checkAuthStatus,
         userRole,
+        userName
       }}
     >
       {children}

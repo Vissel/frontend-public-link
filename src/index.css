@@ -11,3 +11,21 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+.header-logo{
+  width: 70px;
+  height: auto;
+}
+
+.app-footer{
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+}
+.cus-btn{
+  margin: 5px 0 5px 0;
+}
+#cus-table{
+  margin: 20px 0 0 0;
+}

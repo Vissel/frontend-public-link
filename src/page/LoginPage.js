@@ -1,8 +1,8 @@
 // src/LoginPage.js (updated)
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { resolvePath, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../AuthContext'; // Import useAuth
+import { useAuth, logout } from '../AuthContext'; // Import useAuth
 import api from '../api';
 
 const LoginPage = () => {
@@ -10,7 +10,7 @@ const LoginPage = () => {
     const [inputPassword, setInputPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { login } = useAuth(); // Get the login function from context
+    const { login,logout } = useAuth(); // Get the login function from context
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -21,15 +21,27 @@ const LoginPage = () => {
                 inputUsername: inputUsername,
                 inputPassword: inputPassword
             };
-
-            const response = await api.post('/auth/login', body, {
-                headers: { 'Content-Type': 'application/json' }
-            });
+            logout();
+            const response = await api.post('/auth/login', body);
 
             if (response.status === 200) {
-                console.log('Login successful!', response.data);
+                console.log('Login successful!');
                 login(response.data);
-                navigate('/home'); // Navigate after state is updated
+                
+                if(response.data.role==='Admin'){
+                    navigate('/home'); // Navigate after state is updated
+                }else{
+                    navigate('/sellerHome',
+                        {
+                            state:{
+                                username:response.data.username
+                            }
+                        }
+                        );
+                }
+            }else{
+                console.error('Login error.');
+                setError("You don't have permission to login");
             }
         } catch (err) {
             console.error('Login error:', err);
@@ -48,6 +60,10 @@ const LoginPage = () => {
             }
         }
     };
+
+    const useEffect=()=>{
+        console.log('Login page');
+    }
 
     return (
         <div className='container mt-6'>

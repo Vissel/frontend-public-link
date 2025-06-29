@@ -19,7 +19,8 @@ const HomePage = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [entries, setEntries] = useState([]);
   
-  const currentHost = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
+  const currentHost = `${window.location.protocol}//${window.location.hostname}/ban-hang/#/`;
+  const apiPublicLink ='public/link?token=';
   const fetchEntries = async () => {
     try {
       const res = await api.get("/admin/generator/home");
@@ -121,7 +122,7 @@ const HomePage = () => {
                   </td>
                   <td>
                     <a
-                      href={entry.publicLink}
+                      href={currentHost+apiPublicLink+entry.publicLink}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

@@ -1,15 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Form, Button, Card } from "react-bootstrap";
-
 import api from "../api";
 import { useAuth } from "../AuthContext";
+import CardWrapper from "../components/CardWrapper";
+import PageContainer from "../components/PageContainer";
+import SectionBlock from "../components/SectionBlock";
 
 const GenerationPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { requestData } = location.state || {};
   const { logout } = useAuth();
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [seller, setSeller] = useState({
     name: requestData?.seller.username || "",
@@ -26,6 +40,16 @@ const GenerationPage = () => {
   });
 
   const [images, setImages] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+
+  useEffect(() => {
+    const nextPreviews = images.map((image) => URL.createObjectURL(image));
+    setPreviewUrls(nextPreviews);
+
+    return () => {
+      nextPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [images]);
 
   const handleSellerChange = (e) => {
     setSeller({ ...seller, [e.target.name]: e.target.value });
@@ -43,18 +67,12 @@ const GenerationPage = () => {
   const handleCancel = () => navigate("/home");
 
   const handleSave = async () => {
-    // You can send to backend here
+    setError("");
+    setSaving(true);
+
     try {
-      // handle 1 product - n images as currently
-      //   const requestData = {
-      //     seller,
-      //     product,
-      //     images,
-      //   };
-      //
       const payload = {
         accessToken: localStorage.getItem("token"),
-
         seller: {
           username: seller.name,
           link: seller.link,
@@ -80,156 +98,181 @@ const GenerationPage = () => {
       );
       if (response.status === 200) {
         console.log("Generate public link successful!");
-        alert("Saved successfully!");
         navigate("/home", {
           state: {
             sellerName: seller.name,
             publicLink: response.data,
           },
-        }); // Navigate after state is updated
+        });
       }
       if (response.status === 403) {
         logout();
       }
     } catch (err) {
       console.error(err);
-      alert("Error saving data");
+      setError(
+        err?.response?.data?.message ||
+          "Unable to save the generated product link."
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
+  if (!requestData) {
+    return (
+      <PageContainer maxWidth="md">
+        <SectionBlock
+          title="Generation Page"
+          description="A seller request must be selected before opening this generation workflow."
+        >
+          <Stack spacing={2}>
+            <Alert severity="warning">
+              No seller request data was supplied for this page.
+            </Alert>
+            <Button variant="contained" onClick={handleCancel}>
+              Back to dashboard
+            </Button>
+          </Stack>
+        </SectionBlock>
+      </PageContainer>
+    );
+  }
+
   return (
-    <div className="container mt-4">
-      <div className="d-flex justify-content-end mb-3">
-        <button className="btn btn-success me-2" onClick={handleSave}>
-          Save
-        </button>
-        <button className="btn btn-secondary" onClick={handleCancel}>
-          Cancel
-        </button>
-      </div>
+    <PageContainer maxWidth="xl">
+      <Stack spacing={3}>
+        <SectionBlock
+          title="Generate Product Link"
+          description="Review seller details, attach product information, and publish the public order page using the shared MUI workflow."
+          action={
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
+              <Button variant="outlined" onClick={handleCancel} disabled={saving}>
+                Cancel
+              </Button>
+              <Button variant="contained" onClick={handleSave} disabled={saving}>
+                Save
+              </Button>
+            </Stack>
+          }
+        >
+          {error && <Alert severity="error">{error}</Alert>}
+        </SectionBlock>
 
-      <div className="row">
-        {/* Area 1: Seller Info */}
-        <div className="col-md-6 mb-4">
-          <h5>Seller Information</h5>
-          <div className="form-group mb-2">
-            <label>Name</label>
-            <input
-              type="text"
-              className="form-control"
-              name="name"
-              value={seller.name}
-              onChange={handleSellerChange}
-            />
-          </div>
-          <div className="form-group mb-2">
-            <label>Link</label>
-            <input
-              type="text"
-              className="form-control"
-              name="link"
-              value={seller.link}
-              onChange={handleSellerChange}
-            />
-          </div>
-          <div className="form-group mb-2">
-            <label>Authenticated by seller ?</label>
-            <input
-              type="text"
-              className="form-control"
-              name="authenticated"
-              value={seller.authenticated}
-              disabled={true}
-            />
-          </div>
-          {/* Area 3: Image Upload */}
-          <div className="mb-4">
-            <h5>Upload Product Images</h5>
-            <input
-              type="file"
-              className="form-control"
-              multiple
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-            <div className="d-flex flex-wrap mt-3">
-              {images.map((img, idx) => (
-                <div key={idx} className="me-2 mb-2">
-                  <img
-                    src={URL.createObjectURL(img)}
-                    alt={`preview-${idx}`}
-                    style={{
-                      width: "80px",
-                      height: "80px",
-                      objectFit: "cover",
-                      borderRadius: "4px",
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SectionBlock
+              title="Seller Information"
+              description="Seller identity and source link information."
+            >
+              <Stack spacing={2}>
+                <TextField
+                  label="Name"
+                  name="name"
+                  value={seller.name}
+                  onChange={handleSellerChange}
+                />
+                <TextField
+                  label="Link"
+                  name="link"
+                  value={seller.link}
+                  onChange={handleSellerChange}
+                />
+                <FormControlLabel
+                  control={<Checkbox checked={Boolean(seller.authenticated)} disabled />}
+                  label="Authenticated by seller"
+                />
+                <Stack spacing={1.5}>
+                  <Typography variant="subtitle1">Upload Product Images</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Upload up to 10 product images. The previews below use the same responsive card spacing as the rest of the app.
+                  </Typography>
+                  <Button component="label" variant="outlined">
+                    Choose images
+                    <Box
+                      component="input"
+                      hidden
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                    />
+                  </Button>
+                  <Grid container spacing={1.5}>
+                    {previewUrls.map((previewUrl, index) => (
+                      <Grid key={previewUrl} size={{ xs: 6, sm: 4 }}>
+                        <CardWrapper
+                          sx={{
+                            p: 1,
+                            borderRadius: 3,
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src={previewUrl}
+                            alt={`preview-${index}`}
+                            sx={{
+                              width: "100%",
+                              aspectRatio: "1 / 1",
+                              objectFit: "cover",
+                              borderRadius: 2,
+                            }}
+                          />
+                        </CardWrapper>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Stack>
+              </Stack>
+            </SectionBlock>
+          </Grid>
 
-        {/* Area 2: Product Info */}
-        <div className="col-md-6 mb-4">
-          <h5>Product Information</h5>
-          <div className="form-group mb-2">
-            <label>Product Description</label>
-            <textarea
-              className="form-control"
-              name="name"
-              value={product.name}
-              onChange={handleProductChange}
-              rows={10}
-            />
-            {/* <input type="textarea" className="form-control" name="name" value={product.name} onChange={handleProductChange} /> */}
-          </div>
-          <div className="form-group mb-2">
-            <label>
-              Amount in unit in price (example: amount is 1 >> 1/kg/10k)
-            </label>
-            <input
-              type="number"
-              className="form-control"
-              name="amount"
-              value={product.amount}
-              onChange={handleProductChange}
-            />
-          </div>
-          <div className="form-group mb-2">
-            <label>Unit</label>
-            <input
-              type="text"
-              className="form-control"
-              name="unit"
-              value={product.unit}
-              onChange={handleProductChange}
-            />
-          </div>
-          <div className="form-group mb-2">
-            <label>Price</label>
-            <input
-              type="text"
-              className="form-control"
-              name="price"
-              value={product.price}
-              onChange={handleProductChange}
-            />
-          </div>
-          <div className="form-group mb-2">
-            <label>Total amount</label>
-            <input
-              type="text"
-              className="form-control"
-              name="total_amount"
-              value={product.total_amount}
-              onChange={handleProductChange}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <SectionBlock
+              title="Product Information"
+              description="Product description, pricing, and inventory data for the public page."
+            >
+              <Stack spacing={2}>
+                <TextField
+                  label="Product Description"
+                  name="name"
+                  value={product.name}
+                  onChange={handleProductChange}
+                  multiline
+                  rows={10}
+                />
+                <TextField
+                  label="Amount in unit in price"
+                  helperText="Example: amount is 1 for a display such as 1/kg/10k."
+                  type="number"
+                  name="amount"
+                  value={product.amount}
+                  onChange={handleProductChange}
+                />
+                <TextField
+                  label="Unit"
+                  name="unit"
+                  value={product.unit}
+                  onChange={handleProductChange}
+                />
+                <TextField
+                  label="Price"
+                  name="price"
+                  value={product.price}
+                  onChange={handleProductChange}
+                />
+                <TextField
+                  label="Total amount"
+                  name="total_amount"
+                  value={product.total_amount}
+                  onChange={handleProductChange}
+                />
+              </Stack>
+            </SectionBlock>
+          </Grid>
+        </Grid>
+      </Stack>
+    </PageContainer>
   );
 };
 

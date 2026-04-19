@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }) => {
       token: data.accessToken,
       timestamp: localStorage.getItem("loginTime"),
     });
-    setUserRole(data.role);
+    setUserRole(data.roles[0]);
     setUserName(data.username);
   };
   const logout = () => {

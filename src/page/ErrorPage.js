@@ -1,14 +1,21 @@
-import { useEffect, useState } from "react";
-import { Container } from "react-bootstrap";
-import { useLocation } from "react-router-dom";
+import { Alert, Stack, Typography } from "@mui/material";
+import PageContainer from "../components/PageContainer";
+import SectionBlock from "../components/SectionBlock";
+
 const ErrorPage = () => {
-   
   return (
-    <Container className="container mt-5">
-      <h1>
-        Error page
-      </h1>
-    </Container>
+    <PageContainer maxWidth="sm">
+      <SectionBlock title="Error Page" description="Something went wrong while loading this page.">
+        <Stack spacing={2}>
+          <Alert severity="error">
+            The requested page could not be loaded. Please retry from the previous page or sign in again.
+          </Alert>
+          <Typography variant="body2" color="text.secondary">
+            This fallback view has been migrated to the same MUI-only shell as the main application.
+          </Typography>
+        </Stack>
+      </SectionBlock>
+    </PageContainer>
   );
 };
 

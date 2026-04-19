@@ -1,16 +1,37 @@
-// src/LoginPage.js (updated)
 import React, { useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Base64 } from "js-base64";
-
 import api from "../api";
+import PageContainer from "../components/PageContainer";
+import SectionBlock from "../components/SectionBlock";
 
 const RegisterPage = () => {
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const queryParam = new URLSearchParams(Base64.decode(location.search));
+  const encodedQuery = location.search.startsWith("?")
+    ? location.search.slice(1)
+    : location.search;
+  const decodedQuery = (() => {
+    try {
+      return encodedQuery ? Base64.decode(encodedQuery) : "";
+    } catch (decodeError) {
+      console.error("Register link decode failed:", decodeError);
+      return "";
+    }
+  })();
+  const queryParam = new URLSearchParams(decodedQuery);
   const paramValue = queryParam.get("id");
   const usernameParam = queryParam.get("username");
   const reqidParam = queryParam.get("reqid");
@@ -19,9 +40,11 @@ const RegisterPage = () => {
   const [inputPassword, setInputPassword] = useState("");
   const [inputName, setInputName] = useState(usernameParam);
   const [inputLink, setInputLink] = useState("");
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+    setSubmitting(true);
 
     try {
       if (inputUsername && inputPassword) {
@@ -41,12 +64,13 @@ const RegisterPage = () => {
 
         if (response.status === 200) {
           console.log("Register successful!");
-          // console.log(response.header.get("token"));
-          // get token in header response, set to local storage.
-          localStorage.setItem("token", response.headers.get("token"));
-          // get response public link.
-          alert("Register successful!");
-          navigate(`/public/link?token=${response.data}`); // Navigate after state is updated
+          const tokenHeader =
+            response.headers?.token ||
+            response.headers?.authorization?.replace(/^Bearer\s+/i, "");
+          if (tokenHeader) {
+            localStorage.setItem("token", tokenHeader);
+          }
+          navigate(`/public/link?token=${response.data}`);
         }
       }
     } catch (err) {
@@ -66,105 +90,88 @@ const RegisterPage = () => {
       } else {
         setError("Error setting up the register request.");
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  //   useEffect(() => {
-  //       if (paramValue) {
-  //         setLoading(true);
-  //         const fetchData = async () => {
-  //         try {
-  //           const response = await api.get(`/public/register?id=${paramValue}`);
-  //           if (response.status !== 200) {
-  //             throw new Error(`HTTP error! status: ${response.status}`);
-  //           }
-  //           const result = await response.data;
-  //           // setData(result);
-  //           console.log(result.sellerName);
-  //           console.log(result.productName);
-  //           setSaleEnv({
-  //             sellerName: result.sellerName,
-  //             productName: result.productName,
-  //           });
-  //           setOrderList(result.orders);
-  //         } catch (e) {
-  //           setError(e);
-  //         } finally {
-  //           setLoading(false);
-  //         }
-  //       };
+  const hasRequiredParams = Boolean(paramValue && usernameParam && reqidParam);
 
-  //       }
-  //         }, [paramValue]);
   return (
-    <div className="container mt-6">
-      <h2>Đăng ký mật khẩu người bán</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <div className="row text-start align-items-start">
-        <form onSubmit={handleRegister}>
-          {/* ... form inputs ... */}
-          <div className="row justify-content-md">
-            <div className="col col-lg-2">
-              <label htmlFor="username">Tài khoản:</label>
-            </div>
-            <div className="col col-lg-4">
-              <input
-                type="text"
-                id="inputUsername"
-                value={inputUsername}
-                required
-                onChange={(e) => setInputUsername(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="row justify-content-md">
-            <div className="col col-lg-2">
-              <label htmlFor="password">Mât khẩu:</label>
-            </div>
-            <div className="col col-lg-6">
-              <input
-                type="password"
-                id="inputPassword"
-                value={inputPassword}
-                onChange={(e) => setInputPassword(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div className="row justify-content-md">
-            <div className="col col-lg-2">
-              <label htmlFor="name">Tên:</label>
-            </div>
-            <div className="col col-lg-6">
-              <input
-                type="text"
-                id="inputName"
-                value={inputName}
-                onChange={(e) => setInputName(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="row justify-content-md">
-            <div className="col col-lg-2">
-              <label htmlFor="name">Facebook's link/name:</label>
-            </div>
-            <div className="col col-lg-6">
-              <input
-                type="text"
-                id="inputLink"
-                value={inputLink}
-                onChange={(e) => setInputLink(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col col-lg-2">
-          <button type="submit" className="btn btn-primary">
-            Đăng ký
-          </button></div></div>
-        </form>
-      </div>
-    </div>
+    <PageContainer maxWidth="md">
+      <SectionBlock
+        title="Đăng ký mật khẩu người bán"
+        description="Thiết lập tài khoản người bán bằng biểu mẫu MUI thống nhất cho cả desktop và mobile."
+      >
+        <Stack spacing={3}>
+          {!hasRequiredParams && (
+            <Alert severity="error">
+              Liên kết đăng ký không hợp lệ hoặc đã thiếu tham số cần thiết.
+            </Alert>
+          )}
+          {error && <Alert severity="error">{error}</Alert>}
+
+          <Box component="form" onSubmit={handleRegister}>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Tài khoản"
+                  type="text"
+                  value={inputUsername}
+                  required
+                  onChange={(event) => setInputUsername(event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Mật khẩu"
+                  type="password"
+                  value={inputPassword}
+                  required
+                  onChange={(event) => setInputPassword(event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Tên"
+                  type="text"
+                  value={inputName}
+                  onChange={(event) => setInputName(event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Facebook link / tên hiển thị"
+                  type="text"
+                  value={inputLink}
+                  onChange={(event) => setInputLink(event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Sau khi đăng ký thành công, bạn sẽ được chuyển đến trang đặt hàng công khai.
+                  </Typography>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={!hasRequiredParams || submitting}
+                  >
+                    Đăng ký
+                  </Button>
+                </Stack>
+              </Grid>
+            </Grid>
+          </Box>
+        </Stack>
+      </SectionBlock>
+    </PageContainer>
   );
 };
 

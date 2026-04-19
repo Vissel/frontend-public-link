@@ -1,19 +1,19 @@
-import axios from 'axios';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import axios from "axios";
+import config from "./config";
 
-const currentHost = `${window.location.protocol}//${window.location.hostname}`;
-const localHost = "http://localhost:9080";
 const api = axios.create({
-  
-  baseURL: `${localHost}/publiclink`, // Update with your backend base URL
-  // withCredentials: true
+  baseURL: config.baseURL,
+  withCredentials: true,
+  timeout: config.timeout,
 });
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+
+api.interceptors.request.use((requestConfig) => {
+  const token = localStorage.getItem("token");
   if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+    requestConfig.headers.Authorization = `Bearer ${token}`;
   }
-  config.headers['Content-Type']='application/json';
-  return config;
+  requestConfig.headers["Content-Type"] = "application/json";
+  return requestConfig;
 });
+
 export default api;

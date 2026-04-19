@@ -1,104 +1,139 @@
-// src/LoginPage.js (updated)
-import React, { useState } from 'react';
-import { resolvePath, useNavigate } from 'react-router-dom';
-
-import { useAuth, logout } from '../AuthContext'; // Import useAuth
-import api from '../api';
+import React, { useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../AuthContext";
+import CardWrapper from "../components/CardWrapper";
+import PageContainer from "../components/PageContainer";
+import api from "../api";
+import JSEncrypt from "jsencrypt";
 
 const LoginPage = () => {
-    const [inputUsername, setInputUsername] = useState('');
-    const [inputPassword, setInputPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const { login,logout } = useAuth(); // Get the login function from context
+  const [inputUsername, setInputUsername] = useState("");
+  const [inputPassword, setInputPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { login, logout } = useAuth();
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setError("");
+    setSubmitting(true);
 
-        try {
-            const body = {
-                inputUsername: inputUsername,
-                inputPassword: inputPassword
-            };
-            logout();
-            const response = await api.post('/auth/login', body);
+    try {
+      let publicKey = sessionStorage.getItem("publicKey");
+      if (publicKey === null) {
+        const keyResponse = await api.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
+        publicKey = new TextDecoder().decode(keyResponse.data);
+        sessionStorage.setItem("publicKey", publicKey);
+      }
+      if (!publicKey || !inputUsername || !inputPassword)
+        throw new Error("Pre-login got failure!");
 
-            if (response.status === 200) {
-                console.log('Login successful!');
-                login(response.data);
-                
-                if(response.data.role==='Admin'){
-                    navigate('/home'); // Navigate after state is updated
-                }else{
-                    navigate('/sellerHome',
-                        {
-                            state:{
-                                username:response.data.username
-                            }
-                        }
-                        );
-                }
-            }else{
-                console.error('Login error.');
-                setError("You don't have permission to login");
-            }
-        } catch (err) {
-            console.error('Login error:', err);
-            if (err.response) {
-                if (err.response.data && err.response.data.message) {
-                    setError(err.response.data.message);
-                } else if (err.response.status === 401 || err.response.status === 403) {
-                    setError('Wrong username/password');
-                }else {
-                    setError('An unexpected error occurred during login.');
-                }
-            } else if (err.request) {
-                setError('No response from server. Please check your network connection.');
-            } else {
-                setError('Error setting up the login request.');
-            }
+      const encryptor = new JSEncrypt();
+      encryptor.setPublicKey(publicKey);
+      const encryptedPassword = encryptor.encrypt(inputPassword);
+
+      const response = await api.post("/api/v1/auth/basic", {
+        username: inputUsername,
+        encryptedPassword: encryptedPassword,
+      });
+
+      if (response.status === 200) {
+        login(response.data);
+
+        if (String(response.data.roles[0]).toLowerCase() === "admin") {
+          navigate("/home");
+        } else {
+          navigate("/sellerHome", {
+            state: {
+              username: response.data.username,
+            },
+          });
         }
-    };
-
-    const useEffect=()=>{
-        console.log('Login page');
+      } else {
+        logout();
+        setError("You don't have permission to log in.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err.response) {
+        if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else if (err.response.status === 401 || err.response.status === 403) {
+          setError("Wrong username/password.");
+        } else {
+          setError("An unexpected error occurred during login.");
+        }
+      } else if (err.request) {
+        setError(
+          "No response from server. Please check your network connection."
+        );
+      } else {
+        setError("Error setting up the login request.");
+      }
+    } finally {
+      setSubmitting(false);
     }
+  };
 
-    return (
-        <div className='container mt-6'>
-            <h2>Login</h2>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            <form onSubmit={handleLogin}>
-                {/* ... form inputs ... */}
-                <div className='row'>
-                    <div className='col-sm-1'>
-                    <label htmlFor="username">Username:</label></div>
-                    <div className='col-sm-2'>
-                    <input
-                        type="text"
-                        id="username"
-                        value={inputUsername}
-                        onChange={(e) => setInputUsername(e.target.value)}
-                        required
-                    /></div>
-                </div>
-                <div className='row'>
-                    <div className='col-sm-1'>
-                    <label htmlFor="password">Password:</label></div>
-                    <div className='col-sm-2'>
-                    <input
-                        type="password"
-                        id="password"
-                        value={inputPassword}
-                        onChange={(e) => setInputPassword(e.target.value)}
-                        required
-                    />
-                </div></div>
-                <button type="submit" className='btn btn-primary'>Log in</button>
-            </form>
-        </div>
-    );
+  return (
+    <PageContainer
+      maxWidth="sm"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        minHeight: { xs: "calc(100dvh - 180px)", md: "calc(100dvh - 200px)" },
+      }}
+    >
+      <CardWrapper sx={{ width: "100%" }}>
+        <Stack spacing={3}>
+          <Stack spacing={1}>
+            <Typography variant="h3">Login</Typography>
+            <Typography variant="body1" color="text.secondary">
+              Sign in to manage seller onboarding and public order links.
+            </Typography>
+          </Stack>
+
+          {error && <Alert severity="error">{error}</Alert>}
+
+          <Box component="form" onSubmit={handleLogin}>
+            <Stack spacing={2}>
+              <TextField
+                label="Username"
+                type="text"
+                value={inputUsername}
+                onChange={(event) => setInputUsername(event.target.value)}
+                required
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={inputPassword}
+                onChange={(event) => setInputPassword(event.target.value)}
+                required
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={submitting}
+              >
+                Log in
+              </Button>
+            </Stack>
+          </Box>
+        </Stack>
+      </CardWrapper>
+    </PageContainer>
+  );
 };
 
 export default LoginPage;

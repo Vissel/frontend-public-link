@@ -1,148 +1,149 @@
-// src/HomePage.js (updated)
 import React, { useEffect, useState } from "react";
-// import { Button, Box } from "@mui/material";
-import { format, parseISO, toDate } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
-
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../AuthContext"; // Import useAuth
+import {
+  Alert,
+  Button,
+  Chip,
+  Link,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import api from "../api";
-
+import PageContainer from "../components/PageContainer";
+import SectionBlock from "../components/SectionBlock";
 import SellerForm from "../form/SellerForm";
-import { Table, Button, Row, Container, Col } from "react-bootstrap";
 
 const HomePage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { logout, checkAuthStatus } = useAuth(); // Get logout function from context
-  const [message, setMessage] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [entries, setEntries] = useState([]);
-  
-  const currentHost = `${window.location.protocol}//${window.location.hostname}/ban-hang/#/`;
-  const apiPublicLink ='public/link?token=';
+  const [error, setError] = useState("");
+
+  const currentHost = `${window.location.protocol}//${window.location.host}/ban-hang/#/`;
+  const apiPublicLink = "public/link?token=";
+
   const fetchEntries = async () => {
     try {
+      setError("");
       const res = await api.get("/admin/generator/home");
       if (res.status === 200) {
-        
         setEntries(res.data || []);
-        
-        // const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       }
     } catch (err) {
       console.error("Failed to fetch records", err);
+      setError("Failed to fetch product link records.");
     }
   };
 
   useEffect(() => {
-    setMessage("Welcome to the Home Page!");
     fetchEntries();
-   
   }, []);
-  const handleAddRecord = (newRecord) => {
-    setEntries((prev) => [newRecord, ...prev]);
-  };
-  const handleLogout = async () => {
-    const result = await logout();
-    if (result.success) {
-      console.log("Logged out successfully");
-      navigate("/login");
-    } else {
-      // Even if logout fails on server, navigate for UX, but log error
-      console.error("Logout failed:", result.message);
-      navigate("/login");
-    }
-  };
 
   return (
-    <Container className="mt-4" fluid="md">
-      {/* SellerForm */}
-      <Row style={styles.cusMargin} >
-        <Col>
-        <Button variant="primary" onClick={() => setOpenDialog(true)}>
-          Generate product link
-        </Button>
-        </Col>
+    <PageContainer maxWidth="xl">
+      <Stack spacing={3}>
+        <SectionBlock
+          title="Admin Workspace"
+          description="Manage seller authentication links and public product pages from a single responsive MUI dashboard."
+          action={
+            <Button variant="contained" onClick={() => setOpenDialog(true)}>
+              Generate product link
+            </Button>
+          }
+        >
+          {error && <Alert severity="error">{error}</Alert>}
+          <Typography variant="body2" color="text.secondary">
+            The table below is fully responsive and uses MUI components only.
+          </Typography>
+        </SectionBlock>
+
         <SellerForm
           open={openDialog}
           onClose={() => setOpenDialog(false)}
-          onSuccess={handleAddRecord}
+          onSuccess={fetchEntries}
         />
-        <Button hidden onClick={handleLogout}>Logout</Button>
-      </Row>
-      {/* 📝 Show record list */}
-      <Row >
-        {" "}
-        {/* Keep this div for responsive table behavior */}
-        <Table responsive="sm" bordered>
-          {" "}
-          {/* 'bordered' prop for table-bordered class */}
-          <thead className="table-light">
-            <tr>
-              <th >Created At</th>
-              <th>Seller Name</th>
-              <th>Product Name</th>
-              <th>Seller Authentication</th>
-              <th>Public Link</th>
-              <th>Created By</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
+
+        <SectionBlock
+          title="Generated Links"
+          description="Each record keeps the seller authentication link and the public customer-facing order page."
+        >
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Created At</TableCell>
+                  <TableCell>Seller Name</TableCell>
+                  <TableCell>Product Name</TableCell>
+                  <TableCell>Seller Authentication</TableCell>
+                  <TableCell>Public Link</TableCell>
+                  <TableCell>Created By</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
             {entries.length === 0 ? (
-              <tr>
-                <td colSpan="2" className="text-center">
-                  No records yet
-                </td>
-              </tr>
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No records yet.
+                  </TableCell>
+                </TableRow>
             ) : (
               entries.map((entry, idx) => (
-                <tr key={idx}>
-                  <td>{entry.createdAt}
-                  </td>
-                  <td>
-                    <a
+                <TableRow key={idx} hover>
+                  <TableCell>{entry.createdAt}</TableCell>
+                  <TableCell>
+                    <Link
                       href={entry.sellerLink}
                       target="_blank"
                       rel="noopener noreferrer"
+                      underline="hover"
                     >
-                      {entry.sellerName}{" "}
-                    </a>
-                  </td>
-                  <td>{entry.productName}</td>
-                  <td>
-                    <a
-                      href={currentHost+entry.sellerAuthLink}
+                      {entry.sellerName}
+                    </Link>
+                  </TableCell>
+                  <TableCell>{entry.productName}</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`${currentHost}${entry.sellerAuthLink}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      underline="hover"
                     >
                       Seller Authentication Link
-                    </a>
-                  </td>
-                  <td>
-                    <a
-                      href={currentHost+apiPublicLink+entry.publicLink}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      href={`${currentHost}${apiPublicLink}${entry.publicLink}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      underline="hover"
                     >
                       Public Link
-                    </a>
-                  </td>
-                  <td>{entry.createdBy}</td>
-                  <td>{entry.envStatus ? "Active" : "In-active"}</td>
-                </tr>
+                    </Link>
+                  </TableCell>
+                  <TableCell>{entry.createdBy}</TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      color={entry.envStatus ? "success" : "default"}
+                      label={entry.envStatus ? "Active" : "Inactive"}
+                    />
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </Table>
-      </Row>
-    </Container>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </SectionBlock>
+      </Stack>
+    </PageContainer>
   );
 };
-const styles = {
-    cusMargin: {
-        margin: "0 0 10px 0"
-    }
-}
+
 export default HomePage;

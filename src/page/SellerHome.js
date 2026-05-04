@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Stack, Typography } from "@mui/material";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../AuthContext";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 
 const SellerHome = () => {
   const [username, setUsername] = useState("");
   const { state } = useLocation();
+  const { userName } = useAuth();
 
   useEffect(() => {
-    setUsername(state?.username || "");
-  }, [state]);
+    setUsername(state?.username || userName || "");
+  }, [state, userName]);
 
   return (
     <PageContainer maxWidth="md">

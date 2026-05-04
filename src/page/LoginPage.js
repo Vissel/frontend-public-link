@@ -14,6 +14,12 @@ import PageContainer from "../components/PageContainer";
 import api from "../api";
 import JSEncrypt from "jsencrypt";
 
+const normalizeRole = (role) =>
+  String(role || "")
+    .trim()
+    .replace(/^ROLE_/i, "")
+    .toLowerCase();
+
 const LoginPage = () => {
   const [inputUsername, setInputUsername] = useState("");
   const [inputPassword, setInputPassword] = useState("");
@@ -47,14 +53,20 @@ const LoginPage = () => {
       });
 
       if (response.status === 200) {
-        login(response.data);
+        const authData = login(response.data);
+        if (!authData) {
+          logout();
+          setError("Login response is missing required authentication data.");
+          return;
+        }
+        const primaryRole = normalizeRole(authData?.userRole);
 
-        if (String(response.data.roles[0]).toLowerCase() === "admin") {
-          navigate("/home");
+        if (primaryRole === "admin") {
+          navigate("/adminHome");
         } else {
           navigate("/sellerHome", {
             state: {
-              username: response.data.username,
+              username: authData?.username || inputUsername,
             },
           });
         }

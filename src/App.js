@@ -1,7 +1,7 @@
 import React from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./page/LoginPage";
-import HomePage from "./page/HomePage";
+import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
 import SaleEnvPage from "./page/SaleEnvPage";
 import RegisterPage from "./page/RegisterPage";
@@ -26,7 +26,7 @@ function App() {
             }
           />
           <Route
-            path="/public/link"
+            path="/api/v1/publish/link"
             element={
               <Layout>
                 <SaleEnvPage />
@@ -34,7 +34,15 @@ function App() {
             }
           />
           <Route
-            path="/public/register"
+            path="/api/v1/publish/link"
+            element={
+              <Layout>
+                <SaleEnvPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/api/v1/publish/register"
             element={
               <Layout>
                 <RegisterPage />
@@ -60,10 +68,10 @@ function App() {
 
           <Route element={<ProtectedRoute />}>
             <Route
-              path="/home"
+              path="/adminHome"
               element={
                 <Layout>
-                  <HomePage />
+                  <AdminHomePage />
                 </Layout>
               }
             />

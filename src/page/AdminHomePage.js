@@ -32,7 +32,16 @@ const AdminHomePage = () => {
   const fetchEntries = async () => {
     try {
       setError("");
-      const res = await api.get(`${contextPath}/admin/v1/getAllEnvironment`);
+      const paginationPayload = {
+        page: 0,
+        size: 100,
+        listData: [
+          {
+            createdAt:""
+          }
+        ],
+      }
+      const res = await api.post(`${contextPath}/admin/v1/getAllEnvironment`,paginationPayload);
       if (res.status === 200) {
         setEntries(res.data || []);
       }
@@ -45,10 +54,12 @@ const AdminHomePage = () => {
   const fetchUsers = async () => {
     try {
       setUserError("");
-      const res = await api.post("/admin/v1/listUser", {
+      const res = await api.post(`${contextPath}/admin/v1/listUser`, {
         page: 0,
         size: 100,
-        listData: [{}],
+        listData: [{
+          byRole:""
+        }],
       });
 
       if (res.status === 200) {

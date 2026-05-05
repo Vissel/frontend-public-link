@@ -6,28 +6,19 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import api from "./api";
-import axios from "axios";
+import {
+  AUTH_STATE_EVENT,
+  clearAuthStorage,
+  getStoredAuth,
+  normalizeRole,
+  storeAuth,
+} from "./authStorage";
 
 const AuthContext = createContext();
-const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
-const AUTH_STORAGE_KEYS = {
-  token: "token",
-  loginTime: "loginTime",
-  userRole: "userRole",
-  userName: "userName",
-  refreshToken: "refreshToken",
-};
-
-const normalizeRole = (role) =>
-  String(role || "")
-    .trim()
-    .replace(/^ROLE_/i, "")
-    .toLowerCase();
 
 const normalizeAuthData = (data = {}, fallback = {}) => {
-  const token = data.token || data.accessToken || fallback.token || "";
-  const username = data.username || data.userName || "";
+  const token = data.token || fallback.token || "";
+  const username = data.username || "";
   const rawRoles = Array.isArray(data.roles)
     ? data.roles
     : data.role
@@ -46,136 +37,100 @@ const normalizeAuthData = (data = {}, fallback = {}) => {
     username,
   };
 };
-
-const clearAuthStorage = () => {
-  Object.values(AUTH_STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
-};
-
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState("anonymoususer");
-  const [userName, setUserName] = useState("anonymousUser");
+  const getUnauthenticatedState = useCallback(() => {
+    return {
+      auth: null,
+      isAuthenticated: false,
+      userRole: "anonymoususer",
+      username: "anonymousUser",
+    };
+  }, []);
 
-  const [auth, setAuth] = useState(() => {
-    const token = localStorage.getItem(AUTH_STORAGE_KEYS.token);
-    const timestamp = localStorage.getItem(AUTH_STORAGE_KEYS.loginTime);
-    if (token && timestamp) {
-      const elapsed = Date.now() - parseInt(timestamp, 10);
-      if (elapsed < LOGIN_TIMEOUT_MS) {
-        return {
-          token,
-          refreshToken:
-            localStorage.getItem(AUTH_STORAGE_KEYS.refreshToken) || "",
-          roles: [localStorage.getItem(AUTH_STORAGE_KEYS.userRole) || ""].filter(
-            Boolean
-          ),
-          userRole: localStorage.getItem(AUTH_STORAGE_KEYS.userRole) || "",
-          username: localStorage.getItem(AUTH_STORAGE_KEYS.userName) || "",
-        };
-      }
+  const getAuthStateFromStorage = useCallback(() => {
+    const storedAuth = getStoredAuth();
+    if (storedAuth.isAuthenticated) {
+      return {
+        auth: {
+          token: storedAuth.token,
+          refreshToken: storedAuth.refreshToken,
+          roles: storedAuth.roles,
+          userRole: storedAuth.userRole,
+          username: storedAuth.username,
+        },
+        isAuthenticated: true,
+        userRole: storedAuth.userRole || "anonymoususer",
+        username: storedAuth.username || "anonymousUser",
+      };
+    }
+    if (storedAuth.isExpired) {
       clearAuthStorage();
     }
-    return null;
-  });
+    return getUnauthenticatedState();
+  }, [getUnauthenticatedState]);
+
+  const [authState, setAuthState] = useState(getAuthStateFromStorage);
+  const { auth, isAuthenticated, userRole, username } = authState;
+  const [loading, setLoading] = useState(false);
+
+  const syncAuthState = useCallback(() => {
+    setAuthState(getAuthStateFromStorage());
+    setLoading(false);
+  }, [getAuthStateFromStorage]);
 
   const applyAuthState = useCallback((data) => {
     const normalized = normalizeAuthData(data, {
-      token: localStorage.getItem(AUTH_STORAGE_KEYS.token) || "",
+      token: getStoredAuth().token,
     });
 
     if (!normalized.authenticated || !normalized.token) {
-      setIsAuthenticated(false);
-      setAuth(null);
-      setUserRole("anonymoususer");
-      setUserName("anonymousUser");
       clearAuthStorage();
       return null;
     }
 
-    const loginTime = Date.now().toString();
-    localStorage.setItem(AUTH_STORAGE_KEYS.token, normalized.token);
-    localStorage.setItem(AUTH_STORAGE_KEYS.loginTime, loginTime);
-    localStorage.setItem(AUTH_STORAGE_KEYS.userRole, normalized.userRole);
-    localStorage.setItem(AUTH_STORAGE_KEYS.userName, normalized.username);
-
-    if (normalized.refreshToken) {
-      localStorage.setItem(
-        AUTH_STORAGE_KEYS.refreshToken,
-        normalized.refreshToken
-      );
-    } else {
-      localStorage.removeItem(AUTH_STORAGE_KEYS.refreshToken);
-    }
-
-    setAuth({
-      token: normalized.token,
-      timestamp: loginTime,
+    const loginTime = storeAuth({
       refreshToken: normalized.refreshToken,
-      roles: normalized.roles,
+      token: normalized.token,
       userRole: normalized.userRole,
       username: normalized.username,
     });
-    setIsAuthenticated(true);
-    setUserRole(normalized.userRole || "anonymoususer");
-    setUserName(normalized.username || "anonymousUser");
+
+    setAuthState({
+      auth: {
+        token: normalized.token,
+        timestamp: loginTime,
+        refreshToken: normalized.refreshToken,
+        roles: normalized.roles,
+        userRole: normalized.userRole,
+        username: normalized.username,
+      },
+      isAuthenticated: true,
+      userRole: normalized.userRole || "anonymoususer",
+      username: normalized.username || "anonymousUser",
+    });
 
     return normalized;
   }, []);
 
-  const checkAuthStatus = useCallback(async () => {
-    if (!localStorage.getItem(AUTH_STORAGE_KEYS.token)) {
-      setIsAuthenticated(false);
-      setAuth(null);
-      setUserRole("anonymoususer");
-      setUserName("anonymousUser");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await api.get("/auth/check-auth");
-      if (response.status === 200) {
-        console.info("Authenticated.");
-        applyAuthState(response.data);
-      }
-    } catch (error) {
-      setIsAuthenticated(false);
-      setAuth(null);
-      setUserRole("anonymoususer");
-      setUserName("anonymousUser");
-      clearAuthStorage();
-      console.error("Authentication check failed:", error);
-      if (
-        axios.isAxiosError(error) &&
-        error.response &&
-        error.response.status === 401
-      ) {
-        console.log("Session expired or not authenticated.");
-      } else {
-        console.error("Error during session check:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [applyAuthState]);
-
-  // Check auth status on component mount
   useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+    syncAuthState();
+
+    window.addEventListener(AUTH_STATE_EVENT, syncAuthState);
+    window.addEventListener("storage", syncAuthState);
+
+    return () => {
+      window.removeEventListener(AUTH_STATE_EVENT, syncAuthState);
+      window.removeEventListener("storage", syncAuthState);
+    };
+  }, [syncAuthState]);
 
   const login = (data) => {
     return applyAuthState(data);
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    setUserRole("anonymoususer");
-    setUserName("anonymousUser");
     clearAuthStorage();
-    setAuth(null);
+    setAuthState(getUnauthenticatedState());
   };
 
   return (
@@ -186,9 +141,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        checkAuthStatus,
         userRole,
-        userName,
+        username,
       }}
     >
       {children}

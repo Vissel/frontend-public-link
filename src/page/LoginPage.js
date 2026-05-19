@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Box,
@@ -7,7 +7,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
@@ -21,12 +21,22 @@ const normalizeRole = (role) =>
     .toLowerCase();
 
 const LoginPage = () => {
-  const [inputUsername, setInputUsername] = useState("");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const urlUsername = queryParams.get("username");
+  const requestUuid = queryParams.get("requestUuid") || queryParams.get("reqUuid");
+  const [inputUsername, setInputUsername] = useState(urlUsername || "");
   const [inputPassword, setInputPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login, logout } = useAuth();
+
+  useEffect(() => {
+    if (urlUsername) {
+      setInputUsername(urlUsername);
+    }
+  }, [urlUsername]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -50,6 +60,7 @@ const LoginPage = () => {
       const response = await api.post("/api/v1/auth/basic", {
         username: inputUsername,
         encryptedPassword: encryptedPassword,
+        ...(requestUuid && { reqUuid: requestUuid }),
       });
 
       if (response.status === 200) {
@@ -64,11 +75,11 @@ const LoginPage = () => {
         if (primaryRole === "admin") {
           navigate("/adminHome");
         } else {
-          navigate("/sellerHome", {
-            state: {
-              username: authData?.username || inputUsername,
-            },
-          });
+          if (authData?.reqUuid) {
+            navigate(`/api/v1/publish/saleUrl?requestUuid=${encodeURIComponent(authData.reqUuid)}`);
+          } else {
+            navigate("/sellerHome");
+          }
         }
       } else {
         logout();
@@ -122,6 +133,7 @@ const LoginPage = () => {
                 label="Username"
                 type="text"
                 value={inputUsername}
+                disabled={Boolean(urlUsername)}
                 onChange={(event) => setInputUsername(event.target.value)}
                 required
               />
@@ -132,6 +144,15 @@ const LoginPage = () => {
                 onChange={(event) => setInputPassword(event.target.value)}
                 required
               />
+              {requestUuid && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontStyle: "italic" }}
+                >
+                  Request ID: {requestUuid}
+                </Typography>
+              )}
               <Button
                 type="submit"
                 variant="contained"

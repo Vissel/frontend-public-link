@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
 import config from "../api/config";
 import PageContainer from "../components/PageContainer";
@@ -145,9 +146,10 @@ const AdminHomePage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [userError, setUserError] = useState("");
   const contextPath = "/publiclink";
-  const currentHost = `${config.baseURL}${contextPath}`;
+  const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
   const previousUserSearchRef = useRef(userAppliedSearchText);
+  const navigate = useNavigate();
 
   const addHostToHref = (contextString) => {
     if (!contextString) {
@@ -156,7 +158,7 @@ const AdminHomePage = () => {
 
     return /^https?:\/\//i.test(contextString)
       ? contextString
-      : `${currentHost}${contextString}`;
+      : `${frontendOrigin}${contextString}`;
   };
 
   useEffect(() => {
@@ -404,6 +406,7 @@ const AdminHomePage = () => {
                   <TableCell>Created At</TableCell>
                   <TableCell>Seller Name</TableCell>
                   <TableCell>Product Name</TableCell>
+                  <TableCell>Total Price</TableCell>
                   <TableCell>Seller Authentication</TableCell>
                   <TableCell>Seller Authentication Expire</TableCell>
                   <TableCell>Request UUID</TableCell>
@@ -415,22 +418,33 @@ const AdminHomePage = () => {
               <TableBody>
                 {entries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} align="center">
+                    <TableCell colSpan={10} align="center">
                       No records yet.
                     </TableCell>
                   </TableRow>
                 ) : (
                   entries.map((entry, idx) => (
-                    <TableRow key={idx} hover>
+                    <TableRow
+                      key={idx}
+                      hover
+                      sx={{ cursor: "pointer" }}
+                      onClick={() => navigate(`/environmentDetail?requestUuid=${entry.requestUUID}`)}
+                    >
                       <TableCell>{entry.createdAt}</TableCell>
                       <TableCell>{entry.sellerName}</TableCell>
                       <TableCell>{entry.productName}</TableCell>
+                      <TableCell>
+                        {entry.totalPrice != null
+                          ? `${Number(entry.totalPrice).toLocaleString()} ${entry.currency || "VND"}`
+                          : "-"}
+                      </TableCell>
                       <TableCell>
                         <Link
                           href={addHostToHref(entry.sellerAuthLink)}
                           target="_blank"
                           rel="noopener noreferrer"
                           underline="hover"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Seller Authentication Link
                         </Link>
@@ -443,6 +457,7 @@ const AdminHomePage = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           underline="hover"
+                          onClick={(e) => e.stopPropagation()}
                         >
                           Public Link
                         </Link>

@@ -1,15 +1,17 @@
 import React from "react";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./page/LoginPage";
 import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
 import SaleEnvPage from "./page/SaleEnvPage";
 import RegisterPage from "./page/RegisterPage";
+import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import SellerHome from "./page/SellerHome";
 import ErrorPage from "./page/ErrorPage";
+import RedirectionPage from "./page/RedirectionPage";
 import Layout from "./Layout";
 
 function App() {
@@ -26,15 +28,15 @@ function App() {
             }
           />
           <Route
-            path="/api/v1/publish/link"
+            path="/link"
             element={
               <Layout>
-                <SaleEnvPage />
+                <RedirectionPage />
               </Layout>
             }
           />
           <Route
-            path="/api/v1/publish/link"
+            path="/api/v1/publish/saleUrl"
             element={
               <Layout>
                 <SaleEnvPage />
@@ -80,6 +82,14 @@ function App() {
               element={
                 <Layout>
                   <GenerationPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/environmentDetail"
+              element={
+                <Layout>
+                  <EnvironmentDetailPage />
                 </Layout>
               }
             />

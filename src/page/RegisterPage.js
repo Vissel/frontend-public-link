@@ -20,6 +20,8 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const rawQueryParams = new URLSearchParams(location.search);
+  const rawName = rawQueryParams.get("name");
   const encodedQuery = location.search.startsWith("?")
     ? location.search.slice(1)
     : location.search;
@@ -38,7 +40,7 @@ const RegisterPage = () => {
   // register
   const [inputUsername, setInputUsername] = useState(usernameParam);
   const [inputPassword, setInputPassword] = useState("");
-  const [inputName, setInputName] = useState(usernameParam);
+  const [inputName, setInputName] = useState(rawName || usernameParam);
   const [inputLink, setInputLink] = useState("");
 
   const handleRegister = async (e) => {
@@ -136,6 +138,8 @@ const RegisterPage = () => {
                   label="Tên"
                   type="text"
                   value={inputName}
+                  required
+                  disabled={Boolean(rawName)}
                   onChange={(event) => setInputName(event.target.value)}
                 />
               </Grid>

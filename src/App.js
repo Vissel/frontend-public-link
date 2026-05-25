@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./page/LoginPage";
 import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
-import SaleEnvPage from "./page/SaleEnvPage";
+import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 
@@ -12,6 +12,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import SellerHome from "./page/SellerHome";
 import ErrorPage from "./page/ErrorPage";
 import RedirectionPage from "./page/RedirectionPage";
+import PublinkPage from "./page/PublinkPage";
 import Layout from "./Layout";
 
 function App() {
@@ -51,11 +52,12 @@ function App() {
               </Layout>
             }
           />
+
           <Route
-            path="/sellerHome"
+            path="/publink"
             element={
               <Layout>
-                <SellerHome />
+                <PublinkPage />
               </Layout>
             }
           />
@@ -68,7 +70,7 @@ function App() {
             }
           />
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             <Route
               path="/adminHome"
               element={
@@ -90,6 +92,17 @@ function App() {
               element={
                 <Layout>
                   <EnvironmentDetailPage />
+                </Layout>
+              }
+            />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["SELLER"]} />}>
+            <Route
+              path="/sellerHome"
+              element={
+                <Layout>
+                  <SellerHome />
                 </Layout>
               }
             />

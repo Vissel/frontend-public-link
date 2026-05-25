@@ -15,6 +15,7 @@ const RedirectionPage = () => {
     const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
+    const reqUuid = queryParams.get("reqUuid");
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -22,55 +23,52 @@ const RedirectionPage = () => {
 
         const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
         // Forward all query params to the backend
-        const backendUrl = `${apiBaseUrl}/api/v1/publish/link${location.search}`;
+        const backendUrl = `${apiBaseUrl}/publiclink/api/v1/publish/link${location.search}`;
 
         const storedAuth = getStoredAuth();
 
-        const handleResponse = (response) => {
-            if (response.status === 400) {
-                setError(
-                    "The link is invalid or expired. Please check the link and try again."
-                );
-                return;
-            }
-            if (response.status === 302 || response.status === 301) {
-                // Extract the redirect Location header and resolve against the frontend origin
-                const locationHeader = response.headers.get("Location");
-                if (locationHeader) {
-                    const destination = new URL(locationHeader, window.location.origin);
-                    window.location.href = destination.href;
-                } else {
-                    navigate('/error');
-                }
-                return;
-            }
-            // Any other non-redirect status: let browser follow naturally
-            window.location.href = backendUrl;
-        };
-
+        const headers = {};
         if (storedAuth.token && !storedAuth.isExpired) {
-            fetch(backendUrl, {
-                headers: {
-                    "Authorization": `Bearer ${storedAuth.token}`,
-                },
-                redirect: "manual",
-            })
-                .then(handleResponse)
-                .catch(() => {
-                    navigate('/error');
-                });
-        } else {
-            // No auth token — still intercept the redirect so the browser
-            // navigates to the frontend origin (not the backend origin)
-            fetch(backendUrl, {
-                redirect: "manual",
-            })
-                .then(handleResponse)
-                .catch(() => {
-                    navigate('/error');
-                });
+            headers["Authorization"] = `Bearer ${storedAuth.token}`;
         }
-    }, [token, location.search]);
+
+        fetch(backendUrl, { headers })
+            .then((response) => {
+                if (!response.ok) {
+                    if (response.status === 400) {
+                        setError(
+                            "The link is invalid or expired. Please check the link and try again."
+                        );
+                        return;
+                    }
+                    throw new Error(`Unexpected status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (!data) return; // error already handled
+
+                if (data.status === "INVALID") {
+                    setError(
+                        "The link is invalid or expired. Please check the link and try again."
+                    );
+                    return;
+                }
+
+                if (data.status === "REDIRECT" && data.destination) {
+                    // Navigate to the frontend route using React Router
+                    // The destination is a frontend path like /login?username=x&requestUuid=y
+                    navigate(data.destination);
+                    return;
+                }
+
+                setError("Unexpected response from server.");
+            })
+            .catch((err) => {
+                console.error("Redirect fetch failed:", err);
+                setError("Failed to process the link. Please try again.");
+            });
+    }, [token, reqUuid, location.search, navigate]);
 
     if (!token) {
         return (

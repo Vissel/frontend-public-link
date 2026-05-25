@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Button,
   Chip,
   CircularProgress,
+  Link,
   Stack,
   Table,
   TableBody,
@@ -14,7 +16,7 @@ import {
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import api from "../api";
+import { pubApi, CONTEXT_PATH } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
@@ -25,11 +27,58 @@ const SellerHome = () => {
   const [saleEnvs, setSaleEnvs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copiedKey, setCopiedKey] = useState("");
+  const frontendOrigin = window.location.origin;
+
+  const fallbackCopy = (text, onDone) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = 0;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      onDone();
+    } catch (e) {
+      console.error("Copy failed", e);
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleCopyLink = (key, value) => {
+    const text = addHostToHref(value);
+    if (!text) return;
+    const markCopied = () => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(""), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(markCopied)
+        .catch(() => fallbackCopy(text, markCopied));
+    } else {
+      fallbackCopy(text, markCopied);
+    }
+  };
+
+  const addHostToHref = (link) => {
+    if (!link) {
+      return "";
+    }
+
+    return /^https?:\/\//i.test(link)
+      ? link
+      : `${frontendOrigin}${CONTEXT_PATH}${link}`;
+  };
+
   const { state } = useLocation();
-  const { userName } = useAuth();
+  const auth = useAuth();
 
   useEffect(() => {
-    const sellerName = state?.username || userName || "";
+    const sellerName = state?.username || auth.username || "";
     setUsername(sellerName);
 
     if (!sellerName) {
@@ -40,8 +89,8 @@ const SellerHome = () => {
     const fetchSellerData = async () => {
       try {
         const [infoRes, listRes] = await Promise.all([
-          api.post("/api/v1/seller/getInfo", { username: sellerName }),
-          api.post("/api/v1/seller/listRequest", {
+          pubApi.post("/api/v1/seller/getInfo", { username: sellerName }),
+          pubApi.post("/api/v1/seller/listRequest", {
             page: 1,
             size: 10,
             listData: [{ sellerName }],
@@ -66,7 +115,7 @@ const SellerHome = () => {
     };
 
     fetchSellerData();
-  }, [state, userName]);
+  }, [state, username]);
 
   if (loading) {
     return (
@@ -161,11 +210,31 @@ const SellerHome = () => {
                 </TableHead>
                 <TableBody>
                   {saleEnvs.map((env, idx) => (
-                    <TableRow key={env.requestUUID || idx} hover>
+                    <TableRow key={env.requestUUID || idx}>
                       <TableCell>{env.sellerName}</TableCell>
                       <TableCell>{env.productName || "—"}</TableCell>
                       <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {env.publicLink || "—"}
+                        {env.publicLink ? (
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Link
+                              href={addHostToHref(env.publicLink)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              underline="hover"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Link
+                            </Link>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => handleCopyLink(`pub-${env.requestUUID || idx}`, env.publicLink)}
+                              sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                            >
+                              {copiedKey === `pub-${env.requestUUID || idx}` ? "Copied!" : "Copy"}
+                            </Button>
+                          </Stack>
+                        ) : ("—")}
                       </TableCell>
                       <TableCell>
                         <Chip

@@ -2,8 +2,16 @@ import axios from "axios";
 import config from "./config";
 import { clearAuthStorage, getStoredAuth } from "../authStorage";
 
+export const CONTEXT_PATH = "/publiclink";
+
 const api = axios.create({
   baseURL: config.baseURL,
+  withCredentials: true,
+  timeout: config.timeout,
+});
+
+const pubApi = axios.create({
+  baseURL: `${config.baseURL}${CONTEXT_PATH}`,
   withCredentials: true,
   timeout: config.timeout,
 });
@@ -79,4 +87,41 @@ api.interceptors.response.use(
   }
 );
 
+pubApi.interceptors.request.use((requestConfig) => {
+  const headers = requestConfig.headers || {};
+  const storedAuth = getStoredAuth();
+
+  requestConfig.headers = headers;
+
+  if (storedAuth.isExpired) {
+    clearAuthStorage();
+    removeHeader(headers, "Authorization");
+    return requestConfig;
+  }
+
+  if (storedAuth.token) {
+    setHeader(headers, "Authorization", `Bearer ${storedAuth.token}`);
+  }
+
+  if (!hasHeader(headers, "Accept")) {
+    setHeader(headers, "Accept", "application/json");
+  }
+
+  setHeader(headers, "Content-Type", "application/json");
+
+  return requestConfig;
+});
+
+pubApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      clearAuthStorage();
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;
+export { pubApi };

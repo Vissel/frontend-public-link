@@ -9,7 +9,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Base64 } from "js-base64";
+import JSEncrypt from "jsencrypt";
 import api from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
@@ -20,70 +20,75 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const rawQueryParams = new URLSearchParams(location.search);
-  const rawName = rawQueryParams.get("name");
-  const encodedQuery = location.search.startsWith("?")
-    ? location.search.slice(1)
-    : location.search;
-  const decodedQuery = (() => {
-    try {
-      return encodedQuery ? Base64.decode(encodedQuery) : "";
-    } catch (decodeError) {
-      console.error("Register link decode failed:", decodeError);
-      return "";
-    }
-  })();
-  const queryParam = new URLSearchParams(decodedQuery);
-  const paramValue = queryParam.get("id");
-  const usernameParam = queryParam.get("username");
-  const reqidParam = queryParam.get("reqid");
-  // register
+  const queryParams = new URLSearchParams(location.search);
+  const usernameParam = queryParams.get("username") || "";
+  const reqUuidParam = queryParams.get("reqUuid") || "";
+  const nameParam = queryParams.get("name") || "";
+
   const [inputUsername, setInputUsername] = useState(usernameParam);
   const [inputPassword, setInputPassword] = useState("");
-  const [inputName, setInputName] = useState(rawName || usernameParam);
+  const [inputRepeatPassword, setInputRepeatPassword] = useState("");
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [inputName, setInputName] = useState(nameParam || usernameParam);
   const [inputLink, setInputLink] = useState("");
+  const PUBLIC_LINK_CONTEXT = "/publiclink";
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     setSubmitting(true);
 
+    if (inputPassword !== inputRepeatPassword) {
+      setPasswordMismatch(true);
+      setError("Passwords do not match.");
+      setSubmitting(false);
+      return;
+    }
+    setPasswordMismatch(false);
+
     try {
       if (inputUsername && inputPassword) {
+        // Fetch the RSA public key (cached in sessionStorage to avoid repeated
+        // round-trips, same strategy as LoginPage).
+        let publicKey = sessionStorage.getItem("publicKey");
+        if (publicKey === null) {
+          const keyResponse = await api.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
+          publicKey = new TextDecoder().decode(keyResponse.data);
+          sessionStorage.setItem("publicKey", publicKey);
+        }
+        if (!publicKey) throw new Error("Failed to retrieve public key for encryption.");
+
+        const encryptor = new JSEncrypt();
+        encryptor.setPublicKey(publicKey);
+        const encryptedPassword = encryptor.encrypt(inputPassword);
+        if (!encryptedPassword) throw new Error("Password encryption failed.");
+
         const form = {
-          userId: paramValue,
-          userName: inputUsername,
-          password: inputPassword,
+          username: inputUsername,
+          password: encryptedPassword,
+          repeatPassword: encryptedPassword,
           name: inputName,
-          link: inputLink,
-          role: "SELLER",
+          profileLink: inputLink,
+          reqUuid: reqUuidParam,
         };
-        localStorage.clear();
-        const response = await api.post(
-          `/auth/sellerRegister?reqId=${reqidParam}`,
-          form
-        );
+
+        const response = await api.post(`${PUBLIC_LINK_CONTEXT}/api/v1/publish/register`, form);
 
         if (response.status === 200) {
           console.log("Register successful!");
-          const tokenHeader =
-            response.headers?.token ||
-            response.headers?.authorization?.replace(/^Bearer\s+/i, "");
-          if (tokenHeader) {
-            localStorage.setItem("token", tokenHeader);
-          }
-          navigate(`/public/link?token=${response.data}`);
+          // After successful registration, redirect to login page so the seller can authenticate
+          navigate(`/login?username=${encodeURIComponent(inputUsername)}&requestUuid=${encodeURIComponent(reqUuidParam)}`);
         }
       }
     } catch (err) {
-      console.error("Login error:", err);
+      console.error("Register error:", err);
       if (err.response) {
         if (err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else if (err.response.status === 401 || err.response.status === 403) {
-          setError("Wrong username/password");
+          setError("Registration failed. Please check your details.");
         } else {
-          setError("An unexpected error occurred during login.");
+          setError("An unexpected error occurred during registration.");
         }
       } else if (err.request) {
         setError(
@@ -97,18 +102,18 @@ const RegisterPage = () => {
     }
   };
 
-  const hasRequiredParams = Boolean(paramValue && usernameParam && reqidParam);
+  const hasRequiredParams = Boolean(usernameParam && reqUuidParam);
 
   return (
     <PageContainer maxWidth="md">
       <SectionBlock
-        title="Đăng ký mật khẩu người bán"
-        description="Thiết lập tài khoản người bán bằng biểu mẫu MUI thống nhất cho cả desktop và mobile."
+        title="Seller Registration"
+        description="Set up your seller account to manage orders and public links."
       >
         <Stack spacing={3}>
           {!hasRequiredParams && (
             <Alert severity="error">
-              Liên kết đăng ký không hợp lệ hoặc đã thiếu tham số cần thiết.
+              Invalid registration link. Required parameters are missing.
             </Alert>
           )}
           {error && <Alert severity="error">{error}</Alert>}
@@ -117,35 +122,58 @@ const RegisterPage = () => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Tài khoản"
+                  label="Username"
                   type="text"
                   value={inputUsername}
                   required
+                  disabled={Boolean(usernameParam)}
                   onChange={(event) => setInputUsername(event.target.value)}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Mật khẩu"
+                  label="Password"
                   type="password"
                   value={inputPassword}
                   required
-                  onChange={(event) => setInputPassword(event.target.value)}
+                  error={passwordMismatch}
+                  onChange={(event) => {
+                    setInputPassword(event.target.value);
+                    if (inputRepeatPassword && event.target.value !== inputRepeatPassword) {
+                      setPasswordMismatch(true);
+                    } else {
+                      setPasswordMismatch(false);
+                    }
+                  }}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Tên"
+                  label="Repeat Password"
+                  type="password"
+                  value={inputRepeatPassword}
+                  required
+                  error={passwordMismatch}
+                  helperText={passwordMismatch ? "Passwords do not match" : ""}
+                  onChange={(event) => {
+                    setInputRepeatPassword(event.target.value);
+                    setPasswordMismatch(inputPassword !== event.target.value);
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Name"
                   type="text"
                   value={inputName}
                   required
-                  disabled={Boolean(rawName)}
+                  disabled={Boolean(nameParam)}
                   onChange={(event) => setInputName(event.target.value)}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Facebook link / tên hiển thị"
+                  label="Profile link (Facebook, Zalo, etc.)"
                   type="text"
                   value={inputLink}
                   onChange={(event) => setInputLink(event.target.value)}
@@ -159,15 +187,15 @@ const RegisterPage = () => {
                   alignItems={{ xs: "stretch", sm: "center" }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    Sau khi đăng ký thành công, bạn sẽ được chuyển đến trang đặt hàng công khai.
+                    After successful registration, you will be redirected to the login page.
                   </Typography>
                   <Button
                     type="submit"
                     variant="contained"
                     size="large"
-                    disabled={!hasRequiredParams || submitting}
+                    disabled={!hasRequiredParams || submitting || passwordMismatch}
                   >
-                    Đăng ký
+                    Register
                   </Button>
                 </Stack>
               </Grid>

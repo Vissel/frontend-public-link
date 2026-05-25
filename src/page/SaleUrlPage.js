@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import api from "../api";
+import {pubApi} from "../api";
 import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
 
@@ -31,8 +31,8 @@ const SaleEnvPage = () => {
       return;
     }
 
-    api
-      .get("/api/v1/publish/getSaleUrl", { params: { requestUuid } })
+    pubApi
+      .get(`/api/v1/publish/getSaleUrl`, { params: { requestUuid } })
       .then((response) => {
         setSaleData(response.data);
         setLoading(false);
@@ -49,7 +49,7 @@ const SaleEnvPage = () => {
 
   const handleCopy = () => {
     if (!saleData?.publicLink) return;
-    const fullLink = `${window.location.origin}/api/v1/publish/link?token=${encodeURIComponent(saleData.publicLink)}`;
+    const fullLink = `${window.location.origin}${saleData.publicLink}`;
     navigator.clipboard
       .writeText(fullLink)
       .then(() => {

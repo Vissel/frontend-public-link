@@ -53,12 +53,13 @@ export const getStoredAuth = () => {
       Number.isNaN(parsedLoginTime) ||
       Date.now() - parsedLoginTime >= LOGIN_TIMEOUT_MS);
   const userRole = localStorage.getItem(AUTH_STORAGE_KEYS.userRole) || "";
+  const refreshToken = localStorage.getItem(AUTH_STORAGE_KEYS.refreshToken) || "";
 
   return {
-    isAuthenticated: Boolean(token) && !isExpired,
+    isAuthenticated: Boolean(token) || Boolean(refreshToken),
     isExpired,
     loginTime,
-    refreshToken: localStorage.getItem(AUTH_STORAGE_KEYS.refreshToken) || "",
+    refreshToken,
     roles: [userRole].filter(Boolean),
     token,
     userRole,

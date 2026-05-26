@@ -468,6 +468,8 @@ const AdminHomePage = () => {
                           size="small"
                           color={entry.envStatus ? "success" : "default"}
                           label={entry.envStatus ? "Active" : "Inactive"}
+                          onClick={() => { }}
+                          clickable={false}
                         />
                       </TableCell>
                     </TableRow>
@@ -571,6 +573,8 @@ const AdminHomePage = () => {
                           size="small"
                           color={user.role === "SELLER" ? "primary" : "default"}
                           label={user.role || "Unknown"}
+                          onClick={() => { }}
+                          clickable={false}
                         />
                       </TableCell>
                     </TableRow>

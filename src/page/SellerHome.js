@@ -71,7 +71,7 @@ const SellerHome = () => {
 
     return /^https?:\/\//i.test(link)
       ? link
-      : `${frontendOrigin}${CONTEXT_PATH}${link}`;
+      : `${frontendOrigin}${link}`;
   };
 
   const { state } = useLocation();
@@ -175,6 +175,8 @@ const SellerHome = () => {
                       size="small"
                       color="primary"
                       variant="outlined"
+                      onClick={() => { }}
+                      clickable={false}
                     />
                   )}
                 </Stack>
@@ -241,6 +243,8 @@ const SellerHome = () => {
                           label={env.envStatus ? "Active" : "Inactive"}
                           size="small"
                           color={env.envStatus ? "success" : "default"}
+                          onClick={() => { }}
+                          clickable={false}
                         />
                       </TableCell>
                       <TableCell>{env.createdAt || "—"}</TableCell>

@@ -17,7 +17,7 @@ const normalizeRole = (role) => String(role || "").toLowerCase();
 function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { auth, logout, userName, userRole } = useAuth();
+  const { auth, logout, username: userName, userRole } = useAuth();
 
   const normalizedRole = normalizeRole(userRole);
   const isAuthenticated = Boolean(auth);
@@ -25,8 +25,8 @@ function Header() {
     normalizedRole === "admin"
       ? "/home"
       : normalizedRole === "seller"
-      ? "/sellerHome"
-      : "/login";
+        ? "/sellerHome"
+        : "/login";
 
   const handleLogout = () => {
     logout();
@@ -100,6 +100,8 @@ function Header() {
                 color="primary"
                 variant="outlined"
                 label={`${userName || "User"} • ${userRole || "Member"}`}
+                onClick={() => { }}
+                clickable={false}
               />
             )}
             {isAuthenticated && location.pathname !== homeTarget && (

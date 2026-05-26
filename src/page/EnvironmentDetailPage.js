@@ -169,6 +169,8 @@ const EnvironmentDetailPage = () => {
                                 size="small"
                                 color={detail?.envStatus ? "success" : "default"}
                                 label={detail?.envStatus ? "Active" : "Inactive"}
+                                onClick={() => { }}
+                                clickable={false}
                             />
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">

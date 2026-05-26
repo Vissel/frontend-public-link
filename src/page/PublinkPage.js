@@ -129,7 +129,7 @@ const PublinkPage = () => {
         );
     }
 
-    const isSeller = Boolean(saleSpace.isSellerView);
+    const isSeller = Boolean(saleSpace.isValidSellerView);
 
     return (
         <PageContainer maxWidth="lg">
@@ -149,13 +149,40 @@ const PublinkPage = () => {
                             color={isSeller ? "primary" : "default"}
                             variant="outlined"
                             size="small"
+                            onClick={() => { }}
+                            clickable={false}
                         />
                         {saleSpace.envState && (
                             <Chip
                                 label={saleSpace.envState === "ACTIVE" ? "Active" : "Inactive"}
                                 color={saleSpace.envState === "ACTIVE" ? "success" : "default"}
                                 size="small"
+                                onClick={() => { }}
+                                clickable={false}
                             />
+                        )}
+                    </Stack>
+                    <Stack spacing={0.5} sx={{ mt: 1 }}>
+                        {saleSpace.reqUuid && (
+                            <Typography variant="caption" color="text.secondary">
+                                Request UUID: {saleSpace.reqUuid}
+                            </Typography>
+                        )}
+                        {saleSpace.createdAt && (
+                            <Typography variant="caption" color="text.secondary">
+                                Created: {saleSpace.createdAt}
+                            </Typography>
+                        )}
+                        {saleSpace.endedAt && (
+                            <Typography variant="caption" color="text.secondary">
+                                Ended: {saleSpace.endedAt}
+                            </Typography>
+                        )}
+                        {isSeller && saleSpace.publicLink && (
+                            <Typography variant="caption" color="text.secondary"
+                                sx={{ wordBreak: "break-all" }}>
+                                Public Link: {window.location.origin}{saleSpace.publicLink}
+                            </Typography>
                         )}
                     </Stack>
                 </SectionBlock>
@@ -168,6 +195,26 @@ const PublinkPage = () => {
                                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={idx}>
                                     <Card variant="outlined" sx={{ height: "100%" }}>
                                         <CardContent>
+                                            {product.listPicProMap && product.listPicProMap.length > 0 && (
+                                                <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: "wrap" }}>
+                                                    {product.listPicProMap.map((pic, i) => (
+                                                        <Box
+                                                            key={i}
+                                                            component="img"
+                                                            src={pic.link}
+                                                            alt={pic.title || ""}
+                                                            sx={{
+                                                                width: 60,
+                                                                height: 60,
+                                                                objectFit: "cover",
+                                                                borderRadius: 1,
+                                                                border: "1px solid",
+                                                                borderColor: "divider",
+                                                            }}
+                                                        />
+                                                    ))}
+                                                </Stack>
+                                            )}
                                             <Typography variant="subtitle1" fontWeight="bold">
                                                 {product.productName || `Product ${idx + 1}`}
                                             </Typography>
@@ -178,9 +225,14 @@ const PublinkPage = () => {
                                                         {product.unit || "VND"}
                                                     </Typography>
                                                 )}
+                                                {product.total_amount > 0 && (
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Total available: {product.total_amount} {product.unit || ""}
+                                                    </Typography>
+                                                )}
                                                 {product.amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Available: {product.amount} {product.unit || ""}
+                                                        Per order limit: {product.amount} {product.unit || ""}
                                                     </Typography>
                                                 )}
                                             </Stack>
@@ -205,6 +257,7 @@ const PublinkPage = () => {
                                         <TableCell>Note</TableCell>
                                         <TableCell>Delivered</TableCell>
                                         <TableCell>Paid</TableCell>
+                                        <TableCell>Seller Note</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -221,6 +274,8 @@ const PublinkPage = () => {
                                                     label={order.delivered ? "Yes" : "No"}
                                                     color={order.delivered ? "success" : "default"}
                                                     size="small"
+                                                    onClick={() => { }}
+                                                    clickable={false}
                                                 />
                                             </TableCell>
                                             <TableCell>
@@ -228,8 +283,11 @@ const PublinkPage = () => {
                                                     label={order.getMoney ? "Yes" : "No"}
                                                     color={order.getMoney ? "success" : "default"}
                                                     size="small"
+                                                    onClick={() => { }}
+                                                    clickable={false}
                                                 />
                                             </TableCell>
+                                            <TableCell>{order.sellerNote || "—"}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

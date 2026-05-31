@@ -201,7 +201,7 @@ const PublinkPage = () => {
                                                         <Box
                                                             key={i}
                                                             component="img"
-                                                            src={pic.link}
+                                                            src={pic.data || pic.link}
                                                             alt={pic.title || ""}
                                                             sx={{
                                                                 width: 60,

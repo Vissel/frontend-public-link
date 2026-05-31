@@ -22,8 +22,8 @@ const normalizeAuthData = (data = {}, fallback = {}) => {
   const rawRoles = Array.isArray(data.roles)
     ? data.roles
     : data.role
-    ? [data.role]
-    : [];
+      ? [data.role]
+      : [];
   const roles = rawRoles.map(normalizeRole).filter(Boolean);
   const userRole = roles[0] || normalizeRole(data.role);
 
@@ -49,6 +49,10 @@ export const AuthProvider = ({ children }) => {
 
   const getAuthStateFromStorage = useCallback(() => {
     const storedAuth = getStoredAuth();
+    if (storedAuth.isExpired) {
+      clearAuthStorage();
+      return getUnauthenticatedState();
+    }
     if (storedAuth.isAuthenticated) {
       return {
         auth: {
@@ -63,9 +67,6 @@ export const AuthProvider = ({ children }) => {
         username: storedAuth.username || "anonymousUser",
       };
     }
-    if (storedAuth.isExpired) {
-      clearAuthStorage();
-    }
     return getUnauthenticatedState();
   }, [getUnauthenticatedState]);
 
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   const syncAuthState = useCallback(() => {
-    setAuthState(getAuthStateFromStorage());
+  setAuthState(getAuthStateFromStorage());
     setLoading(false);
   }, [getAuthStateFromStorage]);
 

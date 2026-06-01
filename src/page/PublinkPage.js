@@ -18,7 +18,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { pubApi } from "../api/index";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
@@ -26,6 +26,7 @@ import CardWrapper from "../components/CardWrapper";
 
 const PublinkPage = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const queryParams = new URLSearchParams(location.search);
     const token = queryParams.get("token");
 
@@ -129,7 +130,7 @@ const PublinkPage = () => {
         );
     }
 
-    const isSeller = Boolean(saleSpace.isValidSellerView);
+    const isSeller = Boolean(saleSpace.isSellerView);
 
     return (
         <PageContainer maxWidth="lg">
@@ -163,11 +164,6 @@ const PublinkPage = () => {
                         )}
                     </Stack>
                     <Stack spacing={0.5} sx={{ mt: 1 }}>
-                        {saleSpace.reqUuid && (
-                            <Typography variant="caption" color="text.secondary">
-                                Request UUID: {saleSpace.reqUuid}
-                            </Typography>
-                        )}
                         {saleSpace.createdAt && (
                             <Typography variant="caption" color="text.secondary">
                                 Created: {saleSpace.createdAt}
@@ -175,13 +171,7 @@ const PublinkPage = () => {
                         )}
                         {saleSpace.endedAt && (
                             <Typography variant="caption" color="text.secondary">
-                                Ended: {saleSpace.endedAt}
-                            </Typography>
-                        )}
-                        {isSeller && saleSpace.publicLink && (
-                            <Typography variant="caption" color="text.secondary"
-                                sx={{ wordBreak: "break-all" }}>
-                                Public Link: {window.location.origin}{saleSpace.publicLink}
+                                Will Ended: {saleSpace.endedAt}
                             </Typography>
                         )}
                     </Stack>

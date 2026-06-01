@@ -218,7 +218,7 @@ const SellerForm = ({ open, onClose, onSuccess, users = [] }) => {
             )
             : [];
 
-        requestBody.product = {
+        requestBody.productRequest = {
           productName: productData.productName || "",
           description: productData.description || "",
           amount: productData.quantity ? Number(productData.quantity) : 0,

@@ -14,7 +14,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { pubApi, CONTEXT_PATH } from "../api";
 import PageContainer from "../components/PageContainer";
@@ -74,6 +74,7 @@ const SellerHome = () => {
       : `${frontendOrigin}${link}`;
   };
 
+  const navigate = useNavigate();
   const { state } = useLocation();
   const auth = useAuth();
 
@@ -212,17 +213,29 @@ const SellerHome = () => {
                 </TableHead>
                 <TableBody>
                   {saleEnvs.map((env, idx) => (
-                    <TableRow key={env.requestUUID || idx}>
+                    <TableRow
+                      key={env.requestUUID || idx}
+                      hover
+                      placeholder
+                      title={env.publicLink ? `${addHostToHref(env.publicLink)}` : ""}
+                      onClick={() => {
+                        if (env.publicLink) {
+                          navigate(env.publicLink);
+                        }
+                      }}
+                      sx={{ cursor: env.publicLink ? "pointer" : "default" }}
+                    >
                       <TableCell>{env.sellerName}</TableCell>
                       <TableCell>{env.productName || "—"}</TableCell>
                       <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
                         {env.publicLink ? (
-                          <Stack direction="row" spacing={1} alignItems="center">
+                          <Stack direction="row" spacing={1} alignItems="center" onClick={(e) => e.stopPropagation()}>
                             <Link
                               href={addHostToHref(env.publicLink)}
                               target="_blank"
                               rel="noopener noreferrer"
                               underline="hover"
+                              title={`Open ${addHostToHref(env.publicLink)}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               Link
@@ -230,7 +243,10 @@ const SellerHome = () => {
                             <Button
                               size="small"
                               variant="outlined"
-                              onClick={() => handleCopyLink(`pub-${env.requestUUID || idx}`, env.publicLink)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyLink(`pub-${env.requestUUID || idx}`, env.publicLink);
+                              }}
                               sx={{ minWidth: 60, fontSize: "0.7rem" }}
                             >
                               {copiedKey === `pub-${env.requestUUID || idx}` ? "Copied!" : "Copy"}

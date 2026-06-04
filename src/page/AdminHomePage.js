@@ -21,6 +21,7 @@ import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import SellerForm from "../form/SellerForm";
+import { CountdownBadge } from "../components/CountdownTimer";
 
 const DEFAULT_ENTRY_ROWS = 10;
 const DEFAULT_USER_ROWS = 10;
@@ -404,6 +405,7 @@ const AdminHomePage = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Created At</TableCell>
+                  <TableCell>Planned End</TableCell>
                   <TableCell>Seller Name</TableCell>
                   <TableCell>Product Name</TableCell>
                   <TableCell>Total Price</TableCell>
@@ -418,7 +420,7 @@ const AdminHomePage = () => {
               <TableBody>
                 {entries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} align="center">
+                    <TableCell colSpan={11} align="center">
                       No records yet.
                     </TableCell>
                   </TableRow>
@@ -431,6 +433,18 @@ const AdminHomePage = () => {
                       onClick={() => navigate(`/environmentDetail?requestUuid=${entry.requestUUID}`)}
                     >
                       <TableCell>{entry.createdAt}</TableCell>
+                      <TableCell>
+                        {entry.plannedEndedAt ? (
+                          <Stack spacing={0.25}>
+                            <CountdownBadge targetDate={entry.plannedEndedAt} />
+                            <Typography variant="caption" color="text.secondary">
+                              {entry.plannedEndedAt}
+                            </Typography>
+                          </Stack>
+                        ) : (
+                          "-"
+                        )}
+                      </TableCell>
                       <TableCell>{entry.sellerName}</TableCell>
                       <TableCell>{entry.productName}</TableCell>
                       <TableCell>

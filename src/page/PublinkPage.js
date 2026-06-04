@@ -23,6 +23,7 @@ import { pubApi } from "../api/index";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
+import { CountdownChip } from "../components/CountdownTimer";
 
 const PublinkPage = () => {
     const location = useLocation();
@@ -162,6 +163,9 @@ const PublinkPage = () => {
                                 clickable={false}
                             />
                         )}
+                        {saleSpace.plannedEndedAt && (
+                            <CountdownChip targetDate={saleSpace.plannedEndedAt} />
+                        )}
                     </Stack>
                     <Stack spacing={0.5} sx={{ mt: 1 }}>
                         {saleSpace.createdAt && (
@@ -172,6 +176,11 @@ const PublinkPage = () => {
                         {saleSpace.endedAt && (
                             <Typography variant="caption" color="text.secondary">
                                 Will Ended: {saleSpace.endedAt}
+                            </Typography>
+                        )}
+                        {saleSpace.plannedEndedAt && (
+                            <Typography variant="caption" color="text.secondary">
+                                Planned Ended At: {saleSpace.plannedEndedAt}
                             </Typography>
                         )}
                     </Stack>

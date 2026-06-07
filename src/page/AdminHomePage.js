@@ -146,6 +146,7 @@ const AdminHomePage = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [userError, setUserError] = useState("");
+  const [copiedKey, setCopiedKey] = useState("");
   const contextPath = "/publiclink";
   const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
@@ -160,6 +161,50 @@ const AdminHomePage = () => {
     return /^https?:\/\//i.test(contextString)
       ? contextString
       : `${frontendOrigin}${contextString}`;
+  };
+
+  const handleCopyText = (key, text) => {
+    if (!text) return;
+    const markCopied = () => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(""), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(markCopied)
+        .catch(() => {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.opacity = "0";
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand("copy");
+            markCopied();
+          } catch (e) {
+            console.error("Copy failed", e);
+          } finally {
+            document.body.removeChild(textArea);
+          }
+        });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        markCopied();
+      } catch (e) {
+        console.error("Copy failed", e);
+      } finally {
+        document.body.removeChild(textArea);
+      }
+    }
   };
 
   useEffect(() => {
@@ -408,7 +453,7 @@ const AdminHomePage = () => {
                   <TableCell>Planned End</TableCell>
                   <TableCell>Seller Name</TableCell>
                   <TableCell>Product Name</TableCell>
-                  <TableCell>Total Price</TableCell>
+                  <TableCell>Total Price (VND)</TableCell>
                   <TableCell>Seller Authentication</TableCell>
                   <TableCell>Seller Authentication Expire</TableCell>
                   <TableCell>Request UUID</TableCell>
@@ -449,32 +494,66 @@ const AdminHomePage = () => {
                       <TableCell>{entry.productName}</TableCell>
                       <TableCell>
                         {entry.totalPrice != null
-                          ? `${Number(entry.totalPrice).toLocaleString()} ${entry.currency || "VND"}`
+                          ? `${Number(entry.totalPrice).toLocaleString()}`
                           : "-"}
                       </TableCell>
                       <TableCell>
-                        <Link
-                          href={addHostToHref(entry.sellerAuthLink)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          underline="hover"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Seller Authentication Link
-                        </Link>
+                        {entry.sellerAuthLink ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyText(`auth-${entry.requestUUID}`, addHostToHref(entry.sellerAuthLink));
+                            }}
+                            sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                          >
+                            {copiedKey === `auth-${entry.requestUUID}`
+                              ? "Copied!"
+                              : "Copy"}
+                          </Button>
+                        ) : (
+                          "\u2014"
+                        )}
                       </TableCell>
                       <TableCell>{entry.sellerAuthLinkExpire}</TableCell>
-                      <TableCell>{entry.requestUUID}</TableCell>
                       <TableCell>
-                        <Link
-                          href={addHostToHref(entry.publicLink)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          underline="hover"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Public Link
-                        </Link>
+                        {entry.requestUUID ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyText(`uuid-${entry.requestUUID}`, entry.requestUUID);
+                            }}
+                            sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                          >
+                            {copiedKey === `uuid-${entry.requestUUID}`
+                              ? "Copied!"
+                              : entry.requestUUID.slice(-4)}
+                          </Button>
+                        ) : (
+                          "\u2014"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.publicLink ? (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyText(`pub-${entry.requestUUID}`, addHostToHref(entry.publicLink));
+                            }}
+                            sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                          >
+                            {copiedKey === `pub-${entry.requestUUID}`
+                              ? "Copied!"
+                              : "Copy"}
+                          </Button>
+                        ) : (
+                          "\u2014"
+                        )}
                       </TableCell>
                       <TableCell>{entry.createdBy}</TableCell>
                       <TableCell>

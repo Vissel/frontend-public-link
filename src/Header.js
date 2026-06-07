@@ -23,7 +23,7 @@ function Header() {
   const isAuthenticated = Boolean(auth);
   const homeTarget =
     normalizedRole === "admin"
-      ? "/home"
+      ? "/adminHome"
       : normalizedRole === "seller"
         ? "/sellerHome"
         : "/login";
@@ -94,7 +94,11 @@ function Header() {
             alignItems="center"
             justifyContent="flex-end"
             flexWrap="wrap"
-          >
+          >{isAuthenticated && location.pathname !== homeTarget && (
+            <Button component={RouterLink} to={homeTarget} variant="text">
+              Workspace
+            </Button>
+          )}
             {isAuthenticated && (
               <Chip
                 color="primary"
@@ -104,11 +108,7 @@ function Header() {
                 clickable={false}
               />
             )}
-            {isAuthenticated && location.pathname !== homeTarget && (
-              <Button component={RouterLink} to={homeTarget} variant="text">
-                Workspace
-              </Button>
-            )}
+
             {isAuthenticated ? (
               <Button variant="contained" color="primary" onClick={handleLogout}>
                 Logout

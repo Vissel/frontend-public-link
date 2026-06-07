@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
     Alert,
+    Box,
     Button,
     Chip,
     Divider,
+    Grid,
     Link,
     Stack,
     Table,
@@ -19,6 +21,7 @@ import api from "../api";
 import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
+import { CountdownBadge } from "../components/CountdownTimer";
 
 const contextPath = "/publiclink";
 
@@ -132,37 +135,60 @@ const EnvironmentDetailPage = () => {
                 >
                     <Stack spacing={1.5}>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Request UUID:
                             </Typography>
-                            <Typography variant="body2">{detail?.requestUUID || "-"}</Typography>
+                            <Typography variant="body2">{detail?.requestUUID || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Request ID:
+                            </Typography>
+                            <Typography variant="body2">{detail?.requestId || "\u2014"}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Seller Name:
                             </Typography>
-                            <Typography variant="body2">{detail?.sellerName || "-"}</Typography>
+                            <Typography variant="body2">{detail?.sellerName || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Product Name:
                             </Typography>
-                            <Typography variant="body2">{detail?.productName || "-"}</Typography>
+                            <Typography variant="body2">{detail?.productName || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Created At:
                             </Typography>
-                            <Typography variant="body2">{detail?.createdAt || "-"}</Typography>
+                            <Typography variant="body2">{detail?.createdAt || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Created By:
                             </Typography>
-                            <Typography variant="body2">{detail?.createdBy || "-"}</Typography>
+                            <Typography variant="body2">{detail?.createdBy || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Ended At:
+                            </Typography>
+                            <Typography variant="body2">{detail?.endedAt || "\u2014"}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Planned Ended At:
+                            </Typography>
+                            <Typography variant="body2">
+                                {detail?.plannedEndedAt || "\u2014"}
+                            </Typography>
+                            {detail?.plannedEndedAt && (
+                                <CountdownBadge targetDate={detail.plannedEndedAt} />
+                            )}
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Status:
                             </Typography>
                             <Chip
@@ -174,7 +200,48 @@ const EnvironmentDetailPage = () => {
                             />
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Total Orders:
+                            </Typography>
+                            <Typography variant="body2">{detail?.orderTotal ?? 0}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Total Product Quantity:
+                            </Typography>
+                            <Typography variant="body2">{detail?.totalProductQuantity ?? 0}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Seller Link:
+                            </Typography>
+                            {detail?.sellerLink ? (
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    <Link
+                                        href={addHostToHref(detail.sellerLink)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        underline="hover"
+                                    >
+                                        Open Link
+                                    </Link>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        onClick={() =>
+                                            handleCopyLink("sellerLink", detail.sellerLink)
+                                        }
+                                        sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                                    >
+                                        {copiedKey === "sellerLink" ? "Copied!" : "Copy"}
+                                    </Button>
+                                </Stack>
+                            ) : (
+                                <Typography variant="body2">{"\u2014"}</Typography>
+                            )}
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Seller Auth Link:
                             </Typography>
                             {detail?.sellerAuthLink ? (
@@ -193,16 +260,23 @@ const EnvironmentDetailPage = () => {
                                         onClick={() =>
                                             handleCopyLink("sellerAuth", detail.sellerAuthLink)
                                         }
+                                        sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
                                         {copiedKey === "sellerAuth" ? "Copied!" : "Copy"}
                                     </Button>
                                 </Stack>
                             ) : (
-                                <Typography variant="body2">-</Typography>
+                                <Typography variant="body2">{"\u2014"}</Typography>
                             )}
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Typography variant="subtitle2" sx={{ minWidth: 160 }}>
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
+                                Seller Auth Link Expires:
+                            </Typography>
+                            <Typography variant="body2">{detail?.sellerAuthLinkExpire || "\u2014"}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
                                 Public Link:
                             </Typography>
                             {detail?.publicLink ? (
@@ -221,16 +295,45 @@ const EnvironmentDetailPage = () => {
                                         onClick={() =>
                                             handleCopyLink("public", detail.publicLink)
                                         }
+                                        sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
                                         {copiedKey === "public" ? "Copied!" : "Copy"}
                                     </Button>
                                 </Stack>
                             ) : (
-                                <Typography variant="body2">-</Typography>
+                                <Typography variant="body2">{"\u2014"}</Typography>
                             )}
                         </Stack>
                     </Stack>
                 </SectionBlock>
+
+                {detail?.productPictures && detail.productPictures.length > 0 && (
+                    <SectionBlock
+                        title="Product Pictures"
+                        description="Images associated with the product in this sale environment."
+                    >
+                        <Grid container spacing={2}>
+                            {detail.productPictures.map((pic, idx) => (
+                                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={idx}>
+                                    <Box
+                                        component="img"
+                                        src={pic.data || pic.link}
+                                        alt={pic.title || `product-img-${idx}`}
+                                        sx={{
+                                            width: "100%",
+                                            aspectRatio: "1 / 1",
+                                            objectFit: "cover",
+                                            borderRadius: 2,
+                                            display: "block",
+                                            border: "1px solid",
+                                            borderColor: "divider",
+                                        }}
+                                    />
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </SectionBlock>
+                )}
 
                 <SectionBlock
                     title="Pricing"
@@ -288,15 +391,55 @@ const EnvironmentDetailPage = () => {
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Buyer Name</TableCell>
+                                        <TableCell>Order ID</TableCell>
+                                        <TableCell>Ordered Time</TableCell>
+                                        <TableCell>Buyer</TableCell>
+                                        <TableCell>Amount</TableCell>
+                                        <TableCell>Unit</TableCell>
+                                        <TableCell>Delivered</TableCell>
+                                        <TableCell>Paid</TableCell>
+                                        <TableCell>Note</TableCell>
+                                        <TableCell>Seller Note</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {detail.orders.map((order, idx) => (
-                                        <TableRow key={idx}>
-                                            <TableCell>{order.buyerName || "-"}</TableCell>
+                                    {(!detail?.orders || detail.orders.length === 0) ? (
+                                        <TableRow>
+                                            <TableCell colSpan={9} align="center">
+                                                No order records.
+                                            </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : (
+                                        detail.orders.map((order, idx) => (
+                                            <TableRow key={idx}>
+                                                <TableCell>{order.orderId || "\u2014"}</TableCell>
+                                                <TableCell>{order.orderedTime || "\u2014"}</TableCell>
+                                                <TableCell>{order.buyer || "\u2014"}</TableCell>
+                                                <TableCell>{order.amount ?? "\u2014"}</TableCell>
+                                                <TableCell>{order.unit || "\u2014"}</TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        size="small"
+                                                        color={order.delivered ? "success" : "default"}
+                                                        label={order.delivered ? "Yes" : "No"}
+                                                        onClick={() => { }}
+                                                        clickable={false}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        size="small"
+                                                        color={order.getMoney ? "success" : "default"}
+                                                        label={order.getMoney ? "Yes" : "No"}
+                                                        onClick={() => { }}
+                                                        clickable={false}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>{order.note || "\u2014"}</TableCell>
+                                                <TableCell>{order.sellerNote || "\u2014"}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>

@@ -11,15 +11,20 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-import { pubApi, CONTEXT_PATH } from "../api";
+import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
+
+const DEFAULT_ROWS_PER_PAGE = 10;
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
 const SellerHome = () => {
   const [username, setUsername] = useState("");
@@ -28,6 +33,10 @@ const SellerHome = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
+  const [total, setTotal] = useState(0);
   const frontendOrigin = window.location.origin;
 
   const fallbackCopy = (text, onDone) => {
@@ -64,6 +73,22 @@ const SellerHome = () => {
     }
   };
 
+  const handleCopyText = (key, text) => {
+    if (!text) return;
+    const markCopied = () => {
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(""), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(markCopied)
+        .catch(() => fallbackCopy(text, markCopied));
+    } else {
+      fallbackCopy(text, markCopied);
+    }
+  };
+
   const addHostToHref = (link) => {
     if (!link) {
       return "";
@@ -72,6 +97,55 @@ const SellerHome = () => {
     return /^https?:\/\//i.test(link)
       ? link
       : `${frontendOrigin}${link}`;
+  };
+
+  const handleExport = async (requestUUID) => {
+    if (!requestUUID) return;
+    try {
+      const response = await pubApi.post(
+        "/api/v1/seller/export",
+        { requestUUID },
+        { responseType: "blob" }
+      );
+      const blob = new Blob(
+        [response.data],
+        { type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+      );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `export-${requestUUID}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const response = await pubApi.post(
+        "/api/v1/seller/exportAll",
+        {},
+        { responseType: "blob" }
+      );
+      const blob = new Blob(
+        [response.data],
+        { type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+      );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "export-all-reports.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export all failed", err);
+    }
   };
 
   const navigate = useNavigate();
@@ -92,8 +166,8 @@ const SellerHome = () => {
         const [infoRes, listRes] = await Promise.all([
           pubApi.post("/api/v1/seller/getInfo", { username: sellerName }),
           pubApi.post("/api/v1/seller/listRequest", {
-            page: 1,
-            size: 10,
+            page: page + 1,
+            size: rowsPerPage,
             listData: [{ sellerName }],
           }),
         ]);
@@ -103,6 +177,7 @@ const SellerHome = () => {
         }
         if (listRes.status === 200) {
           setSaleEnvs(listRes.data.listSaleEnv || []);
+          setTotal(listRes.data.total || 0);
         }
       } catch (err) {
         console.error("Seller data fetch failed:", err);
@@ -116,7 +191,7 @@ const SellerHome = () => {
     };
 
     fetchSellerData();
-  }, [state, username]);
+  }, [state, username, page, rowsPerPage]);
 
   if (loading) {
     return (
@@ -148,7 +223,7 @@ const SellerHome = () => {
   }
 
   return (
-    <PageContainer maxWidth="md">
+    <PageContainer maxWidth="xl">
       <Stack spacing={3}>
         <SectionBlock
           title="Seller Home"
@@ -195,84 +270,189 @@ const SellerHome = () => {
           </Stack>
         </SectionBlock>
 
-        {saleEnvs.length > 0 && (
+        {(saleEnvs.length > 0 || total > 0) && (
           <SectionBlock
             title="Sale Environments"
             description="Your active and past sale environments."
           >
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+              <TextField
+                size="small"
+                placeholder="Search by Product Name"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                sx={{ minWidth: 250 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleExportAll}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                Export All
+              </Button>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: "auto", whiteSpace: "nowrap" }}>
+                Total: {total} | Displaying: {saleEnvs.filter((env) =>
+                  !searchText ||
+                  (env.productName || "").toLowerCase().includes(searchText.toLowerCase())
+                ).length}
+              </Typography>
+            </Stack>
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table size="small" sx={{ minWidth: 600 }}>
+              <Table size="small" sx={{ minWidth: 1100 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Seller Name</TableCell>
-                    <TableCell>Product</TableCell>
-                    <TableCell>Public Link</TableCell>
+                    <TableCell>Request UUID</TableCell>
+                    <TableCell>Product Name</TableCell>
+                    <TableCell>Link</TableCell>
                     <TableCell>Status</TableCell>
-                    <TableCell>Created</TableCell>
+                    <TableCell>Created At</TableCell>
+                    <TableCell>Ended At</TableCell>
+                    <TableCell>Planned Ended At</TableCell>
+                    <TableCell>Order Num/Total</TableCell>
+                    <TableCell>Export</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {saleEnvs.map((env, idx) => (
-                    <TableRow
-                      key={env.requestUUID || idx}
-                      hover
-                      placeholder
-                      title={env.publicLink ? `${addHostToHref(env.publicLink)}` : ""}
-                      onClick={() => {
-                        if (env.publicLink) {
-                          navigate(env.publicLink);
-                        }
-                      }}
-                      sx={{ cursor: env.publicLink ? "pointer" : "default" }}
-                    >
-                      <TableCell>{env.sellerName}</TableCell>
-                      <TableCell>{env.productName || "—"}</TableCell>
-                      <TableCell sx={{ maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {env.publicLink ? (
-                          <Stack direction="row" spacing={1} alignItems="center" onClick={(e) => e.stopPropagation()}>
-                            <Link
-                              href={addHostToHref(env.publicLink)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              underline="hover"
-                              title={`Open ${addHostToHref(env.publicLink)}`}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Link
-                            </Link>
+                  {saleEnvs
+                    .filter((env) =>
+                      !searchText ||
+                      (env.productName || "").toLowerCase().includes(searchText.toLowerCase())
+                    )
+                    .map((env, idx) => {
+                      const uuid = env.requestUUID || "";
+                      const last4 = uuid.slice(-4);
+                      return (
+                        <TableRow
+                          key={uuid || idx}
+                          hover
+                          onClick={() => {
+                            if (env.publicLink) {
+                              navigate(env.publicLink);
+                            }
+                          }}
+                          sx={{ cursor: env.publicLink ? "pointer" : "default" }}
+                        >
+                          <TableCell
+                            onClick={(e) => {
+                              if (uuid) {
+                                e.stopPropagation();
+                                handleCopyText(`uuid-${uuid}`, uuid);
+                              }
+                            }}
+                          >
+                            {last4 ? (
+                              <a
+                                title={`Click to copy: ${uuid}`}
+                                style={{
+                                  textDecoration: "underline",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {copiedKey === `uuid-${uuid}`
+                                  ? "Copied!"
+                                  : last4}
+                              </a>
+                            ) : "\u2014"}
+                          </TableCell>
+                          <TableCell>{env.productName || "\u2014"}</TableCell>
+                          <TableCell
+                            sx={{
+                              maxWidth: 200,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {env.publicLink ? (
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                alignItems="center"
+                              >
+                                <Link
+                                  href={addHostToHref(env.publicLink)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  underline="hover"
+                                  title={`Open ${addHostToHref(env.publicLink)}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Link
+                                </Link>
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCopyLink(
+                                      `pub-${env.requestUUID || idx}`,
+                                      env.publicLink
+                                    );
+                                  }}
+                                  sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                                >
+                                  {copiedKey ===
+                                    `pub-${env.requestUUID || idx}`
+                                    ? "Copied!"
+                                    : "Copy"}
+                                </Button>
+                              </Stack>
+                            ) : (
+                              "\u2014"
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={env.envStatus ? "Active" : "Inactive"}
+                              size="small"
+                              color={env.envStatus ? "success" : "default"}
+                              onClick={() => { }}
+                              clickable={false}
+                            />
+                          </TableCell>
+                          <TableCell>{env.createdAt || "\u2014"}</TableCell>
+                          <TableCell>{env.endedAt || "\u2014"}</TableCell>
+                          <TableCell>{env.plannedEndedAt || "\u2014"}</TableCell>
+                          <TableCell>
+                            {env.orderTotal != null || env.totalProductQuantity != null
+                              ? `${env.orderTotal ?? 0}/${env.totalProductQuantity ?? 0}`
+                              : "\u2014"}
+                          </TableCell>
+                          <TableCell
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleExport(env.requestUUID);
+                            }}
+                          >
                             <Button
                               size="small"
                               variant="outlined"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCopyLink(`pub-${env.requestUUID || idx}`, env.publicLink);
-                              }}
                               sx={{ minWidth: 60, fontSize: "0.7rem" }}
                             >
-                              {copiedKey === `pub-${env.requestUUID || idx}` ? "Copied!" : "Copy"}
+                              Excel
                             </Button>
-                          </Stack>
-                        ) : ("—")}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={env.envStatus ? "Active" : "Inactive"}
-                          size="small"
-                          color={env.envStatus ? "success" : "default"}
-                          onClick={() => { }}
-                          clickable={false}
-                        />
-                      </TableCell>
-                      <TableCell>{env.createdAt || "—"}</TableCell>
-                    </TableRow>
-                  ))}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </TableContainer>
+            <TablePagination
+              component="div"
+              count={total}
+              page={page}
+              onPageChange={(_, nextPage) => setPage(nextPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(event) => {
+                setRowsPerPage(Number(event.target.value));
+                setPage(0);
+              }}
+              rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+            />
           </SectionBlock>
         )}
 
-        {saleEnvs.length === 0 && (
+        {saleEnvs.length === 0 && total === 0 && (
           <CardWrapper>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 3 }}>
               No sale environments found. Contact an administrator to set up your public link.

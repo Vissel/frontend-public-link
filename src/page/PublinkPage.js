@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     Alert,
     Box,
@@ -7,7 +7,12 @@ import {
     CardContent,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Grid,
+    IconButton,
     Stack,
     Table,
     TableBody,
@@ -17,6 +22,8 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
+    useTheme,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { pubApi } from "../api/index";
@@ -24,6 +31,19 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
+
+const MAX_IMAGES = 6;
+const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB (base64 adds ~33% overhead)
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const readFileAsBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error(`Failed to read: ${file.name}`));
+        reader.readAsDataURL(file);
+    });
+};
 
 const PublinkPage = () => {
     const location = useLocation();
@@ -41,6 +61,22 @@ const PublinkPage = () => {
     const [orderNote, setOrderNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState("");
+
+    // Product edit state
+    const [editProduct, setEditProduct] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState("");
+    const [saveSuccess, setSaveSuccess] = useState("");
+    // Image edit state: existing pics (from API) + new pics (from file picker)
+    const [existingPics, setExistingPics] = useState([]); // {data, title, link}
+    const [newImageFiles, setNewImageFiles] = useState([]); // File objects
+    const [newImagePreviews, setNewImagePreviews] = useState([]); // object URLs
+    const [imageError, setImageError] = useState("");
+    const fileInputRef = useRef(null);
+
+    const theme = useTheme();
+    const fullScreenDialog = useMediaQuery(theme.breakpoints.down("sm"));
 
     useEffect(() => {
         if (!token) {
@@ -100,6 +136,164 @@ const PublinkPage = () => {
         }
     };
 
+    const refreshSaleSpace = async () => {
+        const refreshResponse = await pubApi.post("/api/v1/publish/publink", {}, {
+            params: { token },
+        });
+        setSaleSpace(refreshResponse.data);
+    };
+
+    const handleOpenEdit = (product) => {
+        setEditProduct(product);
+        setEditForm({
+            productId: product.productId,
+            productName: product.productName || "",
+            price: product.price ?? 0,
+            amount: product.amount ?? 0,
+            total_amount: product.total_amount ?? 0,
+            unit: product.unit || "VND",
+        });
+        // Load existing images
+        setExistingPics(product.listPicProMap || []);
+        setNewImageFiles([]);
+        setNewImagePreviews([]);
+        setImageError("");
+        setSaveError("");
+        setSaveSuccess("");
+    };
+
+    const handleCloseEdit = () => {
+        setEditProduct(null);
+        setEditForm({});
+        setExistingPics([]);
+        // Revoke object URLs to avoid memory leaks
+        newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+        setNewImageFiles([]);
+        setNewImagePreviews([]);
+        setImageError("");
+        setSaveError("");
+        setSaveSuccess("");
+    };
+
+    const handleEditField = (field) => (e) => {
+        const val = e.target.value;
+        setEditForm((prev) => ({
+            ...prev,
+            [field]: ["price"].includes(field) ? parseFloat(val) || 0 :
+                ["amount", "total_amount"].includes(field) ? parseInt(val, 10) || 0 : val,
+        }));
+    };
+
+    const handleSaveProduct = async () => {
+        if (!editForm.productName.trim()) {
+            setSaveError("Product name is required.");
+            return;
+        }
+        setSaving(true);
+        setSaveError("");
+        setSaveSuccess("");
+
+        try {
+            // Detect if pictures have changed
+            const originalPicsCount = (editProduct.listPicProMap || []).length;
+            const picsChanged = newImageFiles.length > 0 || existingPics.length !== originalPicsCount;
+
+            // Build the request payload
+            const payload = {
+                token,
+                productId: editForm.productId,
+                productName: editForm.productName,
+                price: editForm.price,
+                amount: editForm.amount,
+                totalAmount: editForm.total_amount,
+                unit: editForm.unit,
+            };
+
+            // Only send listPicProMap if pictures have changed
+            if (picsChanged) {
+                // Convert new image files to base64 data URIs
+                const newPicData = await Promise.all(
+                    newImageFiles.map((file) => readFileAsBase64(file))
+                );
+
+                // Build listPicProMap: keep existing + append new
+                payload.listPicProMap = [
+                    ...existingPics.map((pic) => ({
+                        data: pic.data || null,
+                        link: pic.link || null,
+                        title: pic.title || "product-image",
+                    })),
+                    ...newPicData.map((dataUri) => ({
+                        data: dataUri,
+                        link: null,
+                        title: "product-image",
+                    })),
+                ];
+            }
+
+            await pubApi.post("/api/v1/seller/product/update", payload);
+            setSaveSuccess("Product updated successfully!");
+            await refreshSaleSpace();
+            // Update the editProduct with refreshed data
+            const refreshed = saleSpace.listProduct?.find(
+                (p) => p.productId === editForm.productId
+            );
+            if (refreshed) {
+                setEditProduct(refreshed);
+                setExistingPics(refreshed.listPicProMap || []);
+            }
+            // Clear new images after save
+            newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
+            setNewImageFiles([]);
+            setNewImagePreviews([]);
+        } catch (err) {
+            console.error("Update product failed:", err);
+            setSaveError(
+                err?.response?.data || "Failed to update product. Please try again."
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAddImages = (e) => {
+        setImageError("");
+        const files = Array.from(e.target.files);
+        const totalImages = existingPics.length + newImageFiles.length;
+
+        if (totalImages + files.length > MAX_IMAGES) {
+            setImageError(`You can have up to ${MAX_IMAGES} images total.`);
+            return;
+        }
+        for (const file of files) {
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                setImageError("Only JPEG, PNG, and WebP images are allowed.");
+                return;
+            }
+            if (file.size > MAX_FILE_SIZE_BYTES) {
+                setImageError("Each image must be under 1 MB.");
+                return;
+            }
+        }
+
+        const updated = [...newImageFiles, ...files].slice(0, MAX_IMAGES);
+        setNewImageFiles(updated);
+        // Create object URLs for previews
+        const newUrls = files.map((f) => URL.createObjectURL(f));
+        setNewImagePreviews((prev) => [...prev, ...newUrls].slice(0, MAX_IMAGES));
+        e.target.value = "";
+    };
+
+    const handleRemoveExistingPic = (index) => {
+        setExistingPics((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const handleRemoveNewImage = (index) => {
+        URL.revokeObjectURL(newImagePreviews[index]);
+        setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+        setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    };
+
     if (loading) {
         return (
             <PageContainer maxWidth="md">
@@ -138,7 +332,7 @@ const PublinkPage = () => {
             <Stack spacing={3}>
                 {/* Header */}
                 <SectionBlock
-                    title={saleSpace.sellerName || "Sale Space"}
+                    title={"Sale Space " + saleSpace.sellerFullName || ""}
                     description={
                         isSeller
                             ? "Seller view — manage orders and products."
@@ -188,12 +382,26 @@ const PublinkPage = () => {
 
                 {/* Products */}
                 {saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
-                    <SectionBlock title="Products" description="Available items for purchase.">
+                    <SectionBlock
+                        title="Products"
+                        description={
+                            isSeller
+                                ? "Tap edit to modify product details."
+                                : "Available items for purchase."
+                        }
+                    >
                         <Grid container spacing={2}>
                             {saleSpace.listProduct.map((product, idx) => (
                                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={idx}>
-                                    <Card variant="outlined" sx={{ height: "100%" }}>
-                                        <CardContent>
+                                    <Card
+                                        variant="outlined"
+                                        sx={{
+                                            height: "100%",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                        }}
+                                    >
+                                        <CardContent sx={{ flexGrow: 1 }}>
                                             {product.listPicProMap && product.listPicProMap.length > 0 && (
                                                 <Stack direction="row" spacing={1} sx={{ mb: 1, flexWrap: "wrap" }}>
                                                     {product.listPicProMap.map((pic, i) => (
@@ -226,7 +434,7 @@ const PublinkPage = () => {
                                                 )}
                                                 {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Total available: {product.total_amount} {product.unit || ""}
+                                                        Total available: {product.amount}
                                                     </Typography>
                                                 )}
                                                 {product.amount > 0 && (
@@ -236,6 +444,19 @@ const PublinkPage = () => {
                                                 )}
                                             </Stack>
                                         </CardContent>
+                                        {isSeller && (
+                                            <Box sx={{ px: 2, pb: 1.5 }}>
+                                                <Button
+                                                    size="small"
+                                                    variant="outlined"
+                                                    fullWidth
+                                                    onClick={() => handleOpenEdit(product)}
+                                                    sx={{ borderRadius: 2 }}
+                                                >
+                                                    Edit Product
+                                                </Button>
+                                            </Box>
+                                        )}
                                     </Card>
                                 </Grid>
                             ))}
@@ -356,6 +577,198 @@ const PublinkPage = () => {
                     </SectionBlock>
                 )}
             </Stack>
+
+            {/* Product Edit Dialog */}
+            <Dialog
+                open={Boolean(editProduct)}
+                onClose={handleCloseEdit}
+                fullScreen={fullScreenDialog}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    Edit Product
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2.5} sx={{ pt: 1 }}>
+                        {saveError && <Alert severity="error">{saveError}</Alert>}
+                        {saveSuccess && <Alert severity="success">{saveSuccess}</Alert>}
+                        <TextField
+                            label="Product Name"
+                            value={editForm.productName || ""}
+                            onChange={handleEditField("productName")}
+                            required
+                            fullWidth
+                        />
+                        <TextField
+                            label="Price"
+                            type="number"
+                            value={editForm.price ?? 0}
+                            onChange={handleEditField("price")}
+                            inputProps={{ min: 0, step: "any" }}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Unit"
+                            value={editForm.unit || ""}
+                            onChange={handleEditField("unit")}
+                            placeholder="e.g. VND, kg, pcs"
+                            fullWidth
+                        />
+                        <TextField
+                            label="Total Available"
+                            type="number"
+                            value={editForm.amount ?? 0}
+                            onChange={handleEditField("amount")}
+                            inputProps={{ min: 0 }}
+                            fullWidth
+                        />
+                        {/* <TextField
+                            label="Per Order Limit"
+                            type="number"
+                            value={editForm.amount ?? 0}
+                            onChange={handleEditField("amount")}
+                            inputProps={{ min: 0 }}
+                            fullWidth
+                        /> */}
+
+                        {/* Image Management */}
+                        <Stack spacing={1.5}>
+                            <Typography variant="subtitle2">
+                                Images ({existingPics.length + newImageFiles.length}/{MAX_IMAGES})
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                JPEG, PNG, WebP — max 1 MB each.
+                            </Typography>
+
+                            {imageError && (
+                                <Typography variant="caption" color="error">
+                                    {imageError}
+                                </Typography>
+                            )}
+
+                            {existingPics.length + newImageFiles.length < MAX_IMAGES && (
+                                <Button component="label" variant="outlined" size="small" sx={{ alignSelf: "flex-start" }}>
+                                    Add images
+                                    <Box
+                                        component="input"
+                                        hidden
+                                        type="file"
+                                        multiple
+                                        accept="image/jpeg,image/png,image/webp"
+                                        ref={fileInputRef}
+                                        onChange={handleAddImages}
+                                    />
+                                </Button>
+                            )}
+
+                            {/* Existing images */}
+                            {existingPics.length > 0 && (
+                                <Grid container spacing={1}>
+                                    {existingPics.map((pic, i) => (
+                                        <Grid key={`existing-${i}`} size={{ xs: 4, sm: 3 }}>
+                                            <Box sx={{ position: "relative" }}>
+                                                <Box
+                                                    component="img"
+                                                    src={pic.data || pic.link}
+                                                    alt={pic.title || `img-${i}`}
+                                                    sx={{
+                                                        width: "100%",
+                                                        aspectRatio: "1 / 1",
+                                                        objectFit: "cover",
+                                                        borderRadius: 1.5,
+                                                        display: "block",
+                                                        border: "1px solid",
+                                                        borderColor: "divider",
+                                                    }}
+                                                />
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => handleRemoveExistingPic(i)}
+                                                    sx={{
+                                                        position: "absolute",
+                                                        top: 2,
+                                                        right: 2,
+                                                        minWidth: 22,
+                                                        width: 22,
+                                                        height: 22,
+                                                        p: 0,
+                                                        fontSize: 12,
+                                                        lineHeight: 1,
+                                                        bgcolor: "rgba(255,255,255,0.85)",
+                                                        color: "error.main",
+                                                        "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                                                    }}
+                                                >
+                                                    ✕
+                                                </Button>
+                                            </Box>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            )}
+
+                            {/* New image previews */}
+                            {newImagePreviews.length > 0 && (
+                                <Grid container spacing={1}>
+                                    {newImagePreviews.map((previewUrl, i) => (
+                                        <Grid key={`new-${i}`} size={{ xs: 4, sm: 3 }}>
+                                            <Box sx={{ position: "relative" }}>
+                                                <Box
+                                                    component="img"
+                                                    src={previewUrl}
+                                                    alt={`new-img-${i}`}
+                                                    sx={{
+                                                        width: "100%",
+                                                        aspectRatio: "1 / 1",
+                                                        objectFit: "cover",
+                                                        borderRadius: 1.5,
+                                                        display: "block",
+                                                        border: "2px solid",
+                                                        borderColor: "primary.main",
+                                                    }}
+                                                />
+                                                <Button
+                                                    size="small"
+                                                    onClick={() => handleRemoveNewImage(i)}
+                                                    sx={{
+                                                        position: "absolute",
+                                                        top: 2,
+                                                        right: 2,
+                                                        minWidth: 22,
+                                                        width: 22,
+                                                        height: 22,
+                                                        p: 0,
+                                                        fontSize: 12,
+                                                        lineHeight: 1,
+                                                        bgcolor: "rgba(255,255,255,0.85)",
+                                                        color: "error.main",
+                                                        "&:hover": { bgcolor: "rgba(255,255,255,0.95)" },
+                                                    }}
+                                                >
+                                                    ✕
+                                                </Button>
+                                            </Box>
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                            )}
+                        </Stack>
+                    </Stack>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={handleCloseEdit} disabled={saving}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSaveProduct}
+                        variant="contained"
+                        disabled={saving}
+                    >
+                        {saving ? "Saving..." : "Save Changes"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };

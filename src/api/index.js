@@ -200,4 +200,4 @@ pubApi.interceptors.response.use(
 );
 
 export default api;
-export { pubApi };
+export { pubApi, config };

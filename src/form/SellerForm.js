@@ -221,7 +221,7 @@ const SellerForm = ({ open, onClose, onSuccess, users = [] }) => {
         requestBody.productRequest = {
           productName: productData.productName || "",
           description: productData.description || "",
-          amount: productData.quantity ? Number(productData.quantity) : 0,
+          totalAmount: productData.quantity ? Number(productData.quantity) : 0,
           price: productData.price ? Number(productData.price) : 0,
           images: imageUrls,
         };

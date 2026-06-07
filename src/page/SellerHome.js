@@ -124,25 +124,36 @@ const SellerHome = () => {
     }
   };
 
+  /**
+   * Two-step streaming export pattern:
+   * 1. POST /exportAllToken → send params, get download token
+   * 2. GET /stream/exportAll/{token} → stream the Excel file
+   * 
+   * This avoids buffering the entire file in memory and supports
+   * large exports that would otherwise timeout or consume too much RAM.
+   */
   const handleExportAll = async () => {
     try {
-      const response = await pubApi.post(
-        "/api/v1/seller/exportAll",
-        {},
-        { responseType: "blob" }
-      );
-      const blob = new Blob(
-        [response.data],
-        { type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
-      );
-      const url = window.URL.createObjectURL(blob);
+      // Step 1: Get download token
+      const tokenResponse = await pubApi.post("/api/v1/seller/getExportToken", {
+        sellerName: username,
+      });
+      const downloadToken = tokenResponse.data?.downloadToken;
+      if (!downloadToken) {
+        console.error("No download token received");
+        return;
+      }
+
+      // Step 2: Stream download using the token
+      const streamUrl = `${pubApi.defaults.baseURL}/api/v1/seller/stream/exportAll/${downloadToken}`;
+
+      // Create a temporary anchor to trigger download
       const a = document.createElement("a");
-      a.href = url;
-      a.download = "export-all-reports.xlsx";
+      a.href = streamUrl;
+      a.download = ""; // Let server determine filename from Content-Disposition
       document.body.appendChild(a);
       a.click();
       a.remove();
-      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export all failed", err);
     }

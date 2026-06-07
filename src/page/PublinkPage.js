@@ -26,7 +26,7 @@ import {
     useTheme,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import { pubApi } from "../api/index";
+import api, { pubApi } from "../api/index";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
@@ -256,6 +256,32 @@ const PublinkPage = () => {
         }
     };
 
+    const handleToggleDelivered = async (order) => {
+        try {
+            await api.post("/api/v1/seller/order/delivery", {
+                orderId: order.orderId,
+                token,
+                delivered: !order.delivered,
+            });
+            await refreshSaleSpace();
+        } catch (err) {
+            console.error("Toggle delivered failed:", err);
+        }
+    };
+
+    const handleToggleGetMoney = async (order) => {
+        try {
+            await api.post("/api/v1/seller/order/getmoney", {
+                orderId: order.orderId,
+                token,
+                getMoney: !order.getMoney,
+            });
+            await refreshSaleSpace();
+        } catch (err) {
+            console.error("Toggle getMoney failed:", err);
+        }
+    };
+
     const handleAddImages = (e) => {
         setImageError("");
         const files = Array.from(e.target.files);
@@ -434,12 +460,12 @@ const PublinkPage = () => {
                                                 )}
                                                 {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Total available: {product.amount}
+                                                        Total amount: {product.total_amount}
                                                     </Typography>
                                                 )}
-                                                {product.amount > 0 && (
+                                                {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Per order limit: {product.amount} {product.unit || ""}
+                                                        Available amount: {product.total_amount - product.amount}
                                                     </Typography>
                                                 )}
                                             </Stack>
@@ -494,8 +520,11 @@ const PublinkPage = () => {
                                                     label={order.delivered ? "Yes" : "No"}
                                                     color={order.delivered ? "success" : "default"}
                                                     size="small"
-                                                    onClick={() => { }}
-                                                    clickable={false}
+                                                    clickable
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleDelivered(order);
+                                                    }}
                                                 />
                                             </TableCell>
                                             <TableCell>
@@ -503,8 +532,11 @@ const PublinkPage = () => {
                                                     label={order.getMoney ? "Yes" : "No"}
                                                     color={order.getMoney ? "success" : "default"}
                                                     size="small"
-                                                    onClick={() => { }}
-                                                    clickable={false}
+                                                    clickable
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleToggleGetMoney(order);
+                                                    }}
                                                 />
                                             </TableCell>
                                             <TableCell>{order.sellerNote || "—"}</TableCell>
@@ -530,52 +562,51 @@ const PublinkPage = () => {
                 )}
 
                 {/* Buyer: Order Form */}
-                {!isSeller && (
-                    <SectionBlock
-                        title="Place an Order"
-                        description="Fill in your details to place an order."
-                    >
-                        {orderSuccess && <Alert severity="success">{orderSuccess}</Alert>}
-                        <Box component="form" onSubmit={handlePlaceOrder}>
-                            <Stack spacing={2}>
-                                <TextField
-                                    label="Your Name"
-                                    type="text"
-                                    value={buyerName}
-                                    onChange={(e) => setBuyerName(e.target.value)}
-                                    required
-                                    fullWidth
-                                />
-                                <TextField
-                                    label="Amount"
-                                    type="number"
-                                    value={orderAmount}
-                                    onChange={(e) => setOrderAmount(parseInt(e.target.value, 10) || 1)}
-                                    inputProps={{ min: 1 }}
-                                    fullWidth
-                                />
-                                <TextField
-                                    label="Note (optional)"
-                                    type="text"
-                                    value={orderNote}
-                                    onChange={(e) => setOrderNote(e.target.value)}
-                                    multiline
-                                    rows={2}
-                                    fullWidth
-                                />
-                                <Button
-                                    type="submit"
-                                    variant="contained"
-                                    size="large"
-                                    disabled={submitting || !buyerName}
-                                    sx={{ alignSelf: "flex-start" }}
-                                >
-                                    {submitting ? "Placing Order..." : "Place Order"}
-                                </Button>
-                            </Stack>
-                        </Box>
-                    </SectionBlock>
-                )}
+
+                <SectionBlock
+                    title="Place an Order"
+                    description="Fill in your details to place an order."
+                >
+                    {orderSuccess && <Alert severity="success">{orderSuccess}</Alert>}
+                    <Box component="form" onSubmit={handlePlaceOrder}>
+                        <Stack spacing={2}>
+                            <TextField
+                                label="Your Name"
+                                type="text"
+                                value={buyerName}
+                                onChange={(e) => setBuyerName(e.target.value)}
+                                required
+                                fullWidth
+                            />
+                            <TextField
+                                label="Amount"
+                                type="number"
+                                value={orderAmount}
+                                onChange={(e) => setOrderAmount(parseInt(e.target.value, 10) || 1)}
+                                inputProps={{ min: 1 }}
+                                fullWidth
+                            />
+                            <TextField
+                                label="Note (optional)"
+                                type="text"
+                                value={orderNote}
+                                onChange={(e) => setOrderNote(e.target.value)}
+                                multiline
+                                rows={2}
+                                fullWidth
+                            />
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                size="large"
+                                disabled={submitting || !buyerName}
+                                sx={{ alignSelf: "flex-start" }}
+                            >
+                                {submitting ? "Placing Order..." : "Place Order"}
+                            </Button>
+                        </Stack>
+                    </Box>
+                </SectionBlock>
             </Stack>
 
             {/* Product Edit Dialog */}

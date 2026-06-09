@@ -26,7 +26,8 @@ import {
     useTheme,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
-import api, { pubApi } from "../api/index";
+import { pubApi } from "../api/index";
+import { useAuth } from "../AuthContext";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
@@ -54,6 +55,7 @@ const PublinkPage = () => {
     const [saleSpace, setSaleSpace] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const { userRole } = useAuth();
 
     // Order form state
     const [buyerName, setBuyerName] = useState("");
@@ -74,6 +76,11 @@ const PublinkPage = () => {
     const [newImagePreviews, setNewImagePreviews] = useState([]); // object URLs
     const [imageError, setImageError] = useState("");
     const fileInputRef = useRef(null);
+
+    // Seller note inline editing
+    const [editingNoteOrderId, setEditingNoteOrderId] = useState(null);
+    const [draftNote, setDraftNote] = useState("");
+    const noteInputRef = useRef(null);
 
     const theme = useTheme();
     const fullScreenDialog = useMediaQuery(theme.breakpoints.down("sm"));
@@ -100,6 +107,13 @@ const PublinkPage = () => {
                 setLoading(false);
             });
     }, [token]);
+
+    // Focus the input when editing starts
+    useEffect(() => {
+        if (editingNoteOrderId !== null && noteInputRef.current) {
+            noteInputRef.current.focus();
+        }
+    }, [editingNoteOrderId]);
 
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
@@ -258,7 +272,7 @@ const PublinkPage = () => {
 
     const handleToggleDelivered = async (order) => {
         try {
-            await api.post("/api/v1/seller/order/delivery", {
+            await pubApi.post("/api/v1/seller/order/delivery", {
                 orderId: order.orderId,
                 token,
                 delivered: !order.delivered,
@@ -271,7 +285,7 @@ const PublinkPage = () => {
 
     const handleToggleGetMoney = async (order) => {
         try {
-            await api.post("/api/v1/seller/order/getmoney", {
+            await pubApi.post("/api/v1/seller/order/getmoney", {
                 orderId: order.orderId,
                 token,
                 getMoney: !order.getMoney,
@@ -280,6 +294,31 @@ const PublinkPage = () => {
         } catch (err) {
             console.error("Toggle getMoney failed:", err);
         }
+    };
+
+    const handleSaveSellerNote = async (order) => {
+        try {
+            await pubApi.post("/api/v1/seller/order/note", {
+                orderId: order.orderId,
+                token,
+                sellerNote: draftNote,
+            });
+            setEditingNoteOrderId(null);
+            setDraftNote("");
+            await refreshSaleSpace();
+        } catch (err) {
+            console.error("Save seller note failed:", err);
+        }
+    };
+
+    const handleStartEditNote = (order) => {
+        setEditingNoteOrderId(order.orderId);
+        setDraftNote(order.sellerNote || "");
+    };
+
+    const handleCancelEditNote = () => {
+        setEditingNoteOrderId(null);
+        setDraftNote("");
     };
 
     const handleAddImages = (e) => {
@@ -352,6 +391,34 @@ const PublinkPage = () => {
     }
 
     const isSeller = Boolean(saleSpace.isSellerView);
+    const isAdmin = String(userRole || "").toLowerCase() === "admin";
+    const canManageOrders = isSeller || isAdmin;
+
+    const exportToExcel = async () => {
+        const requestUUID = saleSpace.reqUuid;
+        if (!requestUUID) return;
+        try {
+            const response = await pubApi.post(
+                "/api/v1/seller/export",
+                { requestUUID },
+                { responseType: "blob" }
+            );
+            const blob = new Blob(
+                [response.data],
+                { type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+            );
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `export-${requestUUID}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Export failed", err);
+        }
+    };
 
     return (
         <PageContainer maxWidth="lg">
@@ -363,6 +430,13 @@ const PublinkPage = () => {
                         isSeller
                             ? "Seller view — manage orders and products."
                             : "Browse products and place your order."
+                    }
+                    action={
+                        isSeller ? (
+                            <Button variant="contained" color="success" onClick={exportToExcel}>
+                                Export Excel
+                            </Button>
+                        ) : null
                     }
                 >
                     <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
@@ -490,9 +564,12 @@ const PublinkPage = () => {
                     </SectionBlock>
                 )}
 
-                {/* Seller: Orders Table */}
-                {isSeller && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
-                    <SectionBlock title="Orders" description="Customer orders for your products.">
+                {/* Seller/Admin: Orders Table */}
+                {canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
+                    <SectionBlock
+                        title="Orders"
+                        description="Customer orders for your products."
+                    >
                         <TableContainer>
                             <Table size="small">
                                 <TableHead>
@@ -520,8 +597,9 @@ const PublinkPage = () => {
                                                     label={order.delivered ? "Yes" : "No"}
                                                     color={order.delivered ? "success" : "default"}
                                                     size="small"
-                                                    clickable
+                                                    clickable={canManageOrders}
                                                     onClick={(e) => {
+                                                        if (!canManageOrders) return;
                                                         e.stopPropagation();
                                                         handleToggleDelivered(order);
                                                     }}
@@ -532,14 +610,83 @@ const PublinkPage = () => {
                                                     label={order.getMoney ? "Yes" : "No"}
                                                     color={order.getMoney ? "success" : "default"}
                                                     size="small"
-                                                    clickable
+                                                    clickable={canManageOrders}
                                                     onClick={(e) => {
+                                                        if (!canManageOrders) return;
                                                         e.stopPropagation();
                                                         handleToggleGetMoney(order);
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell>{order.sellerNote || "—"}</TableCell>
+                                            <TableCell
+                                                onClick={(e) => e.stopPropagation()}
+                                                sx={{ minWidth: 120 }}
+                                            >
+                                                {canManageOrders ? (
+                                                    editingNoteOrderId === order.orderId ? (
+                                                        <Stack direction="row" spacing={0.5} alignItems="center">
+                                                            <TextField
+                                                                inputRef={noteInputRef}
+                                                                size="small"
+                                                                value={draftNote}
+                                                                onChange={(e) => setDraftNote(e.target.value)}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "Enter") {
+                                                                        e.preventDefault();
+                                                                        handleSaveSellerNote(order);
+                                                                    } else if (e.key === "Escape") {
+                                                                        handleCancelEditNote();
+                                                                    }
+                                                                }}
+                                                                onBlur={() => {
+                                                                    setTimeout(() => {
+                                                                        if (editingNoteOrderId === order.orderId) {
+                                                                            handleSaveSellerNote(order);
+                                                                        }
+                                                                    }, 150);
+                                                                }}
+                                                                sx={{
+                                                                    "& .MuiInputBase-input": { py: 0.5, fontSize: "0.8rem" },
+                                                                    "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "divider" } },
+                                                                }}
+                                                                inputProps={{ maxLength: 200 }}
+                                                            />
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleSaveSellerNote(order);
+                                                                }}
+                                                                sx={{ p: 0.5 }}
+                                                                title="Save note"
+                                                            >
+                                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                            </IconButton>
+                                                        </Stack>
+                                                    ) : (
+                                                        <Stack direction="row" spacing={0.5} alignItems="center">
+                                                            <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                                                                {order.sellerNote || "\u2014"}
+                                                            </Typography>
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleStartEditNote(order);
+                                                                }}
+                                                                sx={{ p: 0.5 }}
+                                                                title="Edit note"
+                                                            >
+                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                                            </IconButton>
+                                                        </Stack>
+                                                    )
+                                                ) : (
+                                                    <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
+                                                        {order.sellerNote || "\u2014"}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -548,8 +695,8 @@ const PublinkPage = () => {
                     </SectionBlock>
                 )}
 
-                {/* Seller: No orders yet */}
-                {isSeller && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
+                {/* Seller/Admin: No orders yet */}
+                {canManageOrders && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
                     <CardWrapper>
                         <Typography
                             variant="body2"

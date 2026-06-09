@@ -144,16 +144,27 @@ const SellerHome = () => {
         return;
       }
 
-      // Step 2: Stream download using the token
-      const streamUrl = `${pubApi.defaults.baseURL}/api/v1/seller/stream/exportAll/${downloadToken}`;
+      // Step 2: Download using pubApi.get() so the auth interceptor attaches the Bearer token
+      const response = await pubApi.get(
+        `/api/v1/seller/stream/exportAll/${downloadToken}`,
+        { responseType: "blob" }
+      );
 
-      // Create a temporary anchor to trigger download
+      const blob = new Blob(
+        [response.data],
+        { type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+      );
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = streamUrl;
-      a.download = ""; // Let server determine filename from Content-Disposition
+      a.href = url;
+      // Extract filename from Content-Disposition header if available
+      const disposition = response.headers["content-disposition"];
+      const filenameMatch = disposition && disposition.match(/filename="?([^";\n]+)"?/);
+      a.download = filenameMatch ? filenameMatch[1] : `seller-report-${username}.xlsx`;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Export all failed", err);
     }

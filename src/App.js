@@ -6,6 +6,7 @@ import GenerationPage from "./page/GenerationPage";
 import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
+import NotificationPage from "./page/NotificationPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -92,6 +93,14 @@ function App() {
               element={
                 <Layout>
                   <EnvironmentDetailPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/notification"
+              element={
+                <Layout>
+                  <NotificationPage />
                 </Layout>
               }
             />

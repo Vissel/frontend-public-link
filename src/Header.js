@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import NotificationBell from "./components/NotificationBell";
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
 
@@ -100,13 +101,16 @@ function Header() {
             </Button>
           )}
             {isAuthenticated && (
-              <Chip
-                color="primary"
-                variant="outlined"
-                label={`${userName || "User"} • ${userRole || "Member"}`}
-                onClick={() => { }}
-                clickable={false}
-              />
+              <>
+                {normalizedRole === "seller" && <NotificationBell />}
+                <Chip
+                  color="primary"
+                  variant="outlined"
+                  label={`${userName || "User"} \u2022 ${userRole || "Member"}`}
+                  onClick={() => { }}
+                  clickable={false}
+                />
+              </>
             )}
 
             {isAuthenticated ? (

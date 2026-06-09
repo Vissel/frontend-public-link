@@ -378,15 +378,23 @@ const AdminHomePage = () => {
           title="Admin Workspace"
           description="Manage seller authentication links and public product pages from a single responsive MUI dashboard."
           action={
-            <Button
-              variant="contained"
-              onClick={() => {
-                setSuccessMessage("");
-                setOpenDialog(true);
-              }}
-            >
-              Generate product link
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                onClick={() => navigate("/notification")}
+              >
+                Send Notification
+              </Button>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setSuccessMessage("");
+                  setOpenDialog(true);
+                }}
+              >
+                Generate product link
+              </Button>
+            </Stack>
           }
         >
           {successMessage && (

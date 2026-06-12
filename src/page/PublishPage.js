@@ -97,7 +97,7 @@ const SaleEnvPage = () => {
       console.error(requestError);
       setError(
         requestError?.response?.data?.message ||
-          t("publish.errors.submitOrderFailed")
+        t("publish.errors.submitOrderFailed")
       );
     } finally {
       setSubmittingOrder(false);
@@ -124,7 +124,7 @@ const SaleEnvPage = () => {
           console.error("Sale environment fetch failed:", e);
           setError(
             e?.response?.data?.message ||
-              t("publish.errors.loadFailed")
+            t("publish.errors.loadFailed")
           );
         } finally {
           setLoading(false);
@@ -263,8 +263,7 @@ const SaleEnvPage = () => {
 
     saveAs(
       blob,
-      `${t("publish.excel.fileName")}-${saleEnv.sellerName}-${
-        saleEnv.productName
+      `${t("publish.excel.fileName")}-${saleEnv.sellerName}-${saleEnv.productName
       }-${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };

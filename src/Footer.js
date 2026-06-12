@@ -1,6 +1,8 @@
 import { Box, Container, Typography, Link } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 function Footer() {
+  const { t } = useTranslation();
   return (
     <Box
       component="footer"
@@ -13,7 +15,7 @@ function Footer() {
     >
       <Container maxWidth="lg">
         <Typography variant="caption" component="p" sx={{ m: 0, lineHeight: 1.2 }}>
-          © {new Date().getFullYear()} Jade · Licensed under the{" "}
+          © {new Date().getFullYear()} Jade · {t("footer.licensed")}{" "}
           <Link
             href="https://opensource.org/licenses/MIT"
             target="_blank"

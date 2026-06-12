@@ -13,12 +13,14 @@ import JSEncrypt from "jsencrypt";
 import api from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
+import { useTranslation } from "react-i18next";
 
 const RegisterPage = () => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const queryParams = new URLSearchParams(location.search);
   const usernameParam = queryParams.get("username") || "";
@@ -40,7 +42,7 @@ const RegisterPage = () => {
 
     if (inputPassword !== inputRepeatPassword) {
       setPasswordMismatch(true);
-      setError("Passwords do not match.");
+      setError(t("register.errors.passwordMismatch"));
       setSubmitting(false);
       return;
     }
@@ -86,16 +88,14 @@ const RegisterPage = () => {
         if (err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else if (err.response.status === 401 || err.response.status === 403) {
-          setError("Registration failed. Please check your details.");
+          setError(t("register.errors.failed"));
         } else {
-          setError("An unexpected error occurred during registration.");
+          setError(t("register.errors.unexpected"));
         }
       } else if (err.request) {
-        setError(
-          "No response from server. Please check your network connection."
-        );
+        setError(t("register.errors.noResponse"));
       } else {
-        setError("Error setting up the register request.");
+        setError(t("register.errors.setupError"));
       }
     } finally {
       setSubmitting(false);
@@ -107,13 +107,13 @@ const RegisterPage = () => {
   return (
     <PageContainer maxWidth="md">
       <SectionBlock
-        title="Seller Registration"
-        description="Set up your seller account to manage orders and public links."
+        title={t("register.title")}
+        description={t("register.subtitle")}
       >
         <Stack spacing={3}>
           {!hasRequiredParams && (
             <Alert severity="error">
-              Invalid registration link. Required parameters are missing.
+              {t("register.errors.invalidLink")}
             </Alert>
           )}
           {error && <Alert severity="error">{error}</Alert>}
@@ -122,7 +122,7 @@ const RegisterPage = () => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Username"
+                  label={t("register.username")}
                   type="text"
                   value={inputUsername}
                   required
@@ -132,7 +132,7 @@ const RegisterPage = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Password"
+                  label={t("register.password")}
                   type="password"
                   value={inputPassword}
                   required
@@ -149,12 +149,12 @@ const RegisterPage = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Repeat Password"
+                  label={t("register.repeatPassword")}
                   type="password"
                   value={inputRepeatPassword}
                   required
                   error={passwordMismatch}
-                  helperText={passwordMismatch ? "Passwords do not match" : ""}
+                  helperText={passwordMismatch ? t("register.errors.passwordMismatch") : ""}
                   onChange={(event) => {
                     setInputRepeatPassword(event.target.value);
                     setPasswordMismatch(inputPassword !== event.target.value);
@@ -163,7 +163,7 @@ const RegisterPage = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Name"
+                  label={t("register.name")}
                   type="text"
                   value={inputName}
                   required
@@ -173,7 +173,7 @@ const RegisterPage = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Profile link (Facebook, Zalo, etc.)"
+                  label={t("register.profileLink")}
                   type="text"
                   value={inputLink}
                   onChange={(event) => setInputLink(event.target.value)}
@@ -187,7 +187,7 @@ const RegisterPage = () => {
                   alignItems={{ xs: "stretch", sm: "center" }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    After successful registration, you will be redirected to the login page.
+                    {t("register.redirectNote")}
                   </Typography>
                   <Button
                     type="submit"
@@ -195,7 +195,7 @@ const RegisterPage = () => {
                     size="large"
                     disabled={!hasRequiredParams || submitting || passwordMismatch}
                   >
-                    Register
+                    {t("register.registerButton")}
                   </Button>
                 </Stack>
               </Grid>

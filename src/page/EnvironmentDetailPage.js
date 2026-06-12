@@ -22,6 +22,7 @@ import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import { CountdownBadge } from "../components/CountdownTimer";
+import { useTranslation } from "react-i18next";
 
 const contextPath = "/publiclink";
 
@@ -34,6 +35,7 @@ const EnvironmentDetailPage = () => {
     const [copiedKey, setCopiedKey] = useState("");
     const navigate = useNavigate();
     const frontendOrigin = window.location.origin;
+    const { t } = useTranslation();
 
     const addHostToHref = (contextString) => {
         if (!contextString) return "";
@@ -78,7 +80,7 @@ const EnvironmentDetailPage = () => {
 
     useEffect(() => {
         if (!requestUuid) {
-            setError("No request UUID provided.");
+            setError(t("environmentDetail.errors.noUuid"));
             setLoading(false);
             return;
         }
@@ -93,7 +95,7 @@ const EnvironmentDetailPage = () => {
                 setDetail(res.data);
             } catch (err) {
                 console.error("Failed to fetch environment detail", err);
-                setError("Failed to fetch environment detail.");
+                setError(t("environmentDetail.errors.fetchFailed"));
             } finally {
                 setLoading(false);
             }
@@ -105,7 +107,7 @@ const EnvironmentDetailPage = () => {
     if (loading) {
         return (
             <PageContainer maxWidth="md">
-                <Typography>Loading...</Typography>
+                <Typography>{t("common.loading")}</Typography>
             </PageContainer>
         );
     }
@@ -115,7 +117,7 @@ const EnvironmentDetailPage = () => {
             <PageContainer maxWidth="md">
                 <Alert severity="error">{error}</Alert>
                 <Button sx={{ mt: 2 }} variant="outlined" onClick={() => navigate("/adminHome")}>
-                    Back to Admin Home
+                    {t("environmentDetail.backToAdmin")}
                 </Button>
             </PageContainer>
         );
@@ -125,60 +127,60 @@ const EnvironmentDetailPage = () => {
         <PageContainer maxWidth="md">
             <Stack spacing={3}>
                 <SectionBlock
-                    title="Environment Detail"
-                    description={`Detail view for request UUID: ${requestUuid}`}
+                    title={t("environmentDetail.title")}
+                    description={`${t("environmentDetail.subtitle")} ${requestUuid}`}
                     action={
                         <Button variant="outlined" onClick={() => navigate("/adminHome")}>
-                            Back to Admin Home
+                            {t("environmentDetail.backToAdmin")}
                         </Button>
                     }
                 >
                     <Stack spacing={1.5}>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Request UUID:
+                                {t("environmentDetail.requestUuid")}
                             </Typography>
                             <Typography variant="body2">{detail?.requestUUID || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Request ID:
+                                {t("environmentDetail.requestId")}
                             </Typography>
                             <Typography variant="body2">{detail?.requestId || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Seller Name:
+                                {t("environmentDetail.sellerName")}
                             </Typography>
                             <Typography variant="body2">{detail?.sellerName || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Product Name:
+                                {t("environmentDetail.productName")}
                             </Typography>
                             <Typography variant="body2">{detail?.productName || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Created At:
+                                {t("environmentDetail.createdAt")}
                             </Typography>
                             <Typography variant="body2">{detail?.createdAt || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Created By:
+                                {t("environmentDetail.createdBy")}
                             </Typography>
                             <Typography variant="body2">{detail?.createdBy || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Ended At:
+                                {t("environmentDetail.endedAt")}
                             </Typography>
                             <Typography variant="body2">{detail?.endedAt || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Planned Ended At:
+                                {t("environmentDetail.plannedEndedAt")}
                             </Typography>
                             <Typography variant="body2">
                                 {detail?.plannedEndedAt || "\u2014"}
@@ -189,31 +191,31 @@ const EnvironmentDetailPage = () => {
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Status:
+                                {t("environmentDetail.status")}
                             </Typography>
                             <Chip
                                 size="small"
                                 color={detail?.envStatus ? "success" : "default"}
-                                label={detail?.envStatus ? "Active" : "Inactive"}
+                                label={detail?.envStatus ? t("common.active") : t("common.inactive")}
                                 onClick={() => { }}
                                 clickable={false}
                             />
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Total Orders:
+                                {t("environmentDetail.totalOrders")}
                             </Typography>
                             <Typography variant="body2">{detail?.orderTotal ?? 0}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Total Product Quantity:
+                                {t("environmentDetail.totalQuantity")}
                             </Typography>
                             <Typography variant="body2">{detail?.totalProductQuantity ?? 0}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Seller Link:
+                                {t("environmentDetail.sellerLink")}
                             </Typography>
                             {detail?.sellerLink ? (
                                 <Stack direction="row" spacing={1} alignItems="center">
@@ -223,7 +225,7 @@ const EnvironmentDetailPage = () => {
                                         rel="noopener noreferrer"
                                         underline="hover"
                                     >
-                                        Open Link
+                                        {t("environmentDetail.openLink")}
                                     </Link>
                                     <Button
                                         size="small"
@@ -233,7 +235,7 @@ const EnvironmentDetailPage = () => {
                                         }
                                         sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
-                                        {copiedKey === "sellerLink" ? "Copied!" : "Copy"}
+                                        {copiedKey === "sellerLink" ? t("common.copied") : t("common.copy")}
                                     </Button>
                                 </Stack>
                             ) : (
@@ -242,7 +244,7 @@ const EnvironmentDetailPage = () => {
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Seller Auth Link:
+                                {t("environmentDetail.sellerAuthLink")}
                             </Typography>
                             {detail?.sellerAuthLink ? (
                                 <Stack direction="row" spacing={1} alignItems="center">
@@ -252,7 +254,7 @@ const EnvironmentDetailPage = () => {
                                         rel="noopener noreferrer"
                                         underline="hover"
                                     >
-                                        Open Link
+                                        {t("environmentDetail.openLink")}
                                     </Link>
                                     <Button
                                         size="small"
@@ -262,7 +264,7 @@ const EnvironmentDetailPage = () => {
                                         }
                                         sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
-                                        {copiedKey === "sellerAuth" ? "Copied!" : "Copy"}
+                                        {copiedKey === "sellerAuth" ? t("common.copied") : t("common.copy")}
                                     </Button>
                                 </Stack>
                             ) : (
@@ -271,13 +273,13 @@ const EnvironmentDetailPage = () => {
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Seller Auth Link Expires:
+                                {t("environmentDetail.sellerAuthExpires")}
                             </Typography>
                             <Typography variant="body2">{detail?.sellerAuthLinkExpire || "\u2014"}</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Typography variant="subtitle2" sx={{ minWidth: 180 }}>
-                                Public Link:
+                                {t("environmentDetail.publicLink")}
                             </Typography>
                             {detail?.publicLink ? (
                                 <Stack direction="row" spacing={1} alignItems="center">
@@ -287,7 +289,7 @@ const EnvironmentDetailPage = () => {
                                         rel="noopener noreferrer"
                                         underline="hover"
                                     >
-                                        Open Link
+                                        {t("environmentDetail.openLink")}
                                     </Link>
                                     <Button
                                         size="small"
@@ -297,7 +299,7 @@ const EnvironmentDetailPage = () => {
                                         }
                                         sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
-                                        {copiedKey === "public" ? "Copied!" : "Copy"}
+                                        {copiedKey === "public" ? t("common.copied") : t("common.copy")}
                                     </Button>
                                 </Stack>
                             ) : (
@@ -309,8 +311,8 @@ const EnvironmentDetailPage = () => {
 
                 {detail?.productPictures && detail.productPictures.length > 0 && (
                     <SectionBlock
-                        title="Product Pictures"
-                        description="Images associated with the product in this sale environment."
+                        title={t("environmentDetail.productPictures")}
+                        description={t("environmentDetail.productPicturesDesc")}
                     >
                         <Grid container spacing={2}>
                             {detail.productPictures.map((pic, idx) => (
@@ -336,12 +338,12 @@ const EnvironmentDetailPage = () => {
                 )}
 
                 <SectionBlock
-                    title="Pricing"
-                    description="Pricing records associated with this sale environment."
+                    title={t("environmentDetail.pricing")}
+                    description={t("environmentDetail.pricingDesc")}
                 >
                     <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
                         <Typography variant="h6">
-                            Total:{" "}
+                            {t("environmentDetail.total")}{" "}
                             {detail?.totalPrice != null
                                 ? `${Number(detail.totalPrice).toLocaleString()} ${detail.currency || "VND"}`
                                 : "0 VND"}
@@ -352,17 +354,17 @@ const EnvironmentDetailPage = () => {
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Duration (hours)</TableCell>
-                                    <TableCell>Amount</TableCell>
-                                    <TableCell>Currency</TableCell>
-                                    <TableCell>Created At</TableCell>
+                                    <TableCell>{t("environmentDetail.duration")}</TableCell>
+                                    <TableCell>{t("environmentDetail.amount")}</TableCell>
+                                    <TableCell>{t("environmentDetail.currency")}</TableCell>
+                                    <TableCell>{t("environmentDetail.createdAt")}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {(!detail?.pricings || detail.pricings.length === 0) ? (
                                     <TableRow>
                                         <TableCell colSpan={4} align="center">
-                                            No pricing records.
+                                            {t("environmentDetail.noPricing")}
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -384,29 +386,29 @@ const EnvironmentDetailPage = () => {
 
                 {detail?.orders && detail.orders.length > 0 && (
                     <SectionBlock
-                        title="Orders"
-                        description="Orders placed in this sale environment."
+                        title={t("environmentDetail.orders")}
+                        description={t("environmentDetail.ordersDesc")}
                     >
                         <TableContainer>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Order ID</TableCell>
-                                        <TableCell>Ordered Time</TableCell>
-                                        <TableCell>Buyer</TableCell>
-                                        <TableCell>Amount</TableCell>
-                                        <TableCell>Unit</TableCell>
-                                        <TableCell>Delivered</TableCell>
-                                        <TableCell>Paid</TableCell>
-                                        <TableCell>Note</TableCell>
-                                        <TableCell>Seller Note</TableCell>
+                                        <TableCell>{t("environmentDetail.orderId")}</TableCell>
+                                        <TableCell>{t("environmentDetail.orderedTime")}</TableCell>
+                                        <TableCell>{t("environmentDetail.buyer")}</TableCell>
+                                        <TableCell>{t("environmentDetail.amount")}</TableCell>
+                                        <TableCell>{t("environmentDetail.unit")}</TableCell>
+                                        <TableCell>{t("environmentDetail.delivered")}</TableCell>
+                                        <TableCell>{t("environmentDetail.paid")}</TableCell>
+                                        <TableCell>{t("environmentDetail.note")}</TableCell>
+                                        <TableCell>{t("environmentDetail.sellerNote")}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {(!detail?.orders || detail.orders.length === 0) ? (
                                         <TableRow>
                                             <TableCell colSpan={9} align="center">
-                                                No order records.
+                                                {t("environmentDetail.noOrders")}
                                             </TableCell>
                                         </TableRow>
                                     ) : (
@@ -421,7 +423,7 @@ const EnvironmentDetailPage = () => {
                                                     <Chip
                                                         size="small"
                                                         color={order.delivered ? "success" : "default"}
-                                                        label={order.delivered ? "Yes" : "No"}
+                                                        label={order.delivered ? t("common.yes") : t("common.no")}
                                                         onClick={() => { }}
                                                         clickable={false}
                                                     />
@@ -430,7 +432,7 @@ const EnvironmentDetailPage = () => {
                                                     <Chip
                                                         size="small"
                                                         color={order.getMoney ? "success" : "default"}
-                                                        label={order.getMoney ? "Yes" : "No"}
+                                                        label={order.getMoney ? t("common.yes") : t("common.no")}
                                                         onClick={() => { }}
                                                         clickable={false}
                                                     />

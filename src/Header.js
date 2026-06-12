@@ -12,6 +12,7 @@ import {
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import NotificationBell from "./components/NotificationBell";
+import { useTranslation } from "react-i18next";
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
 
@@ -19,6 +20,7 @@ function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const { auth, logout, username: userName, userRole } = useAuth();
+  const { t, i18n } = useTranslation();
 
   const normalizedRole = normalizeRole(userRole);
   const isAuthenticated = Boolean(auth);
@@ -32,6 +34,10 @@ function Header() {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleLanguageChange = (lang) => {
+    i18n.changeLanguage(lang);
   };
 
   return (
@@ -81,10 +87,10 @@ function Header() {
             />
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                Public Link
+                {t("header.publicLink")}
               </Typography>
               <Typography variant="body2" color="text.secondary" noWrap>
-                Unified seller registration and order management
+                {t("header.tagline")}
               </Typography>
             </Box>
           </Stack>
@@ -95,11 +101,28 @@ function Header() {
             alignItems="center"
             justifyContent="flex-end"
             flexWrap="wrap"
-          >{isAuthenticated && location.pathname !== homeTarget && (
-            <Button component={RouterLink} to={homeTarget} variant="text">
-              Workspace
+          >
+            <Button
+              variant={i18n.language === "en" ? "contained" : "outlined"}
+              size="small"
+              onClick={() => handleLanguageChange("en")}
+              sx={{ minWidth: 40, p: 0.5 }}
+            >
+              EN
             </Button>
-          )}
+            <Button
+              variant={i18n.language === "vi" ? "contained" : "outlined"}
+              size="small"
+              onClick={() => handleLanguageChange("vi")}
+              sx={{ minWidth: 40, p: 0.5 }}
+            >
+              VI
+            </Button>
+            {isAuthenticated && location.pathname !== homeTarget && (
+              <Button component={RouterLink} to={homeTarget} variant="text">
+                {t("header.workspace")}
+              </Button>
+            )}
             {isAuthenticated && (
               <>
                 {normalizedRole === "seller" && <NotificationBell />}
@@ -115,7 +138,7 @@ function Header() {
 
             {isAuthenticated ? (
               <Button variant="contained" color="primary" onClick={handleLogout}>
-                Logout
+                {t("header.logout")}
               </Button>
             ) : (
               <Button
@@ -123,7 +146,7 @@ function Header() {
                 to="/login"
                 variant={location.pathname === "/login" ? "contained" : "outlined"}
               >
-                Login
+                {t("header.login")}
               </Button>
             )}
           </Stack>

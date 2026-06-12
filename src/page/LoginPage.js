@@ -13,6 +13,7 @@ import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
 import api from "../api";
 import JSEncrypt from "jsencrypt";
+import { useTranslation } from "react-i18next";
 
 const normalizeRole = (role) =>
   String(role || "")
@@ -31,6 +32,7 @@ const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login, logout } = useAuth();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (urlUsername) {
@@ -51,7 +53,7 @@ const LoginPage = () => {
         sessionStorage.setItem("publicKey", publicKey);
       }
       if (!publicKey || !inputUsername || !inputPassword)
-        throw new Error("Pre-login got failure!");
+        throw new Error(t("login.errors.preLogin"));
 
       const encryptor = new JSEncrypt();
       encryptor.setPublicKey(publicKey);
@@ -67,7 +69,7 @@ const LoginPage = () => {
         const authData = login(response.data);
         if (!authData) {
           logout();
-          setError("Login response is missing required authentication data.");
+          setError(t("login.errors.missingAuth"));
           return;
         }
         const primaryRole = normalizeRole(authData?.userRole);
@@ -83,7 +85,7 @@ const LoginPage = () => {
         }
       } else {
         logout();
-        setError("You don't have permission to log in.");
+        setError(t("login.errors.noPermission"));
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -91,16 +93,14 @@ const LoginPage = () => {
         if (err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else if (err.response.status === 401 || err.response.status === 403) {
-          setError("Wrong username/password.");
+          setError(t("login.errors.wrongCredentials"));
         } else {
-          setError("An unexpected error occurred during login.");
+          setError(t("login.errors.unexpected"));
         }
       } else if (err.request) {
-        setError(
-          "No response from server. Please check your network connection."
-        );
+        setError(t("login.errors.noResponse"));
       } else {
-        setError("Error setting up the login request.");
+        setError(t("login.errors.setupError"));
       }
     } finally {
       setSubmitting(false);
@@ -119,9 +119,9 @@ const LoginPage = () => {
       <CardWrapper sx={{ width: "100%" }}>
         <Stack spacing={3}>
           <Stack spacing={1}>
-            <Typography variant="h3">Login</Typography>
+            <Typography variant="h3">{t("login.title")}</Typography>
             <Typography variant="body1" color="text.secondary">
-              Sign in to manage seller onboarding and public order links.
+              {t("login.subtitle")}
             </Typography>
           </Stack>
 
@@ -130,7 +130,7 @@ const LoginPage = () => {
           <Box component="form" onSubmit={handleLogin}>
             <Stack spacing={2}>
               <TextField
-                label="Username"
+                label={t("login.username")}
                 type="text"
                 value={inputUsername}
                 disabled={Boolean(urlUsername)}
@@ -138,7 +138,7 @@ const LoginPage = () => {
                 required
               />
               <TextField
-                label="Password"
+                label={t("login.password")}
                 type="password"
                 value={inputPassword}
                 onChange={(event) => setInputPassword(event.target.value)}
@@ -150,7 +150,7 @@ const LoginPage = () => {
                   color="text.secondary"
                   sx={{ fontStyle: "italic" }}
                 >
-                  Request ID: {requestUuid}
+                  {t("login.requestId")}: {requestUuid}
                 </Typography>
               )}
               <Button
@@ -159,7 +159,7 @@ const LoginPage = () => {
                 size="large"
                 disabled={submitting}
               >
-                Log in
+                {t("login.loginButton")}
               </Button>
             </Stack>
           </Box>

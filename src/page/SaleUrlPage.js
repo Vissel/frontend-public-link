@@ -9,9 +9,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import {pubApi} from "../api";
+import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
+import { useTranslation } from "react-i18next";
 
 const SaleEnvPage = () => {
   const location = useLocation();
@@ -23,10 +24,11 @@ const SaleEnvPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!requestUuid) {
-      setError("Missing request UUID.");
+      setError(t("saleUrl.errors.missingUuid"));
       setLoading(false);
       return;
     }
@@ -41,7 +43,7 @@ const SaleEnvPage = () => {
         console.error("Failed to fetch sale URL:", err);
         setError(
           err?.response?.data?.message ||
-          "Unable to load sale information."
+          t("saleUrl.errors.unableToLoad")
         );
         setLoading(false);
       });
@@ -82,7 +84,7 @@ const SaleEnvPage = () => {
         >
           <CircularProgress size={20} />
           <Typography variant="body2" color="text.secondary">
-            Loading...
+            {t("common.loading")}
           </Typography>
         </Stack>
       </PageContainer>
@@ -99,10 +101,10 @@ const SaleEnvPage = () => {
               sx={{ alignSelf: "flex-start", p: 0, textTransform: "none" }}
               onClick={() => navigate("/sellerHome")}
             >
-              ← Seller home page
+              {t("saleUrl.backToSellerHome")}
             </Button>
             <Alert severity="error">
-              {error || "Sale information not found."}
+              {error || t("saleUrl.errors.notFound")}
             </Alert>
           </Stack>
         </CardWrapper>
@@ -119,11 +121,11 @@ const SaleEnvPage = () => {
             sx={{ alignSelf: "flex-start", p: 0, textTransform: "none" }}
             onClick={() => navigate("/sellerHome")}
           >
-            ← Seller home page
+            {t("saleUrl.backToSellerHome")}
           </Button>
 
           <TextField
-            label="Seller Name"
+            label={t("saleUrl.sellerName")}
             value={saleData.sellerName || ""}
             slotProps={{ input: { readOnly: true } }}
             variant="outlined"
@@ -131,7 +133,7 @@ const SaleEnvPage = () => {
           />
 
           <TextField
-            label="Public Link"
+            label={t("saleUrl.publicLink")}
             value={saleData.publicLink || ""}
             slotProps={{
               input: {
@@ -143,7 +145,7 @@ const SaleEnvPage = () => {
                     onClick={handleCopy}
                     sx={{ minWidth: 80, mr: -0.5 }}
                   >
-                    {copied ? "Copied!" : "Copy"}
+                    {copied ? t("common.copied") : t("common.copy")}
                   </Button>
                 ),
               },
@@ -153,8 +155,8 @@ const SaleEnvPage = () => {
           />
 
           <TextField
-            label="Environment State"
-            value={saleData.envState ? "Active" : "Inactive"}
+            label={t("saleUrl.environmentState")}
+            value={saleData.envState ? t("common.active") : t("common.inactive")}
             slotProps={{ input: { readOnly: true } }}
             variant="outlined"
             fullWidth

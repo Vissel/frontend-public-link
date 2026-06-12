@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Chip, Stack, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 const parseRemaining = (targetDate) => {
     const diff = new Date(targetDate).getTime() - Date.now();
@@ -25,8 +26,8 @@ const URGENCY_STYLES = {
     expired: { bg: "#f5f5f5", color: "#9e9e9e", icon: "\u2716" },
 };
 
-const formatCountdown = (remaining) => {
-    if (!remaining) return "Expired";
+const formatCountdown = (remaining, t) => {
+    if (!remaining) return t("countdown.expired");
     const { days, hours, minutes, seconds } = remaining;
     const parts = [];
     if (days > 0) parts.push(`${days}d`);
@@ -42,6 +43,7 @@ const formatCountdown = (remaining) => {
  */
 export function CountdownBadge({ targetDate }) {
     const [remaining, setRemaining] = useState(() => parseRemaining(targetDate));
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!targetDate) return;
@@ -88,7 +90,7 @@ export function CountdownBadge({ targetDate }) {
                     letterSpacing: 0.3,
                 }}
             >
-                {formatCountdown(remaining)}
+                {formatCountdown(remaining, t)}
             </Typography>
         </Stack>
     );
@@ -99,6 +101,7 @@ export function CountdownBadge({ targetDate }) {
  */
 export function CountdownChip({ targetDate }) {
     const [remaining, setRemaining] = useState(() => parseRemaining(targetDate));
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (!targetDate) return;
@@ -121,7 +124,7 @@ export function CountdownChip({ targetDate }) {
             {...(style.icon ? { icon: <span style={{ fontSize: 16 }}>{style.icon}</span> } : {})}
             label={
                 <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-                    {formatCountdown(remaining)}
+                    {formatCountdown(remaining, t)}
                 </span>
             }
             size="small"

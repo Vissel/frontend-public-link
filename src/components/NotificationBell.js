@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { pubApi } from "../api";
 import { useAuth } from "../AuthContext";
+import { useTranslation } from "react-i18next";
 
 const BellSvgIcon = (props) => (
     <SvgIcon {...props} viewBox="0 0 24 24">
@@ -33,17 +34,17 @@ const truncate = (text, maxLen) => {
     return text.length > maxLen ? text.slice(0, maxLen) + "..." : text;
 };
 
-const formatTime = (dateStr) => {
+const formatTime = (dateStr, t) => {
     if (!dateStr) return "";
     try {
         const d = new Date(dateStr);
         const now = new Date();
         const diffMs = now - d;
         const diffMin = Math.floor(diffMs / 60000);
-        if (diffMin < 1) return "Just now";
-        if (diffMin < 60) return `${diffMin}m ago`;
+        if (diffMin < 1) return t("notificationBell.justNow");
+        if (diffMin < 60) return t("notificationBell.minutesAgo", { count: diffMin });
         const diffHr = Math.floor(diffMin / 60);
-        if (diffHr < 24) return `${diffHr}h ago`;
+        if (diffHr < 24) return t("notificationBell.hoursAgo", { count: diffHr });
         return d.toLocaleDateString();
     } catch {
         return dateStr;
@@ -57,6 +58,7 @@ const NotificationBell = () => {
     const [previewItems, setPreviewItems] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const { t } = useTranslation();
 
     const fetchUnreadCount = useCallback(async () => {
         if (!username) return;
@@ -101,16 +103,13 @@ const NotificationBell = () => {
 
     const handleNotificationClick = async (notification) => {
         setAnchorEl(null);
-        // Open dialog immediately with preview data
         setSelectedNotification(notification);
         setDialogOpen(true);
         try {
             const res = await pubApi.get(`/api/v1/seller/notifications/${notification.id}`, {
                 headers: { "X-User-ID": username },
             });
-            // Update with full detail (includes sender info)
             setSelectedNotification(res.data);
-            // Update unread count after reading
             fetchUnreadCount();
         } catch (err) {
             console.error("Failed to load notification detail", err);
@@ -139,8 +138,8 @@ const NotificationBell = () => {
             <IconButton
                 onClick={handleBellClick}
                 size="small"
-                aria-label="Notifications"
-                title="Notifications"
+                aria-label={t("notificationBell.notifications")}
+                title={t("notificationBell.notifications")}
             >
                 <Badge badgeContent={unreadCount > 0 ? unreadCount : 0} color="error">
                     <BellSvgIcon />
@@ -163,7 +162,7 @@ const NotificationBell = () => {
                 <Stack sx={{ p: 2, pb: 1 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                            Notifications
+                            {t("notificationBell.notifications")}
                         </Typography>
                         {unreadCount > 0 && (
                             <Link
@@ -172,7 +171,7 @@ const NotificationBell = () => {
                                 onClick={handleMarkAllAsRead}
                                 underline="hover"
                             >
-                                Mark all as read
+                                {t("notificationBell.markAllAsRead")}
                             </Link>
                         )}
                     </Stack>
@@ -182,7 +181,7 @@ const NotificationBell = () => {
                     {previewItems.length === 0 ? (
                         <Box sx={{ p: 3, textAlign: "center" }}>
                             <Typography variant="body2" color="text.secondary">
-                                No notifications yet.
+                                {t("notificationBell.noNotifications")}
                             </Typography>
                         </Box>
                     ) : (
@@ -229,10 +228,10 @@ const NotificationBell = () => {
                                                 </Typography>
                                                 <Stack direction="row" justifyContent="space-between">
                                                     <Typography variant="caption" color="text.disabled">
-                                                        {item.senderName || "Admin"}
+                                                        {item.senderName || t("notificationBell.admin")}
                                                     </Typography>
                                                     <Typography variant="caption" color="text.disabled">
-                                                        {formatTime(item.createdAt)}
+                                                        {formatTime(item.createdAt, t)}
                                                     </Typography>
                                                 </Stack>
                                             </Stack>
@@ -276,7 +275,7 @@ const NotificationBell = () => {
                                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                                     <Stack spacing={0.25}>
                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                            From: {selectedNotification.senderName || "Admin"}
+                                            {t("notificationBell.from")} {selectedNotification.senderName || t("notificationBell.admin")}
                                         </Typography>
                                         {selectedNotification.senderEmail && (
                                             <Typography variant="caption" color="text.secondary">
@@ -291,7 +290,7 @@ const NotificationBell = () => {
                                 </Stack>
                                 {selectedNotification.requestUuid && (
                                     <Typography variant="caption" color="text.secondary">
-                                        Environment: {selectedNotification.requestUuid.slice(-6)}
+                                        {t("notificationBell.environment")} {selectedNotification.requestUuid.slice(-6)}
                                     </Typography>
                                 )}
                                 <Divider />

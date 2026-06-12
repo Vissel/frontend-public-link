@@ -32,6 +32,7 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
+import { useTranslation } from "react-i18next";
 
 const MAX_IMAGES = 6;
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB (base64 adds ~33% overhead)
@@ -56,6 +57,7 @@ const PublinkPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const { userRole } = useAuth();
+    const { t } = useTranslation();
 
     // Order form state
     const [buyerName, setBuyerName] = useState("");
@@ -87,7 +89,7 @@ const PublinkPage = () => {
 
     useEffect(() => {
         if (!token) {
-            setError("Missing token parameter.");
+            setError(t("publink.errors.missingToken"));
             setLoading(false);
             return;
         }
@@ -102,7 +104,7 @@ const PublinkPage = () => {
                 console.error("Failed to fetch sale space:", err);
                 setError(
                     err?.response?.data?.message ||
-                    "Unable to load sale space. The link may be invalid or expired."
+                    t("publink.errors.unableToLoad")
                 );
                 setLoading(false);
             });
@@ -130,7 +132,7 @@ const PublinkPage = () => {
 
             const response = await pubApi.post("/api/v1/publish/order", orderRequest);
             if (response.status === 200) {
-                setOrderSuccess("Order placed successfully!");
+                setOrderSuccess(t("publink.success.orderPlaced"));
                 setBuyerName("");
                 setOrderAmount(1);
                 setOrderNote("");
@@ -143,7 +145,7 @@ const PublinkPage = () => {
         } catch (err) {
             console.error("Order failed:", err);
             setError(
-                err?.response?.data?.message || "Failed to place order. Please try again."
+                err?.response?.data?.message || t("publink.errors.orderFailed")
             );
         } finally {
             setSubmitting(false);
@@ -200,7 +202,7 @@ const PublinkPage = () => {
 
     const handleSaveProduct = async () => {
         if (!editForm.productName.trim()) {
-            setSaveError("Product name is required.");
+            setSaveError(t("publink.errors.productNameRequired"));
             return;
         }
         setSaving(true);
@@ -246,7 +248,7 @@ const PublinkPage = () => {
             }
 
             await pubApi.post("/api/v1/seller/product/update", payload);
-            setSaveSuccess("Product updated successfully!");
+            setSaveSuccess(t("publink.success.productUpdated"));
             await refreshSaleSpace();
             // Update the editProduct with refreshed data
             const refreshed = saleSpace.listProduct?.find(
@@ -263,7 +265,7 @@ const PublinkPage = () => {
         } catch (err) {
             console.error("Update product failed:", err);
             setSaveError(
-                err?.response?.data || "Failed to update product. Please try again."
+                err?.response?.data || t("publink.errors.updateFailed")
             );
         } finally {
             setSaving(false);
@@ -327,16 +329,16 @@ const PublinkPage = () => {
         const totalImages = existingPics.length + newImageFiles.length;
 
         if (totalImages + files.length > MAX_IMAGES) {
-            setImageError(`You can have up to ${MAX_IMAGES} images total.`);
+            setImageError(`${t("publink.errors.maxImages")}`);
             return;
         }
         for (const file of files) {
             if (!ALLOWED_TYPES.includes(file.type)) {
-                setImageError("Only JPEG, PNG, and WebP images are allowed.");
+                setImageError(t("publink.errors.fileType"));
                 return;
             }
             if (file.size > MAX_FILE_SIZE_BYTES) {
-                setImageError("Each image must be under 1 MB.");
+                setImageError(t("publink.errors.fileSize"));
                 return;
             }
         }
@@ -371,7 +373,7 @@ const PublinkPage = () => {
                 >
                     <CircularProgress size={20} />
                     <Typography variant="body2" color="text.secondary">
-                        Loading...
+                        {t("common.loading")}
                     </Typography>
                 </Stack>
             </PageContainer>
@@ -383,7 +385,7 @@ const PublinkPage = () => {
             <PageContainer maxWidth="sm">
                 <CardWrapper>
                     <Alert severity="error">
-                        {error || "Sale space not found or link is invalid."}
+                        {error || t("publink.errors.notFound")}
                     </Alert>
                 </CardWrapper>
             </PageContainer>
@@ -425,23 +427,23 @@ const PublinkPage = () => {
             <Stack spacing={3}>
                 {/* Header */}
                 <SectionBlock
-                    title={"Sale Space " + saleSpace.sellerFullName || ""}
+                    title={`${t("publink.saleSpace")} ${saleSpace.sellerFullName || ""}`}
                     description={
                         isSeller
-                            ? "Seller view — manage orders and products."
-                            : "Browse products and place your order."
+                            ? t("publink.sellerView")
+                            : t("publink.buyerView")
                     }
                     action={
                         isSeller ? (
                             <Button variant="contained" color="success" onClick={exportToExcel}>
-                                Export Excel
+                                {t("publink.exportExcel")}
                             </Button>
                         ) : null
                     }
                 >
                     <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
                         <Chip
-                            label={isSeller ? "Seller View" : "Buyer View"}
+                            label={isSeller ? t("publink.sellerViewLabel") : t("publink.buyerViewLabel")}
                             color={isSeller ? "primary" : "default"}
                             variant="outlined"
                             size="small"
@@ -450,7 +452,7 @@ const PublinkPage = () => {
                         />
                         {saleSpace.envState && (
                             <Chip
-                                label={saleSpace.envState === "ACTIVE" ? "Active" : "Inactive"}
+                                label={saleSpace.envState === "ACTIVE" ? t("common.active") : t("common.inactive")}
                                 color={saleSpace.envState === "ACTIVE" ? "success" : "default"}
                                 size="small"
                                 onClick={() => { }}
@@ -464,17 +466,17 @@ const PublinkPage = () => {
                     <Stack spacing={0.5} sx={{ mt: 1 }}>
                         {saleSpace.createdAt && (
                             <Typography variant="caption" color="text.secondary">
-                                Created: {saleSpace.createdAt}
+                                {t("publink.created")} {saleSpace.createdAt}
                             </Typography>
                         )}
                         {saleSpace.endedAt && (
                             <Typography variant="caption" color="text.secondary">
-                                Will Ended: {saleSpace.endedAt}
+                                {t("publink.willEnded")} {saleSpace.endedAt}
                             </Typography>
                         )}
                         {saleSpace.plannedEndedAt && (
                             <Typography variant="caption" color="text.secondary">
-                                Planned Ended At: {saleSpace.plannedEndedAt}
+                                {t("publink.plannedEndedAt")} {saleSpace.plannedEndedAt}
                             </Typography>
                         )}
                     </Stack>
@@ -483,11 +485,11 @@ const PublinkPage = () => {
                 {/* Products */}
                 {saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
                     <SectionBlock
-                        title="Products"
+                        title={t("publink.products")}
                         description={
                             isSeller
-                                ? "Tap edit to modify product details."
-                                : "Available items for purchase."
+                                ? t("publink.productsSellerDesc")
+                                : t("publink.productsBuyerDesc")
                         }
                     >
                         <Grid container spacing={2}>
@@ -523,23 +525,23 @@ const PublinkPage = () => {
                                                 </Stack>
                                             )}
                                             <Typography variant="subtitle1" fontWeight="bold">
-                                                {product.productName || `Product ${idx + 1}`}
+                                                {product.productName || `${t("publink.products")} ${idx + 1}`}
                                             </Typography>
                                             <Stack spacing={0.5} sx={{ mt: 1 }}>
                                                 {product.price != null && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Price: {product.price.toLocaleString()}{" "}
+                                                        {t("publink.price")} {product.price.toLocaleString()}{" "}
                                                         {product.unit || "VND"}
                                                     </Typography>
                                                 )}
                                                 {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Total amount: {product.total_amount}
+                                                        {t("publink.totalAmount")} {product.total_amount}
                                                     </Typography>
                                                 )}
                                                 {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        Available amount: {product.total_amount - product.amount}
+                                                        {t("publink.availableAmount")} {product.total_amount - product.amount}
                                                     </Typography>
                                                 )}
                                             </Stack>
@@ -553,7 +555,7 @@ const PublinkPage = () => {
                                                     onClick={() => handleOpenEdit(product)}
                                                     sx={{ borderRadius: 2 }}
                                                 >
-                                                    Edit Product
+                                                    {t("publink.editProduct")}
                                                 </Button>
                                             </Box>
                                         )}
@@ -567,20 +569,20 @@ const PublinkPage = () => {
                 {/* Seller/Admin: Orders Table */}
                 {canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
                     <SectionBlock
-                        title="Orders"
-                        description="Customer orders for your products."
+                        title={t("publink.orders")}
+                        description={t("publink.ordersDesc")}
                     >
                         <TableContainer>
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Time</TableCell>
-                                        <TableCell>Buyer</TableCell>
-                                        <TableCell>Amount</TableCell>
-                                        <TableCell>Note</TableCell>
-                                        <TableCell>Delivered</TableCell>
-                                        <TableCell>Paid</TableCell>
-                                        <TableCell>Seller Note</TableCell>
+                                        <TableCell>{t("publink.time")}</TableCell>
+                                        <TableCell>{t("publink.buyer")}</TableCell>
+                                        <TableCell>{t("publink.amount")}</TableCell>
+                                        <TableCell>{t("publink.note")}</TableCell>
+                                        <TableCell>{t("publink.delivered")}</TableCell>
+                                        <TableCell>{t("publink.paid")}</TableCell>
+                                        <TableCell>{t("publink.sellerNote")}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -594,7 +596,7 @@ const PublinkPage = () => {
                                             <TableCell>{order.note || "—"}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={order.delivered ? "Yes" : "No"}
+                                                    label={order.delivered ? t("common.yes") : t("common.no")}
                                                     color={order.delivered ? "success" : "default"}
                                                     size="small"
                                                     clickable={canManageOrders}
@@ -607,7 +609,7 @@ const PublinkPage = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={order.getMoney ? "Yes" : "No"}
+                                                    label={order.getMoney ? t("common.yes") : t("common.no")}
                                                     color={order.getMoney ? "success" : "default"}
                                                     size="small"
                                                     clickable={canManageOrders}
@@ -703,7 +705,7 @@ const PublinkPage = () => {
                             color="text.secondary"
                             sx={{ textAlign: "center", py: 2 }}
                         >
-                            No orders yet. Share the public link with buyers.
+                            {t("publink.noOrders")}
                         </Typography>
                     </CardWrapper>
                 )}
@@ -711,14 +713,14 @@ const PublinkPage = () => {
                 {/* Buyer: Order Form */}
 
                 <SectionBlock
-                    title="Place an Order"
-                    description="Fill in your details to place an order."
+                    title={t("publink.placeOrder")}
+                    description={t("publink.placeOrderDesc")}
                 >
                     {orderSuccess && <Alert severity="success">{orderSuccess}</Alert>}
                     <Box component="form" onSubmit={handlePlaceOrder}>
                         <Stack spacing={2}>
                             <TextField
-                                label="Your Name"
+                                label={t("publink.yourName")}
                                 type="text"
                                 value={buyerName}
                                 onChange={(e) => setBuyerName(e.target.value)}
@@ -726,7 +728,7 @@ const PublinkPage = () => {
                                 fullWidth
                             />
                             <TextField
-                                label="Amount"
+                                label={t("publink.amount")}
                                 type="number"
                                 value={orderAmount}
                                 onChange={(e) => setOrderAmount(parseInt(e.target.value, 10) || 1)}
@@ -734,7 +736,7 @@ const PublinkPage = () => {
                                 fullWidth
                             />
                             <TextField
-                                label="Note (optional)"
+                                label={t("publink.noteOptional")}
                                 type="text"
                                 value={orderNote}
                                 onChange={(e) => setOrderNote(e.target.value)}
@@ -749,7 +751,7 @@ const PublinkPage = () => {
                                 disabled={submitting || !buyerName}
                                 sx={{ alignSelf: "flex-start" }}
                             >
-                                {submitting ? "Placing Order..." : "Place Order"}
+                                {submitting ? t("publink.placingOrder") : t("publink.placeOrderButton")}
                             </Button>
                         </Stack>
                     </Box>
@@ -765,21 +767,21 @@ const PublinkPage = () => {
                 fullWidth
             >
                 <DialogTitle sx={{ pb: 1 }}>
-                    Edit Product
+                    {t("publink.editProductTitle")}
                 </DialogTitle>
                 <DialogContent dividers>
                     <Stack spacing={2.5} sx={{ pt: 1 }}>
                         {saveError && <Alert severity="error">{saveError}</Alert>}
                         {saveSuccess && <Alert severity="success">{saveSuccess}</Alert>}
                         <TextField
-                            label="Product Name"
+                            label={t("publink.productName")}
                             value={editForm.productName || ""}
                             onChange={handleEditField("productName")}
                             required
                             fullWidth
                         />
                         <TextField
-                            label="Price"
+                            label={t("publink.price")}
                             type="number"
                             value={editForm.price ?? 0}
                             onChange={handleEditField("price")}
@@ -787,14 +789,14 @@ const PublinkPage = () => {
                             fullWidth
                         />
                         <TextField
-                            label="Unit"
+                            label={t("publink.unit")}
                             value={editForm.unit || ""}
                             onChange={handleEditField("unit")}
-                            placeholder="e.g. VND, kg, pcs"
+                            placeholder={t("publink.unitPlaceholder")}
                             fullWidth
                         />
                         <TextField
-                            label="Total Available"
+                            label={t("publink.totalAvailable")}
                             type="number"
                             value={editForm.amount ?? 0}
                             onChange={handleEditField("amount")}
@@ -813,10 +815,10 @@ const PublinkPage = () => {
                         {/* Image Management */}
                         <Stack spacing={1.5}>
                             <Typography variant="subtitle2">
-                                Images ({existingPics.length + newImageFiles.length}/{MAX_IMAGES})
+                                {t("publink.images")} ({existingPics.length + newImageFiles.length}/{MAX_IMAGES})
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                JPEG, PNG, WebP — max 1 MB each.
+                                {t("publink.imagesNote")}
                             </Typography>
 
                             {imageError && (
@@ -827,7 +829,7 @@ const PublinkPage = () => {
 
                             {existingPics.length + newImageFiles.length < MAX_IMAGES && (
                                 <Button component="label" variant="outlined" size="small" sx={{ alignSelf: "flex-start" }}>
-                                    Add images
+                                    {t("publink.addImages")}
                                     <Box
                                         component="input"
                                         hidden
@@ -936,14 +938,14 @@ const PublinkPage = () => {
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
                     <Button onClick={handleCloseEdit} disabled={saving}>
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button
                         onClick={handleSaveProduct}
                         variant="contained"
                         disabled={saving}
                     >
-                        {saving ? "Saving..." : "Save Changes"}
+                        {saving ? t("publink.saving") : t("publink.saveChanges")}
                     </Button>
                 </DialogActions>
             </Dialog>

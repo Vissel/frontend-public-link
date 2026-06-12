@@ -22,6 +22,7 @@ import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
+import { useTranslation } from "react-i18next";
 
 const DEFAULT_ROWS_PER_PAGE = 10;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
@@ -38,6 +39,7 @@ const SellerHome = () => {
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [total, setTotal] = useState(0);
   const frontendOrigin = window.location.origin;
+  const { t } = useTranslation();
 
   const fallbackCopy = (text, onDone) => {
     const textArea = document.createElement("textarea");
@@ -205,7 +207,7 @@ const SellerHome = () => {
         console.error("Seller data fetch failed:", err);
         setError(
           err?.response?.data?.message ||
-          "Unable to load seller information."
+          t("sellerHome.errors.unableToLoad")
         );
       } finally {
         setLoading(false);
@@ -227,7 +229,7 @@ const SellerHome = () => {
         >
           <CircularProgress size={20} />
           <Typography variant="body2" color="text.secondary">
-            Loading...
+            {t("common.loading")}
           </Typography>
         </Stack>
       </PageContainer>
@@ -237,7 +239,7 @@ const SellerHome = () => {
   if (error) {
     return (
       <PageContainer maxWidth="md">
-        <SectionBlock title="Seller Home" description="Unable to load seller data.">
+        <SectionBlock title={t("sellerHome.title")} description={t("sellerHome.errors.loadFailed")}>
           <Alert severity="error">{error}</Alert>
         </SectionBlock>
       </PageContainer>
@@ -248,23 +250,23 @@ const SellerHome = () => {
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
         <SectionBlock
-          title="Seller Home"
-          description="Your seller profile and sale environments."
+          title={t("sellerHome.title")}
+          description={t("sellerHome.subtitle")}
         >
           <Stack spacing={2}>
             {sellerInfo && (
               <Stack spacing={1}>
                 <Typography variant="h5">
-                  Welcome,
+                  {t("sellerHome.welcome")}
                   {" "}{sellerInfo.name || sellerInfo.username || username}
                 </Typography>
                 <Stack direction="row" spacing={2} flexWrap="wrap">
                   <Typography variant="body2" color="text.secondary">
-                    Username: {sellerInfo.username}
+                    {t("sellerHome.username")} {sellerInfo.username}
                   </Typography>
                   {sellerInfo.email && (
                     <Typography variant="body2" color="text.secondary">
-                      Email: {sellerInfo.email}
+                      {t("sellerHome.email")} {sellerInfo.email}
                     </Typography>
                   )}
                   {sellerInfo.role && (
@@ -282,25 +284,24 @@ const SellerHome = () => {
             )}
             {!sellerInfo && username && (
               <Typography variant="h5">
-                Welcome, {username}
+                {t("sellerHome.welcome")} {username}
               </Typography>
             )}
             <Typography variant="body1" color="text.secondary">
-              Use the public link provided to manage customer orders from mobile or
-              desktop.
+              {t("sellerHome.usePublicLink")}
             </Typography>
           </Stack>
         </SectionBlock>
 
         {(saleEnvs.length > 0 || total > 0) && (
           <SectionBlock
-            title="Sale Environments"
-            description="Your active and past sale environments."
+            title={t("sellerHome.saleEnvironments")}
+            description={t("sellerHome.saleEnvironmentsDesc")}
           >
             <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
               <TextField
                 size="small"
-                placeholder="Search by Product Name"
+                placeholder={t("sellerHome.searchByProduct")}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 sx={{ minWidth: 250 }}
@@ -310,10 +311,10 @@ const SellerHome = () => {
                 onClick={handleExportAll}
                 sx={{ whiteSpace: "nowrap" }}
               >
-                Export All
+                {t("sellerHome.exportAll")}
               </Button>
               <Typography variant="body2" color="text.secondary" sx={{ ml: "auto", whiteSpace: "nowrap" }}>
-                Total: {total} | Displaying: {saleEnvs.filter((env) =>
+                {t("sellerHome.total")} {total} | {t("sellerHome.displaying")} {saleEnvs.filter((env) =>
                   !searchText ||
                   (env.productName || "").toLowerCase().includes(searchText.toLowerCase())
                 ).length}
@@ -323,15 +324,15 @@ const SellerHome = () => {
               <Table size="small" sx={{ minWidth: 1100 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Request UUID</TableCell>
-                    <TableCell>Product Name</TableCell>
-                    <TableCell>Link</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Created At</TableCell>
-                    <TableCell>Ended At</TableCell>
-                    <TableCell>Planned Ended At</TableCell>
-                    <TableCell>Order Num/Total</TableCell>
-                    <TableCell>Export</TableCell>
+                    <TableCell>{t("sellerHome.requestUuid")}</TableCell>
+                    <TableCell>{t("sellerHome.productName")}</TableCell>
+                    <TableCell>{t("sellerHome.link")}</TableCell>
+                    <TableCell>{t("sellerHome.status")}</TableCell>
+                    <TableCell>{t("sellerHome.createdAt")}</TableCell>
+                    <TableCell>{t("sellerHome.endedAt")}</TableCell>
+                    <TableCell>{t("sellerHome.plannedEndedAt")}</TableCell>
+                    <TableCell>{t("sellerHome.orderNumTotal")}</TableCell>
+                    <TableCell>{t("sellerHome.export")}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -371,7 +372,7 @@ const SellerHome = () => {
                                 }}
                               >
                                 {copiedKey === `uuid-${uuid}`
-                                  ? "Copied!"
+                                  ? t("common.copied")
                                   : last4}
                               </a>
                             ) : "\u2014"}
@@ -414,8 +415,8 @@ const SellerHome = () => {
                                 >
                                   {copiedKey ===
                                     `pub-${env.requestUUID || idx}`
-                                    ? "Copied!"
-                                    : "Copy"}
+                                    ? t("common.copied")
+                                    : t("common.copy")}
                                 </Button>
                               </Stack>
                             ) : (
@@ -424,7 +425,7 @@ const SellerHome = () => {
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={env.envStatus ? "Active" : "Inactive"}
+                              label={env.envStatus ? t("common.active") : t("common.inactive")}
                               size="small"
                               color={env.envStatus ? "success" : "default"}
                               onClick={() => { }}
@@ -450,7 +451,7 @@ const SellerHome = () => {
                               variant="outlined"
                               sx={{ minWidth: 60, fontSize: "0.7rem" }}
                             >
-                              Excel
+                              {t("sellerHome.excel")}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -477,7 +478,7 @@ const SellerHome = () => {
         {saleEnvs.length === 0 && total === 0 && (
           <CardWrapper>
             <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 3 }}>
-              No sale environments found. Contact an administrator to set up your public link.
+              {t("sellerHome.noEnvironments")}
             </Typography>
           </CardWrapper>
         )}

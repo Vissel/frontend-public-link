@@ -25,6 +25,7 @@ import { useNavigate } from "react-router-dom";
 import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
+import { useTranslation } from "react-i18next";
 
 const SaleEnvPage = () => {
   const location = useLocation();
@@ -48,6 +49,7 @@ const SaleEnvPage = () => {
   const isSeller =
     String(userRole || "").toLowerCase() === "seller" &&
     saleEnv.sellerName === userName;
+  const { t } = useTranslation();
 
   const totalAmount = isSeller
     ? orderList.reduce((sum, item) => sum + Number(item.amount || 0), 0)
@@ -66,7 +68,7 @@ const SaleEnvPage = () => {
     if (!buyer.trim() || !amount) {
       setFeedback({
         severity: "error",
-        message: "Apartment and amount are required before placing an order.",
+        message: t("publish.errors.buyerAmountRequired"),
       });
       return;
     }
@@ -88,14 +90,14 @@ const SaleEnvPage = () => {
         setNote("");
         setFeedback({
           severity: "success",
-          message: "Order created successfully.",
+          message: t("publish.success.orderCreated"),
         });
       }
     } catch (requestError) {
       console.error(requestError);
       setError(
         requestError?.response?.data?.message ||
-          "Unable to submit the order right now."
+          t("publish.errors.submitOrderFailed")
       );
     } finally {
       setSubmittingOrder(false);
@@ -122,7 +124,7 @@ const SaleEnvPage = () => {
           console.error("Sale environment fetch failed:", e);
           setError(
             e?.response?.data?.message ||
-              "Unable to load the public order environment."
+              t("publish.errors.loadFailed")
           );
         } finally {
           setLoading(false);
@@ -131,7 +133,7 @@ const SaleEnvPage = () => {
 
       fetchData();
     } else {
-      setError("Missing public link token.");
+      setError(t("publish.errors.missingToken"));
     }
   }, [paramValue, navigate]);
 
@@ -149,9 +151,7 @@ const SaleEnvPage = () => {
         orderPayload
       );
       if (response.status !== 200) throw new Error("Update delivery failed");
-      // additional response like link is closed.
 
-      // Update the list immutably
       setOrderList((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, delivered: response.data } : item
@@ -161,7 +161,7 @@ const SaleEnvPage = () => {
       console.error(err);
       setFeedback({
         severity: "error",
-        message: "Failed to update delivery status.",
+        message: t("publish.errors.deliveryUpdateFailed"),
       });
     }
   };
@@ -180,9 +180,7 @@ const SaleEnvPage = () => {
         orderPayload
       );
       if (response.status !== 200) throw new Error("Update getmoney failed");
-      // additional response like link is closed.
 
-      // Update the list immutably
       setOrderList((prev) =>
         prev.map((item, i) =>
           i === index ? { ...item, getMoney: response.data } : item
@@ -192,7 +190,7 @@ const SaleEnvPage = () => {
       console.error(err);
       setFeedback({
         severity: "error",
-        message: "Failed to update payment status.",
+        message: t("publish.errors.paymentUpdateFailed"),
       });
     }
   };
@@ -233,7 +231,7 @@ const SaleEnvPage = () => {
         console.error(err);
         setFeedback({
           severity: "error",
-          message: "Failed to save seller note.",
+          message: t("publish.errors.noteSaveFailed"),
         });
       }
     }, 500);
@@ -241,13 +239,13 @@ const SaleEnvPage = () => {
 
   const exportToExcel = () => {
     const worksheetData = orderList.map((order) => ({
-      "Thời gian order": order.orderedTime,
-      "Căn hô": order.buyer,
-      "Số lương": order.amount,
-      "Order note": order.note,
-      Giao: order.delivered ? "Có" : "Chưa",
-      "Thu tiền": order.getMoney ? "Có" : "Chưa",
-      "Ghi chú": order.sellerNote,
+      [t("publish.excel.orderTime")]: order.orderedTime,
+      [t("publish.excel.apartment")]: order.buyer,
+      [t("publish.excel.quantity")]: order.amount,
+      [t("publish.excel.orderNote")]: order.note,
+      [t("publish.excel.delivered")]: order.delivered ? t("common.yes") : t("common.no"),
+      [t("publish.excel.paid")]: order.getMoney ? t("common.yes") : t("common.no"),
+      [t("publish.excel.note")]: order.sellerNote,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
@@ -265,7 +263,7 @@ const SaleEnvPage = () => {
 
     saveAs(
       blob,
-      `Thống kê đơn hàng-${saleEnv.sellerName}-${
+      `${t("publish.excel.fileName")}-${saleEnv.sellerName}-${
         saleEnv.productName
       }-${new Date().toISOString().slice(0, 10)}.xlsx`
     );
@@ -275,14 +273,15 @@ const SaleEnvPage = () => {
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
         <SectionBlock
-          title={`Trang đặt hàng: ${saleEnv.productName || "Sản phẩm"} của ${
-            saleEnv.sellerName || "người bán"
-          }`}
-          description="Public ordering and seller follow-up now share a single MUI-first layout with mobile-safe spacing and table scrolling."
+          title={t("publish.title", {
+            product: saleEnv.productName || t("publish.defaultProduct"),
+            seller: saleEnv.sellerName || t("publish.defaultSeller"),
+          })}
+          description={t("publish.description")}
           action={
             isSeller ? (
               <Button variant="contained" color="success" onClick={exportToExcel}>
-                Xuất Excel
+                {t("publish.exportExcel")}
               </Button>
             ) : null
           }
@@ -292,7 +291,7 @@ const SaleEnvPage = () => {
               <Stack direction="row" spacing={1.5} alignItems="center">
                 <CircularProgress size={20} />
                 <Typography variant="body2" color="text.secondary">
-                  Loading data...
+                  {t("common.loading")}
                 </Typography>
               </Stack>
             )}
@@ -305,7 +304,7 @@ const SaleEnvPage = () => {
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
-                    label="Căn hộ"
+                    label={t("publish.apartment")}
                     value={buyer}
                     onChange={(event) =>
                       setBuyer(event.target.value.toUpperCase())
@@ -314,7 +313,7 @@ const SaleEnvPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <TextField
-                    label="Số lượng"
+                    label={t("publish.quantity")}
                     type="number"
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
@@ -322,7 +321,7 @@ const SaleEnvPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <TextField
-                    label="Ghi chú"
+                    label={t("publish.note")}
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
                   />
@@ -335,7 +334,7 @@ const SaleEnvPage = () => {
                     alignItems={{ xs: "stretch", md: "center" }}
                   >
                     <Typography variant="body2" color="text.secondary">
-                      Điền thông tin đặt hàng theo bố cục mobile-first và gửi ngay từ cùng một biểu mẫu MUI.
+                      {t("publish.fillOrderInfo")}
                     </Typography>
                     <Button
                       type="submit"
@@ -343,7 +342,7 @@ const SaleEnvPage = () => {
                       size="large"
                       disabled={submittingOrder}
                     >
-                      Đặt
+                      {t("publish.placeOrder")}
                     </Button>
                   </Stack>
                 </Grid>
@@ -358,7 +357,7 @@ const SaleEnvPage = () => {
               <CardWrapper>
                 <Stack spacing={0.5}>
                   <Typography variant="overline" color="text.secondary">
-                    Total amount
+                    {t("publish.totalAmount")}
                   </Typography>
                   <Typography variant="h4">{totalAmount}</Typography>
                 </Stack>
@@ -368,7 +367,7 @@ const SaleEnvPage = () => {
               <CardWrapper>
                 <Stack spacing={0.5}>
                   <Typography variant="overline" color="text.secondary">
-                    Total apartment
+                    {t("publish.totalApartment")}
                   </Typography>
                   <Typography variant="h4">{totalOrder}</Typography>
                 </Stack>
@@ -378,27 +377,27 @@ const SaleEnvPage = () => {
         )}
 
         <SectionBlock
-          title="Thông tin order"
-          description="The order table keeps seller-only actions while remaining scrollable and usable on smaller screens."
+          title={t("publish.orderInfo")}
+          description={t("publish.orderInfoDesc")}
         >
           <TableContainer sx={{ overflowX: "auto" }}>
             <Table size="small" sx={{ minWidth: isSeller ? 980 : 640 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Thời gian</TableCell>
-                  <TableCell>Căn hộ</TableCell>
-                  <TableCell>Số lượng</TableCell>
-                  <TableCell>Ghi chú</TableCell>
-                  {isSeller && <TableCell>Giao</TableCell>}
-                  {isSeller && <TableCell>Thu tiền</TableCell>}
-                  {isSeller && <TableCell>Ghi chú người bán</TableCell>}
+                  <TableCell>{t("publish.orderTime")}</TableCell>
+                  <TableCell>{t("publish.apartment")}</TableCell>
+                  <TableCell>{t("publish.quantity")}</TableCell>
+                  <TableCell>{t("publish.note")}</TableCell>
+                  {isSeller && <TableCell>{t("publish.delivered")}</TableCell>}
+                  {isSeller && <TableCell>{t("publish.paid")}</TableCell>}
+                  {isSeller && <TableCell>{t("publish.sellerNoteCol")}</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {orderList.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={isSeller ? 7 : 4} align="center">
-                      Chưa có đơn hàng nào.
+                      {t("publish.noOrders")}
                     </TableCell>
                   </TableRow>
                 ) : (

@@ -22,6 +22,7 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import SellerForm from "../form/SellerForm";
 import { CountdownBadge } from "../components/CountdownTimer";
+import { useTranslation } from "react-i18next";
 
 const DEFAULT_ENTRY_ROWS = 10;
 const DEFAULT_USER_ROWS = 10;
@@ -152,6 +153,7 @@ const AdminHomePage = () => {
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
   const previousUserSearchRef = useRef(userAppliedSearchText);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const addHostToHref = (contextString) => {
     if (!contextString) {
@@ -263,7 +265,7 @@ const AdminHomePage = () => {
         setEntryTotal(total);
       } catch (err) {
         console.error("Failed to fetch records", err);
-        setError("Failed to fetch product link records.");
+        setError(t("adminHome.errors.fetchRecords"));
       }
     };
 
@@ -300,7 +302,7 @@ const AdminHomePage = () => {
         setUserTotal(total);
       } catch (err) {
         console.error("Failed to fetch users", err);
-        setUserError("Failed to fetch user records.");
+        setUserError(t("adminHome.errors.fetchUsers"));
       }
     };
 
@@ -331,7 +333,7 @@ const AdminHomePage = () => {
   }, [contextPath]);
 
   const handleSellerFormSuccess = async ({ message }) => {
-    setSuccessMessage(message || "Generated seller environment successfully.");
+    setSuccessMessage(message || t("adminHome.success.generated"));
 
     if (entryPage !== 0) {
       setEntryPage(0);
@@ -355,7 +357,7 @@ const AdminHomePage = () => {
       setEntryTotal(total);
     } catch (err) {
       console.error("Failed to refresh records", err);
-      setError("Generated successfully, but failed to refresh product link records.");
+      setError(t("adminHome.errors.refreshRecords"));
     }
   };
 
@@ -375,15 +377,15 @@ const AdminHomePage = () => {
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
         <SectionBlock
-          title="Admin Workspace"
-          description="Manage seller authentication links and public product pages from a single responsive MUI dashboard."
+          title={t("adminHome.title")}
+          description={t("adminHome.subtitle")}
           action={
             <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
                 onClick={() => navigate("/notification")}
               >
-                Send Notification
+                {t("adminHome.sendNotification")}
               </Button>
               <Button
                 variant="contained"
@@ -392,7 +394,7 @@ const AdminHomePage = () => {
                   setOpenDialog(true);
                 }}
               >
-                Generate product link
+                {t("adminHome.generateProductLink")}
               </Button>
             </Stack>
           }
@@ -402,7 +404,7 @@ const AdminHomePage = () => {
           )}
           {error && <Alert severity="error">{error}</Alert>}
           <Typography variant="body2" color="text.secondary">
-            The table below is fully responsive and uses MUI components only.
+            {t("adminHome.tableNote")}
           </Typography>
         </SectionBlock>
 
@@ -414,12 +416,12 @@ const AdminHomePage = () => {
         />
 
         <SectionBlock
-          title="Generated Links"
-          description={`Each record keeps the seller authentication link and the public customer-facing order page. Total records: ${entryTotal}.`}
+          title={t("adminHome.generatedLinks")}
+          description={`${t("adminHome.generatedLinksDesc")} ${t("adminHome.total")} ${entryTotal}.`}
         >
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
             <TextField
-              label="Created By"
+              label={t("adminHome.createdBy")}
               size="small"
               value={filterCreatedBy}
               onChange={(e) => setFilterCreatedBy(e.target.value)}
@@ -427,7 +429,7 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Seller Name"
+              label={t("adminHome.sellerName")}
               size="small"
               value={filterSellerName}
               onChange={(e) => setFilterSellerName(e.target.value)}
@@ -435,7 +437,7 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Request UUID"
+              label={t("adminHome.requestUuid")}
               size="small"
               value={filterRequestUuid}
               onChange={(e) => setFilterRequestUuid(e.target.value)}
@@ -443,8 +445,8 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Search generated links"
-              placeholder="Search after typing stops"
+              label={t("adminHome.searchLinks")}
+              placeholder={t("adminHome.searchPlaceholder")}
               value={entrySearchText}
               onChange={(event) => setEntrySearchText(event.target.value)}
               onKeyDown={handleEntrySearchKeyDown}
@@ -457,24 +459,24 @@ const AdminHomePage = () => {
             <Table sx={{ minWidth: 900 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Created At</TableCell>
-                  <TableCell>Planned End</TableCell>
-                  <TableCell>Seller Name</TableCell>
-                  <TableCell>Product Name</TableCell>
-                  <TableCell>Total Price (VND)</TableCell>
-                  <TableCell>Seller Authentication</TableCell>
-                  <TableCell>Seller Authentication Expire</TableCell>
-                  <TableCell>Request UUID</TableCell>
-                  <TableCell>Public Link</TableCell>
-                  <TableCell>Created By</TableCell>
-                  <TableCell>Status</TableCell>
+                  <TableCell>{t("adminHome.createdAt")}</TableCell>
+                  <TableCell>{t("adminHome.plannedEnd")}</TableCell>
+                  <TableCell>{t("adminHome.sellerName")}</TableCell>
+                  <TableCell>{t("adminHome.productName")}</TableCell>
+                  <TableCell>{t("adminHome.totalPrice")}</TableCell>
+                  <TableCell>{t("adminHome.sellerAuth")}</TableCell>
+                  <TableCell>{t("adminHome.sellerAuthExpire")}</TableCell>
+                  <TableCell>{t("adminHome.requestUuid")}</TableCell>
+                  <TableCell>{t("adminHome.publicLink")}</TableCell>
+                  <TableCell>{t("adminHome.createdBy")}</TableCell>
+                  <TableCell>{t("adminHome.status")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {entries.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={11} align="center">
-                      No records yet.
+                      {t("adminHome.noRecords")}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -517,8 +519,8 @@ const AdminHomePage = () => {
                             sx={{ minWidth: 60, fontSize: "0.7rem" }}
                           >
                             {copiedKey === `auth-${entry.requestUUID}`
-                              ? "Copied!"
-                              : "Copy"}
+                              ? t("common.copied")
+                              : t("common.copy")}
                           </Button>
                         ) : (
                           "\u2014"
@@ -537,7 +539,7 @@ const AdminHomePage = () => {
                             sx={{ minWidth: 60, fontSize: "0.7rem" }}
                           >
                             {copiedKey === `uuid-${entry.requestUUID}`
-                              ? "Copied!"
+                              ? t("common.copied")
                               : entry.requestUUID.slice(-4)}
                           </Button>
                         ) : (
@@ -556,8 +558,8 @@ const AdminHomePage = () => {
                             sx={{ minWidth: 60, fontSize: "0.7rem" }}
                           >
                             {copiedKey === `pub-${entry.requestUUID}`
-                              ? "Copied!"
-                              : "Copy"}
+                              ? t("common.copied")
+                              : t("common.copy")}
                           </Button>
                         ) : (
                           "\u2014"
@@ -568,7 +570,7 @@ const AdminHomePage = () => {
                         <Chip
                           size="small"
                           color={entry.envStatus ? "success" : "default"}
-                          label={entry.envStatus ? "Active" : "Inactive"}
+                          label={entry.envStatus ? t("common.active") : t("common.inactive")}
                           onClick={() => { }}
                           clickable={false}
                         />
@@ -594,13 +596,13 @@ const AdminHomePage = () => {
         </SectionBlock>
 
         <SectionBlock
-          title="User List"
-          description={`Internal user accounts returned from /listUser. Total users: ${userTotal}.`}
+          title={t("adminHome.userList")}
+          description={`${t("adminHome.userListDesc")} ${t("adminHome.total")} ${userTotal}.`}
         >
           {userError && <Alert severity="error">{userError}</Alert>}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
             <TextField
-              label="Username"
+              label={t("adminHome.username")}
               size="small"
               value={filterUsername}
               onChange={(e) => setFilterUsername(e.target.value)}
@@ -608,7 +610,7 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Name"
+              label={t("adminHome.name")}
               size="small"
               value={filterName}
               onChange={(e) => setFilterName(e.target.value)}
@@ -616,7 +618,7 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Email"
+              label={t("adminHome.email")}
               size="small"
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
@@ -624,7 +626,7 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Role"
+              label={t("adminHome.role")}
               size="small"
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
@@ -632,8 +634,8 @@ const AdminHomePage = () => {
               fullWidth
             />
             <TextField
-              label="Search users"
-              placeholder="Search after typing stops"
+              label={t("adminHome.searchUsers")}
+              placeholder={t("adminHome.searchPlaceholder")}
               value={userSearchText}
               onChange={(event) => setUserSearchText(event.target.value)}
               onKeyDown={handleUserSearchKeyDown}
@@ -650,17 +652,17 @@ const AdminHomePage = () => {
             <Table stickyHeader sx={{ minWidth: 640 }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Username</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
+                  <TableCell>{t("adminHome.username")}</TableCell>
+                  <TableCell>{t("adminHome.name")}</TableCell>
+                  <TableCell>{t("adminHome.email")}</TableCell>
+                  <TableCell>{t("adminHome.role")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} align="center">
-                      No users found.
+                      {t("adminHome.noUsers")}
                     </TableCell>
                   </TableRow>
                 ) : (

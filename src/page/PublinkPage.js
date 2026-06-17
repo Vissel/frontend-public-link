@@ -264,8 +264,12 @@ const PublinkPage = () => {
             setNewImagePreviews([]);
         } catch (err) {
             console.error("Update product failed:", err);
+            const errData = err?.response?.data;
             setSaveError(
-                err?.response?.data || t("publink.errors.updateFailed")
+                (typeof errData === "string" && errData) ||
+                errData?.errorMessage ||
+                errData?.message ||
+                t("publink.errors.updateFailed")
             );
         } finally {
             setSaving(false);
@@ -395,6 +399,7 @@ const PublinkPage = () => {
     const isSeller = Boolean(saleSpace.isSellerView);
     const isAdmin = String(userRole || "").toLowerCase() === "admin";
     const canManageOrders = isSeller || isAdmin;
+    const isEnvStateActive = saleSpace.envState === "ACTIVE";
 
     const exportToExcel = async () => {
         const requestUUID = saleSpace.reqUuid;
@@ -712,7 +717,7 @@ const PublinkPage = () => {
 
                 {/* Buyer: Order Form */}
 
-                <SectionBlock
+              {isEnvStateActive && <SectionBlock
                     title={t("publink.placeOrder")}
                     description={t("publink.placeOrderDesc")}
                 >
@@ -756,6 +761,7 @@ const PublinkPage = () => {
                         </Stack>
                     </Box>
                 </SectionBlock>
+                } 
             </Stack>
 
             {/* Product Edit Dialog */}

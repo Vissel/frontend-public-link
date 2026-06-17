@@ -239,7 +239,10 @@
         "errors": {
             "noUuid": "Không có UUID yêu cầu nào được cung cấp.",
             "fetchFailed": "Không thể tải chi tiết môi trường."
-        }
+        },
+        "extend15Min": "Gia hạn +15 phút",
+        "extending": "Đang gia hạn...",
+        "extendSuccess": "Liên kết xác thực đã được gia hạn thêm 15 phút."
     },
     "sellerHome": {
         "title": "Trang chủ người bán",

@@ -48,12 +48,14 @@ export const getStoredAuth = () => {
   const token = localStorage.getItem(AUTH_STORAGE_KEYS.token) || "";
   const loginTime = localStorage.getItem(AUTH_STORAGE_KEYS.loginTime) || "";
   const parsedLoginTime = Number.parseInt(loginTime, 10);
-  const isExpired = Boolean(token) &&
+  const refreshToken = localStorage.getItem(AUTH_STORAGE_KEYS.refreshToken) || "";
+  const accessTokenTimedOut = Boolean(token) &&
     (!loginTime ||
       Number.isNaN(parsedLoginTime) ||
       Date.now() - parsedLoginTime >= LOGIN_TIMEOUT_MS);
+  // Keep the session restorable while a refresh token is still available.
+  const isExpired = accessTokenTimedOut && !refreshToken;
   const userRole = localStorage.getItem(AUTH_STORAGE_KEYS.userRole) || "";
-  const refreshToken = localStorage.getItem(AUTH_STORAGE_KEYS.refreshToken) || "";
 
   return {
     isAuthenticated: Boolean(token) || Boolean(refreshToken),

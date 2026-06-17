@@ -239,7 +239,10 @@
         "errors": {
             "noUuid": "No request UUID provided.",
             "fetchFailed": "Failed to fetch environment detail."
-        }
+        },
+        "extend15Min": "Extend +15 min",
+        "extending": "Extending...",
+        "extendSuccess": "Auth link extended by 15 minutes."
     },
     "sellerHome": {
         "title": "Seller Home",

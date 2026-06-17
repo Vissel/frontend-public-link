@@ -18,7 +18,16 @@ const resolveBaseUrl = () => {
   // In production, use the env variable as-is (reverse proxy handles routing)
   if (process.env.NODE_ENV === "production") return envUrl;
 
-  // In development, replace the hostname with the current browser hostname
+  // For HTTPS URLs (ngrok tunnel, remote host), use as-is — no hostname swap
+  if (envUrl.startsWith("https://")) return envUrl.replace(/\/$/, "");
+
+  // When the browser itself is on HTTPS (e.g. ngrok tunnel),
+  // keep the env URL as-is — swapping to the frontend ngrok hostname would
+  // break because the frontend tunnel only exposes the dev-server port.
+  if (window.location.protocol === "https:") return envUrl.replace(/\/$/, "");
+
+  // In development (http://localhost:8080), replace the hostname with the
+  // current browser hostname so LAN/mobile devices reach the correct host.
   try {
     const parsed = new URL(envUrl);
     parsed.hostname = window.location.hostname;

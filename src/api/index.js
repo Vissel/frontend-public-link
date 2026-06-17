@@ -8,12 +8,14 @@ const api = axios.create({
   baseURL: config.baseURL,
   withCredentials: true,
   timeout: config.timeout,
+  headers: { "ngrok-skip-browser-warning": "true" },
 });
 
 const pubApi = axios.create({
   baseURL: `${config.baseURL}${CONTEXT_PATH}`,
   withCredentials: true,
   timeout: config.timeout,
+  headers: { "ngrok-skip-browser-warning": "true" },
 });
 
 const hasHeader = (headers, name) => {
@@ -92,8 +94,8 @@ const refreshAuthToken = async () => {
   storeAuth({
     token: data.accessToken,
     refreshToken: data.refreshToken,
-    userRole: data.roles?.[0] || "",
-    username: data.username || "",
+    userRole: data.roles?.[0] || getStoredAuth().userRole || "",
+    username: data.username || getStoredAuth().username || "",
   });
 
   return data.accessToken;

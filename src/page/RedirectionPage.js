@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
-import { getStoredAuth } from "../authStorage";
+import { pubApi } from "../api";
 
 const RedirectionPage = () => {
     const location = useLocation();
@@ -21,32 +21,10 @@ const RedirectionPage = () => {
     useEffect(() => {
         if (!token) return;
 
-        const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
-        // Forward all query params to the backend
-        const backendUrl = `${apiBaseUrl}/publiclink/api/v1/publish/link${location.search}`;
-
-        const storedAuth = getStoredAuth();
-
-        const headers = {};
-        if (storedAuth.token && !storedAuth.isExpired) {
-            headers["Authorization"] = `Bearer ${storedAuth.token}`;
-        }
-
-        fetch(backendUrl, { headers })
+        pubApi
+            .get(`/api/v1/publish/link${location.search}`)
             .then((response) => {
-                if (!response.ok) {
-                    if (response.status === 400) {
-                        setError(
-                            "The link is invalid or expired. Please check the link and try again."
-                        );
-                        return;
-                    }
-                    throw new Error(`Unexpected status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                if (!data) return; // error already handled
+                const data = response.data;
 
                 if (data.status === "INVALID") {
                     setError(
@@ -65,6 +43,12 @@ const RedirectionPage = () => {
                 setError("Unexpected response from server.");
             })
             .catch((err) => {
+                if (err.response && err.response.status === 400) {
+                    setError(
+                        "The link is invalid or expired. Please check the link and try again."
+                    );
+                    return;
+                }
                 console.error("Redirect fetch failed:", err);
                 setError("Failed to process the link. Please try again.");
             });

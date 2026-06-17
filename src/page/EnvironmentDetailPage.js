@@ -33,6 +33,7 @@ const EnvironmentDetailPage = () => {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(true);
     const [copiedKey, setCopiedKey] = useState("");
+    const [extending, setExtending] = useState(false);
     const navigate = useNavigate();
     const frontendOrigin = window.location.origin;
     const { t } = useTranslation();
@@ -75,6 +76,24 @@ const EnvironmentDetailPage = () => {
             console.error("Copy failed", e);
         } finally {
             document.body.removeChild(textArea);
+        }
+    };
+
+    const handleExtendAuthLink = async () => {
+        setExtending(true);
+        try {
+            const res = await api.post(`${contextPath}/admin/v1/extendAuthLink`, {
+                requestUuid: requestUuid,
+            });
+            setDetail(prev => ({
+                ...prev,
+                sellerAuthLink: res.data.sellerAuthLink,
+                sellerAuthLinkExpire: res.data.sellerAuthLinkExpire,
+            }));
+        } catch (err) {
+            console.error("Failed to extend auth link", err);
+        } finally {
+            setExtending(false);
         }
     };
 
@@ -265,6 +284,16 @@ const EnvironmentDetailPage = () => {
                                         sx={{ minWidth: 60, fontSize: "0.7rem" }}
                                     >
                                         {copiedKey === "sellerAuth" ? t("common.copied") : t("common.copy")}
+                                    </Button>
+                                    <Button
+                                        size="small"
+                                        variant="outlined"
+                                        color="warning"
+                                        onClick={handleExtendAuthLink}
+                                        disabled={extending}
+                                        sx={{ minWidth: 90, fontSize: "0.7rem" }}
+                                    >
+                                        {extending ? t("environmentDetail.extending") : t("environmentDetail.extend15Min")}
                                     </Button>
                                 </Stack>
                             ) : (

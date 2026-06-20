@@ -23,6 +23,7 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
+import { getExportLocale } from "../i18n/exportLocale";
 
 const DEFAULT_ROWS_PER_PAGE = 10;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
@@ -106,7 +107,7 @@ const SellerHome = () => {
     try {
       const response = await pubApi.post(
         "/api/v1/seller/export",
-        { requestUUID },
+        { requestUUID, locale: getExportLocale() },
         { responseType: "blob" }
       );
       const blob = new Blob(
@@ -139,6 +140,7 @@ const SellerHome = () => {
       // Step 1: Get download token
       const tokenResponse = await pubApi.post("/api/v1/seller/getExportToken", {
         sellerName: username,
+        locale: getExportLocale(),
       });
       const downloadToken = tokenResponse.data?.downloadToken;
       if (!downloadToken) {

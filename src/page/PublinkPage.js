@@ -33,6 +33,7 @@ import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
 import { useTranslation } from "react-i18next";
+import { getExportLocale } from "../i18n/exportLocale";
 
 const MAX_IMAGES = 6;
 const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB (base64 adds ~33% overhead)
@@ -407,7 +408,7 @@ const PublinkPage = () => {
         try {
             const response = await pubApi.post(
                 "/api/v1/seller/export",
-                { requestUUID },
+                { requestUUID, locale: getExportLocale() },
                 { responseType: "blob" }
             );
             const blob = new Blob(
@@ -546,7 +547,7 @@ const PublinkPage = () => {
                                                 )}
                                                 {product.total_amount > 0 && (
                                                     <Typography variant="body2" color="text.secondary">
-                                                        {t("publink.availableAmount")} {product.total_amount - product.amount}
+                                                        {t("publink.availableAmount")} {saleSpace.availableAmount}
                                                     </Typography>
                                                 )}
                                             </Stack>

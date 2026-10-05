@@ -20,7 +20,7 @@ import api from "../api";
 import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
-import SellerForm from "../form/SellerForm";
+import CreatePlanForm from "../form/CreatePlanForm";
 import { CountdownBadge } from "../components/CountdownTimer";
 import { useTranslation } from "react-i18next";
 
@@ -408,7 +408,7 @@ const AdminHomePage = () => {
           </Typography>
         </SectionBlock>
 
-        <SellerForm
+        <CreatePlanForm
           open={openDialog}
           onClose={() => setOpenDialog(false)}
           onSuccess={handleSellerFormSuccess}

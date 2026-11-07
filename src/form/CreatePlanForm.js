@@ -223,8 +223,8 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
       );
 
       onSuccess?.({
-        message: `Generated seller environment for ${nextRecord.sellerName}.`,
-        record: nextRecord,
+        message: `Generated seller environment for ${sellerName}.`,
+        record: environmentData,
       });
       onClose?.();
     } catch (err) {

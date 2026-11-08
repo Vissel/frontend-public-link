@@ -53,10 +53,12 @@
         "confirmPassword": "Xác nhận mật khẩu",
         "submitButton": "Đổi mật khẩu",
         "success": "Đổi mật khẩu thành công. Đang chuyển đến trang đăng nhập...",
+        "backToLogin": "Quay lại đăng nhập",
         "errors": {
             "preLogin": "Không tải được khóa công khai!",
             "tooShort": "Mật khẩu mới phải có ít nhất 8 ký tự.",
             "mismatch": "Mật khẩu không khớp.",
+            "ticketExpired": "Phiên đổi mật khẩu đã hết hạn. Hãy quay lại trang đăng nhập và đăng nhập lại để nhận phiên mới.",
             "generic": "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn. Vui lòng đăng nhập lại."
         }
     },

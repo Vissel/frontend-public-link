@@ -3,8 +3,10 @@ import {
     Alert,
     Box,
     Button,
+    IconButton,
     Stack,
     TextField,
+    Tooltip,
     Typography,
 } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -74,7 +76,10 @@ const ChangePasswordPage = () => {
             }
         } catch (err) {
             console.error("Change password error:", err);
-            if (err.response && err.response.data && err.response.data.message) {
+            if (err.response?.data?.code === "AUTH_007") {
+                // Ticket was invalid or already expired (TTL is 5 minutes)
+                setError(t("changePassword.errors.ticketExpired"));
+            } else if (err.response && err.response.data && err.response.data.message) {
                 setError(err.response.data.message);
             } else {
                 setError(t("changePassword.errors.generic"));
@@ -95,6 +100,22 @@ const ChangePasswordPage = () => {
         >
             <CardWrapper sx={{ width: "100%" }}>
                 <Stack spacing={3}>
+                    <Tooltip title={t("changePassword.backToLogin")}>
+                        <IconButton
+                            aria-label={t("changePassword.backToLogin")}
+                            onClick={() => navigate("/login")}
+                            sx={{ alignSelf: "flex-start", ml: -1 }}
+                        >
+                            <Box
+                                component="span"
+                                aria-hidden="true"
+                                sx={{ fontSize: "1.5rem", lineHeight: 1 }}
+                            >
+                                ←
+                            </Box>
+                        </IconButton>
+                    </Tooltip>
+
                     <Stack spacing={1}>
                         <Typography variant="h3">{t("changePassword.title")}</Typography>
                         <Typography variant="body1" color="text.secondary">
@@ -102,6 +123,11 @@ const ChangePasswordPage = () => {
                         </Typography>
                     </Stack>
 
+                    {!ticket && (
+                        <Alert severity="warning">
+                            {t("changePassword.errors.ticketExpired")}
+                        </Alert>
+                    )}
                     {error && <Alert severity="error">{error}</Alert>}
                     {success && <Alert severity="success">{success}</Alert>}
 

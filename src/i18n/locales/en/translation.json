@@ -53,10 +53,12 @@
         "confirmPassword": "Confirm Password",
         "submitButton": "Change password",
         "success": "Change password successfully. Redirecting to login...",
+        "backToLogin": "Back to login",
         "errors": {
             "preLogin": "Failed to load the public key!",
             "tooShort": "New password must be at least 8 characters.",
             "mismatch": "Passwords do not match.",
+            "ticketExpired": "Your password change ticket has expired. Return to login and sign in again to receive a new one.",
             "generic": "Change password failed. The ticket may be expired. Please log in again."
         }
     },

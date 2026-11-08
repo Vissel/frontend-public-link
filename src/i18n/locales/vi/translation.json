@@ -46,6 +46,20 @@
             "setupError": "Lỗi khi thiết lập yêu cầu đăng nhập."
         }
     },
+    "changePassword": {
+        "title": "Tạo mật khẩu mới",
+        "subtitle": "Vì lý do bảo mật, hãy đặt mật khẩu mới trước khi tiếp tục.",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu",
+        "submitButton": "Đổi mật khẩu",
+        "success": "Đổi mật khẩu thành công. Đang chuyển đến trang đăng nhập...",
+        "errors": {
+            "preLogin": "Không tải được khóa công khai!",
+            "tooShort": "Mật khẩu mới phải có ít nhất 8 ký tự.",
+            "mismatch": "Mật khẩu không khớp.",
+            "generic": "Đổi mật khẩu thất bại. Phiên có thể đã hết hạn. Vui lòng đăng nhập lại."
+        }
+    },
     "register": {
         "title": "Đăng ký người bán",
         "subtitle": "Thiết lập tài khoản người bán để quản lý đơn hàng và liên kết công khai.",

@@ -46,6 +46,20 @@
             "setupError": "Error setting up the login request."
         }
     },
+    "changePassword": {
+        "title": "Create New Password",
+        "subtitle": "For your security, set a new password before continuing.",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "submitButton": "Change password",
+        "success": "Change password successfully. Redirecting to login...",
+        "errors": {
+            "preLogin": "Failed to load the public key!",
+            "tooShort": "New password must be at least 8 characters.",
+            "mismatch": "Passwords do not match.",
+            "generic": "Change password failed. The ticket may be expired. Please log in again."
+        }
+    },
     "register": {
         "title": "Seller Registration",
         "subtitle": "Set up your seller account to manage orders and public links.",

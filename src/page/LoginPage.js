@@ -66,6 +66,14 @@ const LoginPage = () => {
       });
 
       if (response.status === 200) {
+        if (response.data?.changePasswordRequired) {
+          navigate(
+            `/change-password?ticket=${encodeURIComponent(
+              response.data.passwordChangeTicket || ""
+            )}`
+          );
+          return;
+        }
         const authData = login(response.data);
         if (!authData) {
           logout();

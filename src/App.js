@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./page/LoginPage";
+import ChangePasswordPage from "./page/ChangePasswordPage";
 import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
 import SaleEnvPage from "./page/SaleUrlPage";
@@ -26,6 +27,14 @@ function App() {
             element={
               <Layout>
                 <LoginPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/change-password"
+            element={
+              <Layout>
+                <ChangePasswordPage />
               </Layout>
             }
           />

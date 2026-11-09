@@ -453,5 +453,64 @@
         "success": {
             "orderCreated": "Tạo đơn hàng thành công."
         }
+    },
+    "chat": {
+        "title": "Chat với chúng tôi",
+        "open": "Mở chat",
+        "close": "Thu gọn",
+        "endChat": "Kết thúc cuộc trò chuyện",
+        "connecting": "Đang kết nối…",
+        "online": "Đang trực tuyến",
+        "offline": "Đang kết nối lại…",
+        "empty": "Hãy nhắn tin cho chúng tôi, chúng tôi sẽ trả lời tại đây hoặc trên Zalo.",
+        "placeholder": "Nhập tin nhắn…",
+        "adminTyping": "Quản trị viên đang soạn tin…",
+        "returningVisitor": "Chào mừng trở lại, lượt thứ {{count}}",
+        "status": {
+            "pending": "Đang gửi",
+            "sent": "Đã gửi",
+            "delivered": "Đã giao",
+            "seen": "Đã xem",
+            "replied": "Đã trả lời",
+            "failed": "Không gửi được",
+            "waiting": "Đang chờ mạng",
+            "sentHint": "Đã gửi tới quản trị viên trên Zalo",
+            "deliveredHint": "Đã tới ứng dụng Zalo của quản trị viên",
+            "seenHint": "Quản trị viên đã mở cuộc trò chuyện Zalo",
+            "repliedHint": "Quản trị viên đã trả lời"
+        },
+        "errors": {
+            "startFailed": "Không thể mở chat. Vui lòng thử lại.",
+            "sendFailed": "Tin nhắn của bạn không thể gửi được."
+        }
+    },
+    "adminChat": {
+        "title": "Hộp thư chat",
+        "conversations": "Cuộc trò chuyện",
+        "conversation": "Chat",
+        "awaiting": "Chờ trả lời",
+        "visits": "{{count}} tin nhắn của khách",
+        "noMessages": "Chưa có tin nhắn",
+        "empty": "Chưa có cuộc trò chuyện nào. Khung chat là công khai, sẽ có hội thoại ngay khi khách nhắn tin.",
+        "selectConversation": "Chọn một cuộc trò chuyện ở bên trái",
+        "closeThread": "Kết thúc hội thoại",
+        "placeholder": "Nhập nội dung trả lời…",
+        "send": "Gửi",
+        "zaloReady": "Cầu Zalo đang hoạt động",
+        "zaloLocal": "Chỉ trên giao diện (Zalo tắt)",
+        "zaloAdmin": "Tài khoản Zalo",
+        "adminNotBoundHint": "Chưa liên kết Zalo quản trị viên — hãy nhắn cho OA một lần với nội dung LINK-ADMIN.",
+        "connectZalo": "Kết nối Zalo",
+        "consentOpened": "Hoàn tất cấp quyền Zalo ở tab mới.",
+        "status": {
+            "ACTIVE": "Đang hoạt động",
+            "IDLE": "Khách đã offline",
+            "CLOSED": "Đã kết thúc"
+        },
+        "errors": {
+            "loadFailed": "Không tải được hộp thư chat.",
+            "replyFailed": "Không gửi được nội dung trả lời.",
+            "consentFailed": "Không thể bắt đầu cấp quyền Zalo."
+        }
     }
 }

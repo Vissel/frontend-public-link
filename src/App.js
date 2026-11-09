@@ -8,6 +8,7 @@ import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 import NotificationPage from "./page/NotificationPage";
+import AdminChatPage from "./page/AdminChatPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -110,6 +111,14 @@ function App() {
               element={
                 <Layout>
                   <NotificationPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/adminChat"
+              element={
+                <Layout>
+                  <AdminChatPage />
                 </Layout>
               }
             />

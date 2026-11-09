@@ -453,5 +453,64 @@
         "success": {
             "orderCreated": "Order created successfully."
         }
+    },
+    "chat": {
+        "title": "Chat with us",
+        "open": "Open chat",
+        "close": "Minimise",
+        "endChat": "End this chat",
+        "connecting": "Connecting…",
+        "online": "Connected",
+        "offline": "Reconnecting…",
+        "empty": "Send us a message and we will reply here or on Zalo.",
+        "placeholder": "Type your message…",
+        "adminTyping": "Administrator is typing…",
+        "returningVisitor": "Welcome back, visit {{count}}",
+        "status": {
+            "pending": "Sending",
+            "sent": "Sent",
+            "delivered": "Delivered",
+            "seen": "Seen",
+            "replied": "Answered",
+            "failed": "Not sent",
+            "waiting": "Waiting for network",
+            "sentHint": "Sent to the administrator on Zalo",
+            "deliveredHint": "Reached the administrator's Zalo app",
+            "seenHint": "The administrator opened the Zalo chat",
+            "repliedHint": "The administrator replied"
+        },
+        "errors": {
+            "startFailed": "Unable to open the chat. Please try again.",
+            "sendFailed": "Your message could not be sent."
+        }
+    },
+    "adminChat": {
+        "title": "Chat inbox",
+        "conversations": "Conversations",
+        "conversation": "Chat",
+        "awaiting": "Waiting for reply",
+        "visits": "{{count}} client messages",
+        "noMessages": "No messages yet",
+        "empty": "No conversations yet. The chat widget is public, so threads appear as soon as a visitor writes.",
+        "selectConversation": "Select a conversation on the left",
+        "closeThread": "End conversation",
+        "placeholder": "Type your reply…",
+        "send": "Send",
+        "zaloReady": "Zalo bridge active",
+        "zaloLocal": "Console only (Zalo off)",
+        "zaloAdmin": "Zalo account",
+        "adminNotBoundHint": "Administrator Zalo not bound yet — DM the OA the word LINK-ADMIN once.",
+        "connectZalo": "Connect Zalo",
+        "consentOpened": "Complete the Zalo consent in the new tab.",
+        "status": {
+            "ACTIVE": "Active",
+            "IDLE": "Visitor offline",
+            "CLOSED": "Closed"
+        },
+        "errors": {
+            "loadFailed": "Unable to load the chat inbox.",
+            "replyFailed": "Your reply could not be sent.",
+            "consentFailed": "Unable to start the Zalo consent."
+        }
     }
 }

@@ -17,14 +17,16 @@
         "active": "Hoạt động",
         "inactive": "Không hoạt động",
         "yes": "Có",
-        "no": "Không"
+        "no": "Không",
+        "create": "Tạo"
     },
     "header": {
         "publicLink": "Liên kết công khai",
         "tagline": "Quản lý thống nhất đăng ký người bán và đơn hàng",
         "workspace": "Không gian làm việc",
         "logout": "Đăng xuất",
-        "login": "Đăng nhập"
+        "login": "Đăng nhập",
+        "setup": "Cài đặt"
     },
     "footer": {
         "licensed": "Được cấp phép theo"
@@ -145,7 +147,8 @@
         },
         "success": {
             "generated": "Tạo môi trường người bán thành công."
-        }
+        },
+        "createPaymentPlan": "Tạo gói thanh toán"
     },
     "sellerForm": {
         "generateProductLink": "Tạo liên kết sản phẩm",
@@ -287,7 +290,9 @@
         "errors": {
             "unableToLoad": "Không thể tải thông tin người bán.",
             "loadFailed": "Không thể tải dữ liệu người bán."
-        }
+        },
+        "generateProductLink": "Tạo link sản phẩm",
+        "generateSuccess": "Đã tạo link sản phẩm thành công."
     },
     "publink": {
         "saleSpace": "Không gian bán hàng",
@@ -511,6 +516,227 @@
             "loadFailed": "Không tải được hộp thư chat.",
             "replyFailed": "Không gửi được nội dung trả lời.",
             "consentFailed": "Không thể bắt đầu cấp quyền Zalo."
+        }
+    },
+    "createPlan": {
+        "title": "Tạo gói thanh toán",
+        "subtitle": "Gán một gói hiện có cho người bán, hoặc tạo mới ngay tại đây.",
+        "field": {
+            "user": "Người bán",
+            "fee": "Phí (VND)",
+            "planDay": "Số ngày",
+            "envCount": "Số link"
+        },
+        "mode": {
+            "existing": "Gói có sẵn",
+            "new": "Gói mới"
+        },
+        "pickPlan": "Chọn gói",
+        "noUsers": "Chưa có người bán nào",
+        "noPlans": "Chưa có gói nào trong danh mục.",
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        },
+        "errors": {
+            "loadCatalog": "Không tải được danh mục gói thanh toán.",
+            "missingUser": "Vui lòng chọn người bán.",
+            "missingPlan": "Vui lòng chọn gói thanh toán.",
+            "invalidNewPlan": "Phí, số ngày và số link phải lớn hơn 0.",
+            "submit": "Không thể tạo gói thanh toán."
+        }
+    },
+    "paymentResult": {
+        "successTitle": "Đã có link thanh toán",
+        "errorTitle": "Không thể tạo gói thanh toán",
+        "hint": "Gửi link này cho người bán để họ thanh toán. Link còn hiệu lực trong vài ngày.",
+        "unknownError": "Đã xảy ra lỗi. Vui lòng thử lại."
+    },
+    "generatePlan": {
+        "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
+        "titleStep2": "Tạo link sản phẩm - bước 2: thông tin sản phẩm",
+        "subtitleStep1": "Chọn người bán và một gói thanh toán đang hoạt động của họ.",
+        "field": {
+            "user": "Người bán"
+        },
+        "noUsers": "Chưa có người bán nào",
+        "pickPlan": "Chọn gói hoạt động",
+        "noPlan": "Người bán này chưa có gói thanh toán hoạt động. Hãy tạo gói trước bằng nút Tạo gói thanh toán.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đang hoạt động đã hết số link. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "remaining": "Còn lại",
+        "unit": {
+            "day": "ngày"
+        },
+        "success": "Đã tạo môi trường bán hàng cho {{sellerName}}.",
+        "errors": {
+            "missingUser": "Vui lòng chọn người bán.",
+            "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
+            "generateRequestId": "Không tạo được mã yêu cầu.",
+            "submit": "Không thể tạo môi trường bán hàng ngay lúc này."
+        }
+    },
+    "sellerGenerate": {
+        "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
+        "titleStep2": "Tạo link sản phẩm - bước 2: thông tin sản phẩm",
+        "subtitleStep1": "Chọn một gói thanh toán đang hoạt động của bạn. Mỗi gói cung cấp số link nhất định.",
+        "noPlan": "Bạn chưa có gói thanh toán hoạt động. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đang hoạt động đã hết số link. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "remaining": "Còn lại",
+        "unit": {
+            "day": "ngày"
+        },
+        "success": "Đã tạo link sản phẩm thành công.",
+        "errors": {
+            "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
+            "generateRequestId": "Không tạo được mã yêu cầu.",
+            "submit": "Không thể tạo link sản phẩm ngay lúc này."
+        }
+    },
+    "transferInfo": {
+        "empty": "Chưa có tài khoản chuyển khoản nào.",
+        "chip": {
+            "default": "Mặc định"
+        },
+        "types": {
+            "bank": "Ngân hàng",
+            "ewallet": "Ví điện tử",
+            "other": "Khác"
+        },
+        "field": {
+            "type": "Loại",
+            "bank": "Ngân hàng",
+            "issuer": "Đơn vị phát hành",
+            "number": "Số tài khoản / ví",
+            "accountName": "Tên chủ tài khoản",
+            "defaultMessage": "Nội dung chuyển tiịn mặc định",
+            "defaultMessageHint": "Nội dung này sẽ hiện ra sau khi quét mã QR."
+        },
+        "action": {
+            "add": "Thêm tài khoản",
+            "hideForm": "Đóng form",
+            "expand": "Xem chi tiết",
+            "collapse": "Ẩn chi tiết",
+            "setDefault": "Đặt làm mặc định",
+            "markDefault": "Dùng làm tài khoản mặc định",
+            "remove": "Xóa",
+            "uploadQr": "Tải ảnh QR",
+            "changeQr": "Đổi ảnh QR"
+        },
+        "success": {
+            "created": "Đã lưu tài khoản chuyển khoản."
+        },
+        "errors": {
+            "load": "Không tải được danh sách tài khoản.",
+            "create": "Không lưu được tài khoản chuyển khoản.",
+            "setDefault": "Không đổi được tài khoản mặc định.",
+            "remove": "Không xóa được tài khoản.",
+            "requiredFields": "Đơn vị phát hành và số tài khoản là bắt buộc.",
+            "qrRead": "Không đọc được tệp ảnh QR."
+        }
+    },
+    "setup": {
+        "title": "Cài đặt",
+        "subtitle": "Duyệt gói thanh toán chờ, xem toàn bộ gói và quản lý tài khoản nhận tiịn.",
+        "search": "Tìm người bán",
+        "total": "Tổng:",
+        "selected": "Đã chọn",
+        "activeDate": "Ngày kích hoạt",
+        "activeDateHint": "Dùng khi duyệt các gói đã chọn. Ngày hết hạn được tính theo độ dài gói.",
+        "pendingTitle": "Chờ duyệt",
+        "pendingDesc": "Gói thanh toán quản trị tạo và vẫn ở trạng thái CREATE.",
+        "pendingEmpty": "Không có gói nào đang chờ duyệt.",
+        "allTitle": "Gói thanh toán",
+        "allDesc": "Mặc định hiển thị gói ACTIVE; bấm nút để hiển toàn bộ trạng thái.",
+        "toggleState": "Hiển thị tất cả",
+        "showAll": "Hiển thị tất cả",
+        "showActive": "Chị hiển ACTIVE",
+        "billNote": "Đã xác nhận thanh toán",
+        "column": {
+            "user": "Người bán",
+            "name": "Tên",
+            "fee": "Phí",
+            "days": "Ngày",
+            "quota": "Đã dùng / hạn mức",
+            "state": "Trạng thái",
+            "activeDate": "Ngày kích hoạt",
+            "endedDate": "Ngày hết hạn",
+            "payment": "Thanh toán",
+            "action": "Thao tác"
+        },
+        "action": {
+            "approve": "Duyệt",
+            "reject": "Từ chối",
+            "activate": "Kích hoạt",
+            "deactivate": "Ngủng kích hoạt",
+            "markPaid": "Đã thu tiịn"
+        },
+        "transferTitle": "Tài khoản nhận tiịn của tôi",
+        "transferDesc": "Các tài khoản này hiển trên trang thanh toán của người bán. Chỉ có một tài khoản mặc định.",
+        "success": {
+            "approved": "Đã kích hoạt các gói đã chọn.",
+            "rejected": "Đã ngủng kích hoạt các gói đã chọn.",
+            "activated": "Đã kích hoạt các gói đã chọn.",
+            "deactivated": "Đã ngủng kích hoạt các gói đã chọn."
+        },
+        "errors": {
+            "load": "Không tải được danh sách gói thanh toán.",
+            "bulkAction": "Thao tác thất bại. Vui lòng thử lại.",
+            "noSelection": "Vui lòng chọn ít nhất một gói thanh toán."
+        }
+    },
+    "sellerSetup": {
+        "title": "Cài đặt của tôi",
+        "subtitle": "Xem gói thanh toán của bạn và quản lý tài khoản chuyển khoản.",
+        "plansTitle": "Gói thanh toán của tôi",
+        "plansDesc": "Gói đang hoạt động và số link sản phẩm còn lại.",
+        "empty": "Chưa có gói thanh toán hoạt động nào.",
+        "remaining": "Còn lại",
+        "transferTitle": "Tài khoản chuyển khoản của tôi",
+        "transferDesc": "Người mua có thể chuyển vào các tài khoản này.",
+        "errors": {
+            "load": "Không tải được gói thanh toán của bạn."
+        }
+    },
+    "payment": {
+        "title": "Thanh toán",
+        "subtitle": "Xem thông tin gói và chuyển khoản để kích hoạn.",
+        "planTitle": "Chi tiết gói thanh toán",
+        "field": {
+            "fee": "Phí gói",
+            "duration": "Hiệu lực",
+            "estimatedActive": "Dự kiến ngày kích hoạt",
+            "estimatedEnd": "Dự kiến ngày hết hạn",
+            "accountNumber": "Số tài khoản",
+            "accountName": "Chủ tài khoản",
+            "email": "Email của bạn",
+            "phone": "Số điện thoại"
+        },
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        },
+        "status": {
+            "create": "Đang chờ thanh toán",
+            "waiting": "Đã nhận xác nhận, đang chờ quản trị",
+            "paid": "Đã thanh toán",
+            "rejected": "Đã từ chối"
+        },
+        "dateNote": "Ngày chính thức do quản trị thiết lập sau khi duyệt thanh toán.",
+        "transferTitle": "Thông tin chuyển khoản",
+        "transferNote": "Nội dung trên sẽ được điền tự động khi quét mã QR.",
+        "scanMessagePrefix": "Nội dung chuyển:",
+        "noTransfer": "Chưa có tài khoản nhận tiịn. Vui lòng liên hệ quản trị.",
+        "guide": "Sau khi chuyển tiịn xong, hãy bấm nút dưới đây để chúng tôi kiểm tra và kích hoạn gói cho bạn.",
+        "confirmButton": "Xác nhận thanh toán",
+        "processed": "Thanh toán này đã được xử lý",
+        "notFound": "Link thanh toán này không còn hiệu lực.",
+        "waitingGuidance": "Bạn sẽ nhận được kết quả trong ít phút qua chat ứng dụng, hoặc email / số điện thoại bạn đã cấp.",
+        "confirmTitle": "Xác nhận thanh toán của bạn",
+        "confirmSubtitle": "Cho chúng tôi biết cách liên hệ bạn với kết quả.",
+        "errors": {
+            "missingToken": "Link thanh toán không hoàn chỉnh. Vui lòng yêu cầu quản trị gửi link mới.",
+            "load": "Link thanh toán này không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ quản trị.",
+            "confirm": "Không thể xác nhận thanh toán ngay lúc này. Vui lòng thử lại."
         }
     }
 }

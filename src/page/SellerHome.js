@@ -20,6 +20,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
+import SellerGenerateForm from "../form/SellerGenerateForm";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
@@ -39,6 +40,9 @@ const SellerHome = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [total, setTotal] = useState(0);
+  const [openGenerate, setOpenGenerate] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
   const frontendOrigin = window.location.origin;
   const { t } = useTranslation();
 
@@ -217,7 +221,7 @@ const SellerHome = () => {
     };
 
     fetchSellerData();
-  }, [state, username, page, rowsPerPage]);
+  }, [state, username, page, rowsPerPage, refreshKey]);
 
   if (loading) {
     return (
@@ -254,6 +258,17 @@ const SellerHome = () => {
         <SectionBlock
           title={t("sellerHome.title")}
           description={t("sellerHome.subtitle")}
+          action={
+            <Button
+              variant="contained"
+              onClick={() => {
+                setSuccessMessage("");
+                setOpenGenerate(true);
+              }}
+            >
+              {t("sellerHome.generateProductLink")}
+            </Button>
+          }
         >
           <Stack spacing={2}>
             {sellerInfo && (
@@ -292,8 +307,19 @@ const SellerHome = () => {
             <Typography variant="body1" color="text.secondary">
               {t("sellerHome.usePublicLink")}
             </Typography>
+            {successMessage && <Alert severity="success">{successMessage}</Alert>}
           </Stack>
         </SectionBlock>
+
+        <SellerGenerateForm
+          open={openGenerate}
+          onClose={() => setOpenGenerate(false)}
+          onSuccess={async ({ message }) => {
+            setOpenGenerate(false);
+            setSuccessMessage(message || t("sellerHome.generateSuccess"));
+            setRefreshKey((prev) => prev + 1);
+          }}
+        />
 
         {(saleEnvs.length > 0 || total > 0) && (
           <SectionBlock

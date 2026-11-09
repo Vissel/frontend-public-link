@@ -123,9 +123,22 @@ function Header() {
                 {t("header.workspace")}
               </Button>
             )}
+            {isAuthenticated && (normalizedRole === "admin" || normalizedRole === "seller") && (
+              <Button
+                component={RouterLink}
+                to={normalizedRole === "admin" ? "/setup" : "/sellerSetup"}
+                variant="text"
+              >
+                {t("header.setup")}
+              </Button>
+            )}
             {isAuthenticated && (
               <>
-                {normalizedRole === "seller" && <NotificationBell />}
+                {/* The notification endpoints are username-scoped, so the bell
+                    works for sellers and admins alike */}
+                {(normalizedRole === "seller" || normalizedRole === "admin") && (
+                  <NotificationBell />
+                )}
                 <Chip
                   color="primary"
                   variant="outlined"

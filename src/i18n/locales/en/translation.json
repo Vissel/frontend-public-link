@@ -17,14 +17,16 @@
         "active": "Active",
         "inactive": "Inactive",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "create": "Create"
     },
     "header": {
         "publicLink": "Public Link",
         "tagline": "Unified seller registration and order management",
         "workspace": "Workspace",
         "logout": "Logout",
-        "login": "Login"
+        "login": "Login",
+        "setup": "Setup"
     },
     "footer": {
         "licensed": "Licensed under the"
@@ -145,7 +147,8 @@
         },
         "success": {
             "generated": "Generated seller environment successfully."
-        }
+        },
+        "createPaymentPlan": "Create payment plan"
     },
     "sellerForm": {
         "generateProductLink": "Generate Product Link",
@@ -287,7 +290,9 @@
         "errors": {
             "unableToLoad": "Unable to load seller information.",
             "loadFailed": "Unable to load seller data."
-        }
+        },
+        "generateProductLink": "Generate product link",
+        "generateSuccess": "Product link generated successfully."
     },
     "publink": {
         "saleSpace": "Sale Space",
@@ -511,6 +516,227 @@
             "loadFailed": "Unable to load the chat inbox.",
             "replyFailed": "Your reply could not be sent.",
             "consentFailed": "Unable to start the Zalo consent."
+        }
+    },
+    "createPlan": {
+        "title": "Create Payment Plan",
+        "subtitle": "Assign an existing plan to the seller, or define a new one on the spot.",
+        "field": {
+            "user": "Seller",
+            "fee": "Fee (VND)",
+            "planDay": "Days",
+            "envCount": "Links"
+        },
+        "mode": {
+            "existing": "Existing plan",
+            "new": "New plan"
+        },
+        "pickPlan": "Select a plan",
+        "noUsers": "No seller available",
+        "noPlans": "No plan in the catalog yet.",
+        "unit": {
+            "day": "day(s)",
+            "link": "link(s)"
+        },
+        "errors": {
+            "loadCatalog": "Failed to load the payment plan catalog.",
+            "missingUser": "Please select a seller.",
+            "missingPlan": "Please select a plan.",
+            "invalidNewPlan": "Fee, days and links must all be greater than zero.",
+            "submit": "Unable to create the payment plan."
+        }
+    },
+    "paymentResult": {
+        "successTitle": "Payment link is ready",
+        "errorTitle": "Could not create the payment plan",
+        "hint": "Send this link to the seller so they can complete the payment. It stays valid for a few days.",
+        "unknownError": "An unexpected error happened. Please try again."
+    },
+    "generatePlan": {
+        "titleStep1": "Generate Product Link - step 1: payment plan",
+        "titleStep2": "Generate Product Link - step 2: product detail",
+        "subtitleStep1": "Pick the seller and one of their active payment plans.",
+        "field": {
+            "user": "Seller"
+        },
+        "noUsers": "No seller available",
+        "pickPlan": "Select an active plan",
+        "noPlan": "This seller has no active payment plan. Please create one from the Create payment plan dialog first.",
+        "quotaExhausted": "Unable to create. No environment is left in the active payment plan. Please contact admin to get support.",
+        "remaining": "Remaining",
+        "unit": {
+            "day": "day(s)"
+        },
+        "success": "Generated seller environment for {{sellerName}}.",
+        "errors": {
+            "missingUser": "Please select a seller.",
+            "checkQuota": "Unable to check the remaining payment plan quota.",
+            "generateRequestId": "Unable to generate the request ID.",
+            "submit": "Unable to generate the seller environment right now."
+        }
+    },
+    "sellerGenerate": {
+        "titleStep1": "Generate Product Link - step 1: payment plan",
+        "titleStep2": "Generate Product Link - step 2: product detail",
+        "subtitleStep1": "Choose one of your active payment plans. Each plan grants a fixed number of product links.",
+        "noPlan": "You have no active payment plan yet. Please contact admin to get support.",
+        "quotaExhausted": "Unable to create. No environment is left in your active payment plan. Please contact admin to get support.",
+        "remaining": "Remaining",
+        "unit": {
+            "day": "day(s)"
+        },
+        "success": "Product link generated successfully.",
+        "errors": {
+            "checkQuota": "Unable to check the remaining payment plan quota.",
+            "generateRequestId": "Unable to generate the request ID.",
+            "submit": "Unable to generate the product link right now."
+        }
+    },
+    "transferInfo": {
+        "empty": "No transfer account yet.",
+        "chip": {
+            "default": "Default"
+        },
+        "types": {
+            "bank": "Bank",
+            "ewallet": "E-Wallet",
+            "other": "Other"
+        },
+        "field": {
+            "type": "Type",
+            "bank": "Bank",
+            "issuer": "Issuer",
+            "number": "Account / wallet number",
+            "accountName": "Account holder name",
+            "defaultMessage": "Default transfer message",
+            "defaultMessageHint": "This content is shown after the QR code is scanned."
+        },
+        "action": {
+            "add": "Add transfer info",
+            "hideForm": "Close form",
+            "expand": "Show detail",
+            "collapse": "Hide detail",
+            "setDefault": "Set as default",
+            "markDefault": "Use as the default account",
+            "remove": "Remove",
+            "uploadQr": "Upload QR image",
+            "changeQr": "Change QR image"
+        },
+        "success": {
+            "created": "Transfer account saved."
+        },
+        "errors": {
+            "load": "Failed to load transfer accounts.",
+            "create": "Failed to save the transfer account.",
+            "setDefault": "Failed to change the default account.",
+            "remove": "Failed to remove the transfer account.",
+            "requiredFields": "Issuer and account number are required.",
+            "qrRead": "Could not read the QR image file."
+        }
+    },
+    "setup": {
+        "title": "Setup",
+        "subtitle": "Approve pending payment plans, review every assignment and maintain your transfer accounts.",
+        "search": "Search seller",
+        "total": "Total records:",
+        "selected": "Selected",
+        "activeDate": "Activation date",
+        "activeDateHint": "Used when you approve the selected plans. The end date is derived from the plan length.",
+        "pendingTitle": "Waiting for approval",
+        "pendingDesc": "Payment plans created by admin and still in CREATE state.",
+        "pendingEmpty": "No payment plan is waiting for approval.",
+        "allTitle": "Payment plans",
+        "allDesc": "Active plans are shown by default; use the button to display every state.",
+        "toggleState": "Display all states",
+        "showAll": "Display all states",
+        "showActive": "Display active only",
+        "billNote": "Payment confirmed by admin",
+        "column": {
+            "user": "Seller",
+            "name": "Name",
+            "fee": "Fee",
+            "days": "Days",
+            "quota": "Used / quota",
+            "state": "State",
+            "activeDate": "Active date",
+            "endedDate": "Ended date",
+            "payment": "Payment",
+            "action": "Action"
+        },
+        "action": {
+            "approve": "Approve",
+            "reject": "Reject",
+            "activate": "Activate",
+            "deactivate": "Deactivate",
+            "markPaid": "Mark paid"
+        },
+        "transferTitle": "My transfer accounts",
+        "transferDesc": "These accounts are shown on the seller payment page. Only one can be the default.",
+        "success": {
+            "approved": "Selected payment plans are activated.",
+            "rejected": "Selected payment plans are deactivated.",
+            "activated": "Selected payment plans are activated.",
+            "deactivated": "Selected payment plans are deactivated."
+        },
+        "errors": {
+            "load": "Failed to load payment plans.",
+            "bulkAction": "The action failed. Please try again.",
+            "noSelection": "Please select at least one payment plan."
+        }
+    },
+    "sellerSetup": {
+        "title": "My Setup",
+        "subtitle": "Review your payment plans and manage the transfer accounts used for public payments.",
+        "plansTitle": "My payment plans",
+        "plansDesc": "Active plans assigned to you and how many product links are still available.",
+        "empty": "No active payment plan yet.",
+        "remaining": "Remaining",
+        "transferTitle": "My transfer accounts",
+        "transferDesc": "Buyers can use these accounts when paying for your orders.",
+        "errors": {
+            "load": "Failed to load your payment plans."
+        }
+    },
+    "payment": {
+        "title": "Payment",
+        "subtitle": "Review the plan below and transfer the amount to activate it.",
+        "planTitle": "Payment plan detail",
+        "field": {
+            "fee": "Plan fee",
+            "duration": "Validity",
+            "estimatedActive": "Estimated active date",
+            "estimatedEnd": "Estimated end date",
+            "accountNumber": "Account number",
+            "accountName": "Account holder",
+            "email": "Your email",
+            "phone": "Your phone number"
+        },
+        "unit": {
+            "day": "day(s)",
+            "link": "link(s)"
+        },
+        "status": {
+            "create": "Waiting for payment",
+            "waiting": "Confirmation received, waiting for admin",
+            "paid": "Paid",
+            "rejected": "Rejected"
+        },
+        "dateNote": "The exact dates are set by admin once the payment is approved.",
+        "transferTitle": "Transfer information",
+        "transferNote": "The content above is filled automatically when the QR code is scanned.",
+        "scanMessagePrefix": "Transfer content:",
+        "noTransfer": "No transfer account is configured yet. Please contact admin.",
+        "guide": "After the transfer is done, press the button below so we can verify it and activate your plan.",
+        "confirmButton": "Confirm payment",
+        "processed": "This payment has already been processed",
+        "notFound": "This payment link is not available anymore.",
+        "waitingGuidance": "You will get the result within a few minutes via app chat, or the email / phone number you provided.",
+        "confirmTitle": "Confirm your payment",
+        "confirmSubtitle": "Tell us how to reach you with the result.",
+        "errors": {
+            "missingToken": "This payment link is incomplete. Please ask admin for a new one.",
+            "load": "This payment link is invalid or expired. Please contact admin.",
+            "confirm": "Unable to confirm the payment right now. Please try again."
         }
     }
 }

@@ -9,6 +9,9 @@ import RegisterPage from "./page/RegisterPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 import NotificationPage from "./page/NotificationPage";
 import AdminChatPage from "./page/AdminChatPage";
+import SetupPage from "./page/SetupPage";
+import SellerSetupPage from "./page/SellerSetupPage";
+import PaymentPage from "./page/PaymentPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -80,6 +83,15 @@ function App() {
               </Layout>
             }
           />
+          {/* Public payment page: opened from the URL the admin sends */}
+          <Route
+            path="/payment"
+            element={
+              <Layout>
+                <PaymentPage />
+              </Layout>
+            }
+          />
 
           <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             <Route
@@ -122,6 +134,14 @@ function App() {
                 </Layout>
               }
             />
+            <Route
+              path="/setup"
+              element={
+                <Layout>
+                  <SetupPage />
+                </Layout>
+              }
+            />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={["SELLER"]} />}>
@@ -130,6 +150,14 @@ function App() {
               element={
                 <Layout>
                   <SellerHome />
+                </Layout>
+              }
+            />
+            <Route
+              path="/sellerSetup"
+              element={
+                <Layout>
+                  <SellerSetupPage />
                 </Layout>
               }
             />

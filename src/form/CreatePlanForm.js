@@ -1,12 +1,14 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
-  Autocomplete,
+  Box,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
+  MenuItem,
   Stack,
   TextField,
   Typography,
@@ -14,162 +16,166 @@ import {
 import api from "../api";
 import { useAuth } from "../AuthContext";
 import ProductForm from "./ProductForm";
+import { useTranslation } from "react-i18next";
 
 const contextPath = "/publiclink";
 
-const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    username: "",
-    link: "",
-    name: "",
-    durationHours: 24,
-    priceAmount: 10000,
-  });
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [priceDisplay, setPriceDisplay] = useState("10,000");
-  const productDataRef = useRef({});
-  const priceInputRef = useRef(null);
-  const { logout, username: createdBy } = useAuth();
+const formatVND = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "-";
+  return num.toLocaleString("en-US");
+};
 
-  const usernameOptions = Array.from(
-    new Set(
-      users
-        .map((user) => user?.username?.trim())
-        .filter(Boolean)
-    )
+/**
+ * Admin "Generate Product Link" flow.
+ *
+ * Screen 1: pick the seller and one of the seller's ACTIVE payment plans.
+ * Next calls the quota gate; screen 2 is only reachable while the plan still
+ * has an environment left. Submit creates the request + sale environment only
+ * (the payment plan itself is managed from the Create Payment Plan dialog).
+ */
+const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
+  const { t } = useTranslation();
+  const [step, setStep] = useState(1);
+  const [username, setUsername] = useState("");
+  const [plans, setPlans] = useState([]);
+  const [selectedPlanCode, setSelectedPlanCode] = useState("");
+  const [error, setError] = useState("");
+  const [planNotice, setPlanNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const productDataRef = useRef({});
+  const { logout } = useAuth();
+
+  const usernameOptions = useMemo(
+    () => Array.from(new Set(users.map((user) => user?.username?.trim()).filter(Boolean))),
+    [users]
   );
+
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => plan.planUserCode === selectedPlanCode) || null,
+    [plans, selectedPlanCode]
+  );
+
+  const resetForm = useCallback(() => {
+    setStep(1);
+    setUsername("");
+    setPlans([]);
+    setSelectedPlanCode("");
+    setError("");
+    setPlanNotice("");
+    setSubmitting(false);
+    productDataRef.current = {};
+  }, []);
 
   useEffect(() => {
     if (!open) {
-      setError("");
-      setSubmitting(false);
-      setStep(1);
-      setPriceDisplay("10,000");
-      productDataRef.current = {};
-      setForm({
-        username: "",
-        link: "",
-        name: "",
-        durationHours: 24,
-        priceAmount: 10000,
-      });
+      resetForm();
     }
-  }, [open]);
+  }, [open, resetForm]);
 
-  const handleFieldChange = (name, value) => {
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const formatVND = (value) => {
-    if (value === "" || value === undefined || value === null) return "";
-    const num = Number(value);
-    if (Number.isNaN(num)) return "";
-    return num.toLocaleString("en-US");
-  };
-
-  const handlePriceFocus = () => {
-    setPriceDisplay(String(form.priceAmount || ""));
-  };
-
-  const handlePriceBlur = () => {
-    setPriceDisplay(formatVND(form.priceAmount));
-  };
-
-  const handlePriceChange = (e) => {
-    const raw = e.target.value.replace(/,/g, "");
-    const num = raw === "" ? "" : Number(raw);
-    if (raw !== "" && Number.isNaN(Number(raw))) return;
-    setPriceDisplay(raw);
-    handleFieldChange("priceAmount", num);
-  };
-
-  const handleNext = () => {
-    const username = form.username.trim();
-    const link = form.link.trim();
-    const name = form.name.trim();
-    const durationHours = Number(form.durationHours) || 24;
-    const priceAmount = Number(form.priceAmount) || 10000;
-
-    if (!username && !link && !name) {
-      setError("At least one of Username, Name, or Facebook link is required.");
+  useEffect(() => {
+    if (!open || !username.trim()) {
       return;
     }
 
-    if (durationHours <= 0 || priceAmount < 0) {
-      setError("Duration must be positive and price cannot be negative.");
-      return;
-    }
+    const loadPlans = async () => {
+      try {
+        setLoadingPlans(true);
+        setError("");
+        const res = await api.get(`${contextPath}/admin/v1/paymentPlan/userPlans`, {
+          params: { username: username.trim() },
+        });
+        const items = res.data?.items || [];
+        setPlans(items);
+        setSelectedPlanCode(items.length > 0 ? items[0].planUserCode : "");
+        setPlanNotice(
+          items.length === 0 ? t("generatePlan.noPlan") : ""
+        );
+      } catch (err) {
+        console.error("Failed to load seller plans", err);
+        setPlans([]);
+        setSelectedPlanCode("");
+        setPlanNotice(t("generatePlan.noPlan"));
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
 
-    setError("");
-    setStep(2);
-  };
-
-  /**
-   * Convert a File object to a Base64 data URI.
-   *
-   * Best practice: For production with large images, prefer
-   * multipart/form-data via a dedicated upload endpoint.
-   * Base64 is suitable here because the backend accepts JSON
-   * (@RequestBody) and PictureDTO.link stores URL strings.
-   * Product images are expected to be small (< 1 MB each),
-   * so the ~33% size overhead of Base64 is acceptable.
-   */
-  const readFileAsBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () =>
-        reject(new Error(`Failed to read file: ${file.name}`));
-      reader.readAsDataURL(file);
-    });
-  };
+    loadPlans();
+  }, [open, username, t]);
 
   const handleProductDataChange = (data) => {
     productDataRef.current = data;
   };
 
-  const submitCreatePLanForm = async () => {
+  const handleNext = async () => {
+    setError("");
+    setPlanNotice("");
+
+    if (!username.trim()) {
+      setError(t("generatePlan.errors.missingUser"));
+      return;
+    }
+
+    if (!selectedPlan) {
+      setPlanNotice(t("generatePlan.noPlan"));
+      return;
+    }
+
+    try {
+      const res = await api.post(`${contextPath}/admin/v1/paymentPlan/check`, {
+        username: username.trim(),
+      });
+      const data = res.data || {};
+      if (!data.allowed) {
+        setPlanNotice(data.message || t("generatePlan.quotaExhausted"));
+        return;
+      }
+      setStep(2);
+    } catch (err) {
+      if (err?.response?.status === 403) {
+        logout();
+        return;
+      }
+      console.error("Failed to check payment plan quota", err);
+      setError(
+        err?.response?.data?.errorMessage || t("generatePlan.errors.checkQuota")
+      );
+    }
+  };
+
+  const handleSubmit = async () => {
     setError("");
     setSubmitting(true);
 
     try {
-      const username = form.username.trim();
-      const link = form.link.trim();
-      const name = form.name.trim();
-      const durationHours = Number(form.durationHours) || 24;
-      const priceAmount = Number(form.priceAmount) || 10000;
-
+      // The plan length drives how long the public link stays valid.
+      const durationHours = Math.max(1, Number(selectedPlan?.planDay || 1) * 24);
       const sellerRequest = {
-        username,
-        link,
-        name,
+        username: username.trim(),
+        link: "",
+        name: selectedPlan?.displayName || username.trim(),
         price: {
           durationHours,
-          priceAmount,
+          priceAmount: Number(selectedPlan?.fee || 0),
           currency: "VND",
         },
       };
 
-      // 1. Call generateRequestId
       const generatorResponse = await api.post(
         `${contextPath}/api/generator/generateRequestId`,
-        {
-          sellerRequest,
-          productName: "",
-        }
+        { sellerRequest, productName: "" }
       );
 
       const generatorData = generatorResponse.data || {};
       const requestUuid = generatorData.requestUuid;
-      const sellerName = generatorData.sellerName || username;
+      const sellerName = generatorData.sellerName || username.trim();
 
       if (!requestUuid) {
-        throw new Error("Unable to generate request ID.");
+        throw new Error(t("generatePlan.errors.generateRequestId"));
       }
 
-      // 2. Call createSaleEnvironment
       const productData = productDataRef.current;
       const hasProductData =
         productData.productName ||
@@ -178,19 +184,12 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         productData.price ||
         (productData.images && productData.images.length > 0);
 
-      // Build the combined request body with product data
-      const requestBody = {
-        requestUuid,
-        sellerRequest,
-      };
+      const requestBody = { requestUuid, sellerRequest };
 
       if (hasProductData) {
-        // Encode images as base64 data URIs for JSON transport
         const imageUrls =
           productData.images && productData.images.length > 0
-            ? await Promise.all(
-              productData.images.map((file) => readFileAsBase64(file))
-            )
+            ? await Promise.all(productData.images.map((file) => readFileAsBase64(file)))
             : [];
 
         requestBody.productRequest = {
@@ -207,24 +206,9 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         requestBody
       );
 
-      const environmentData = environmentResponse.data || {};
-
-      // 3. Call createSellerPlan
-      const planRequestBody = {
-        sellerRequest,
-        requestUuid,
-        startTime: new Date().toISOString(),
-        description: productData.description || "",
-      };
-
-      await api.post(
-        `${contextPath}/admin/v1/createSellerPlan`,
-        planRequestBody
-      );
-
       onSuccess?.({
-        message: `Generated seller environment for ${sellerName}.`,
-        record: environmentData,
+        message: `${t("generatePlan.success", { sellerName })}`,
+        record: environmentResponse.data || {},
       });
       onClose?.();
     } catch (err) {
@@ -235,13 +219,22 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
 
       console.error("API Error:", err);
       setError(
+        err?.response?.data?.errorMessage ||
         err?.response?.data?.message ||
-        "Unable to generate the seller environment and plan right now."
+        t("generatePlan.errors.submit")
       );
     } finally {
       setSubmitting(false);
     }
   };
+
+  const readFileAsBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+      reader.readAsDataURL(file);
+    });
 
   const handleBack = () => {
     setError("");
@@ -254,85 +247,87 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
       onClose={submitting ? undefined : onClose}
       fullWidth
       maxWidth="md"
-      PaperProps={{
-        sx: {
-          borderRadius: 1,
-        },
-      }}
+      PaperProps={{ sx: { borderRadius: 1 } }}
     >
       <DialogTitle>
-        {step === 1 ? "Create New Sale Plan" : "Product Details"}
+        {step === 1 ? t("generatePlan.titleStep1") : t("generatePlan.titleStep2")}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {step === 1 ? (
             <>
               <Typography variant="body2" color="text.secondary">
-                Select an existing username or type a new seller username, then
-                create the seller environment and public link in one flow.
+                {t("generatePlan.subtitleStep1")}
               </Typography>
               {error && <Alert severity="error">{error}</Alert>}
-              <Autocomplete
-                freeSolo
-                autoHighlight
-                options={usernameOptions}
-                filterOptions={(options, { inputValue }) => {
-                  const query = inputValue.trim().toLowerCase();
+              {planNotice && <Alert severity="warning">{planNotice}</Alert>}
 
-                  if (!query) {
-                    return options;
-                  }
-
-                  return options.filter((option) =>
-                    option.toLowerCase().includes(query)
-                  );
-                }}
-                inputValue={form.username}
-                onInputChange={(_, newInputValue, reason) => {
-                  if (reason === "input" || reason === "clear") {
-                    handleFieldChange("username", newInputValue);
-                  }
-                }}
-                onChange={(_, newValue) => {
-                  handleFieldChange("username", newValue || "");
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Username" name="username" />
+              <TextField
+                label={t("generatePlan.field.user")}
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                select
+                size="small"
+              >
+                {usernameOptions.length === 0 && (
+                  <MenuItem value="" disabled>
+                    {t("generatePlan.noUsers")}
+                  </MenuItem>
                 )}
-              />
-              <TextField
-                label="Name"
-                name="name"
-                value={form.name}
-                onChange={(event) => handleFieldChange("name", event.target.value)}
-              />
-              <TextField
-                label="Facebook link or profile"
-                name="link"
-                value={form.link}
-                onChange={(event) => handleFieldChange("link", event.target.value)}
-              />
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                  label="Duration (hours)"
-                  name="durationHours"
-                  type="number"
-                  inputProps={{ min: 1 }}
-                  value={form.durationHours}
-                  onChange={(event) => handleFieldChange("durationHours", event.target.value)}
-                  fullWidth
-                />
-                <TextField
-                  label="Price (VND)"
-                  name="priceAmount"
-                  type="text"
-                  inputRef={priceInputRef}
-                  value={priceDisplay}
-                  onFocus={handlePriceFocus}
-                  onBlur={handlePriceBlur}
-                  onChange={handlePriceChange}
-                  fullWidth
-                />
+                {usernameOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">
+                  {t("generatePlan.pickPlan")}
+                </Typography>
+                {loadingPlans && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t("common.loading")}
+                  </Typography>
+                )}
+                {!loadingPlans && plans.length === 0 && username.trim() && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t("generatePlan.noPlan")}
+                  </Typography>
+                )}
+                {plans.map((plan) => {
+                  const isSelected = plan.planUserCode === selectedPlanCode;
+                  return (
+                    <Box
+                      key={plan.planUserCode}
+                      onClick={() => setSelectedPlanCode(plan.planUserCode)}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.5,
+                        px: 2,
+                        py: 1,
+                        cursor: "pointer",
+                        borderRadius: 1,
+                        border: "1px solid",
+                        borderColor: isSelected ? "primary.main" : "divider",
+                        bgcolor: isSelected ? "action.selected" : "background.paper",
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {formatVND(plan.fee)} VND
+                      </Typography>
+                      <Divider orientation="vertical" flexItem />
+                      <Typography variant="body2" color="text.secondary">
+                        {plan.planDay} {t("generatePlan.unit.day")}
+                      </Typography>
+                      <Divider orientation="vertical" flexItem />
+                      <Typography variant="body2" color="text.secondary">
+                        {t("generatePlan.remaining")}: {plan.remaining}
+                      </Typography>
+                    </Box>
+                  );
+                })}
               </Stack>
             </>
           ) : (
@@ -347,27 +342,23 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         {step === 1 ? (
           <>
             <Button onClick={onClose} disabled={submitting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleNext}
               variant="contained"
-              disabled={submitting}
+              disabled={submitting || loadingPlans}
             >
-              Next
+              {t("common.next")}
             </Button>
           </>
         ) : (
           <>
             <Button onClick={handleBack} disabled={submitting}>
-              Back
+              {t("common.back")}
             </Button>
-            <Button
-              onClick={submitCreatePLanForm}
-              variant="contained"
-              disabled={submitting}
-            >
-              Submit
+            <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+              {t("common.submit")}
             </Button>
           </>
         )}

@@ -21,6 +21,8 @@ import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CreatePlanForm from "../form/CreatePlanForm";
+import CreateSellerPlanDialog from "../form/CreateSellerPlanDialog";
+import PaymentLinkResultDialog from "../form/PaymentLinkResultDialog";
 import { CountdownBadge } from "../components/CountdownTimer";
 import { useTranslation } from "react-i18next";
 
@@ -148,6 +150,10 @@ const AdminHomePage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [userError, setUserError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
+  const [openPlanDialog, setOpenPlanDialog] = useState(false);
+  const [openPlanResult, setOpenPlanResult] = useState(false);
+  const [planResult, setPlanResult] = useState(null);
+  const [planError, setPlanError] = useState("");
   const contextPath = "/publiclink";
   const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
@@ -388,6 +394,17 @@ const AdminHomePage = () => {
                 {t("adminHome.sendNotification")}
               </Button>
               <Button
+                variant="outlined"
+                onClick={() => {
+                  setSuccessMessage("");
+                  setPlanError("");
+                  setPlanResult(null);
+                  setOpenPlanDialog(true);
+                }}
+              >
+                {t("adminHome.createPaymentPlan")}
+              </Button>
+              <Button
                 variant="contained"
                 onClick={() => {
                   setSuccessMessage("");
@@ -413,6 +430,31 @@ const AdminHomePage = () => {
           onClose={() => setOpenDialog(false)}
           onSuccess={handleSellerFormSuccess}
           users={userOptions}
+        />
+
+        {/* Create payment plan for a seller, then show the payment URL to send */}
+        <CreateSellerPlanDialog
+          open={openPlanDialog}
+          onClose={() => setOpenPlanDialog(false)}
+          users={userOptions}
+          onSuccess={(result) => {
+            setOpenPlanDialog(false);
+            setPlanResult(result);
+            setPlanError("");
+            setOpenPlanResult(true);
+          }}
+          onError={(message) => {
+            setOpenPlanDialog(false);
+            setPlanResult(null);
+            setPlanError(message);
+            setOpenPlanResult(true);
+          }}
+        />
+        <PaymentLinkResultDialog
+          open={openPlanResult}
+          onClose={() => setOpenPlanResult(false)}
+          result={planResult}
+          errorMessage={planError}
         />
 
         <SectionBlock

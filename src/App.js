@@ -1,15 +1,20 @@
 import React from "react";
-import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "./page/LoginPage";
-import HomePage from "./page/HomePage";
+import ChangePasswordPage from "./page/ChangePasswordPage";
+import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
-import SaleEnvPage from "./page/SaleEnvPage";
+import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
+import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
+import NotificationPage from "./page/NotificationPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import SellerHome from "./page/SellerHome";
 import ErrorPage from "./page/ErrorPage";
+import RedirectionPage from "./page/RedirectionPage";
+import PublinkPage from "./page/PublinkPage";
 import Layout from "./Layout";
 
 function App() {
@@ -26,7 +31,23 @@ function App() {
             }
           />
           <Route
-            path="/public/link"
+            path="/change-password"
+            element={
+              <Layout>
+                <ChangePasswordPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/link"
+            element={
+              <Layout>
+                <RedirectionPage />
+              </Layout>
+            }
+          />
+          <Route
+            path="/api/v1/publish/saleUrl"
             element={
               <Layout>
                 <SaleEnvPage />
@@ -34,18 +55,19 @@ function App() {
             }
           />
           <Route
-            path="/public/register"
+            path="/api/v1/publish/register"
             element={
               <Layout>
                 <RegisterPage />
               </Layout>
             }
           />
+
           <Route
-            path="/sellerHome"
+            path="/publink"
             element={
               <Layout>
-                <SellerHome />
+                <PublinkPage />
               </Layout>
             }
           />
@@ -58,12 +80,12 @@ function App() {
             }
           />
 
-          <Route element={<ProtectedRoute />}>
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
             <Route
-              path="/home"
+              path="/adminHome"
               element={
                 <Layout>
-                  <HomePage />
+                  <AdminHomePage />
                 </Layout>
               }
             />
@@ -72,6 +94,33 @@ function App() {
               element={
                 <Layout>
                   <GenerationPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/environmentDetail"
+              element={
+                <Layout>
+                  <EnvironmentDetailPage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/notification"
+              element={
+                <Layout>
+                  <NotificationPage />
+                </Layout>
+              }
+            />
+          </Route>
+
+          <Route element={<ProtectedRoute allowedRoles={["SELLER"]} />}>
+            <Route
+              path="/sellerHome"
+              element={
+                <Layout>
+                  <SellerHome />
                 </Layout>
               }
             />

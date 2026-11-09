@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Box,
@@ -7,20 +7,38 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
 import api from "../api";
 import JSEncrypt from "jsencrypt";
+import { useTranslation } from "react-i18next";
+
+const normalizeRole = (role) =>
+  String(role || "")
+    .trim()
+    .replace(/^ROLE_/i, "")
+    .toLowerCase();
 
 const LoginPage = () => {
-  const [inputUsername, setInputUsername] = useState("");
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const urlUsername = queryParams.get("username");
+  const requestUuid = queryParams.get("requestUuid") || queryParams.get("reqUuid");
+  const [inputUsername, setInputUsername] = useState(urlUsername || "");
   const [inputPassword, setInputPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login, logout } = useAuth();
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    if (urlUsername) {
+      setInputUsername(urlUsername);
+    }
+  }, [urlUsername]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -35,7 +53,7 @@ const LoginPage = () => {
         sessionStorage.setItem("publicKey", publicKey);
       }
       if (!publicKey || !inputUsername || !inputPassword)
-        throw new Error("Pre-login got failure!");
+        throw new Error(t("login.errors.preLogin"));
 
       const encryptor = new JSEncrypt();
       encryptor.setPublicKey(publicKey);
@@ -44,23 +62,38 @@ const LoginPage = () => {
       const response = await api.post("/api/v1/auth/basic", {
         username: inputUsername,
         encryptedPassword: encryptedPassword,
+        ...(requestUuid && { reqUuid: requestUuid }),
       });
 
       if (response.status === 200) {
-        login(response.data);
+        if (response.data?.changePasswordRequired) {
+          navigate(
+            `/change-password?ticket=${encodeURIComponent(
+              response.data.passwordChangeTicket || ""
+            )}`
+          );
+          return;
+        }
+        const authData = login(response.data);
+        if (!authData) {
+          logout();
+          setError(t("login.errors.missingAuth"));
+          return;
+        }
+        const primaryRole = normalizeRole(authData?.userRole);
 
-        if (String(response.data.roles[0]).toLowerCase() === "admin") {
-          navigate("/home");
+        if (primaryRole === "admin") {
+          navigate("/adminHome");
         } else {
-          navigate("/sellerHome", {
-            state: {
-              username: response.data.username,
-            },
-          });
+          if (authData?.reqUuid) {
+            navigate(`/api/v1/publish/saleUrl?requestUuid=${encodeURIComponent(authData.reqUuid)}`);
+          } else {
+            navigate("/sellerHome");
+          }
         }
       } else {
         logout();
-        setError("You don't have permission to log in.");
+        setError(t("login.errors.noPermission"));
       }
     } catch (err) {
       console.error("Login error:", err);
@@ -68,16 +101,14 @@ const LoginPage = () => {
         if (err.response.data && err.response.data.message) {
           setError(err.response.data.message);
         } else if (err.response.status === 401 || err.response.status === 403) {
-          setError("Wrong username/password.");
+          setError(t("login.errors.wrongCredentials"));
         } else {
-          setError("An unexpected error occurred during login.");
+          setError(t("login.errors.unexpected"));
         }
       } else if (err.request) {
-        setError(
-          "No response from server. Please check your network connection."
-        );
+        setError(t("login.errors.noResponse"));
       } else {
-        setError("Error setting up the login request.");
+        setError(t("login.errors.setupError"));
       }
     } finally {
       setSubmitting(false);
@@ -96,9 +127,9 @@ const LoginPage = () => {
       <CardWrapper sx={{ width: "100%" }}>
         <Stack spacing={3}>
           <Stack spacing={1}>
-            <Typography variant="h3">Login</Typography>
+            <Typography variant="h3">{t("login.title")}</Typography>
             <Typography variant="body1" color="text.secondary">
-              Sign in to manage seller onboarding and public order links.
+              {t("login.subtitle")}
             </Typography>
           </Stack>
 
@@ -107,26 +138,36 @@ const LoginPage = () => {
           <Box component="form" onSubmit={handleLogin}>
             <Stack spacing={2}>
               <TextField
-                label="Username"
+                label={t("login.username")}
                 type="text"
                 value={inputUsername}
+                disabled={Boolean(urlUsername)}
                 onChange={(event) => setInputUsername(event.target.value)}
                 required
               />
               <TextField
-                label="Password"
+                label={t("login.password")}
                 type="password"
                 value={inputPassword}
                 onChange={(event) => setInputPassword(event.target.value)}
                 required
               />
+              {requestUuid && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontStyle: "italic" }}
+                >
+                  {t("login.requestId")}: {requestUuid}
+                </Typography>
+              )}
               <Button
                 type="submit"
                 variant="contained"
                 size="large"
                 disabled={submitting}
               >
-                Log in
+                {t("login.loginButton")}
               </Button>
             </Stack>
           </Box>

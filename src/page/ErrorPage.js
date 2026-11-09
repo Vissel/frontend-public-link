@@ -1,17 +1,19 @@
 import { Alert, Stack, Typography } from "@mui/material";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
+import { useTranslation } from "react-i18next";
 
 const ErrorPage = () => {
+  const { t } = useTranslation();
   return (
     <PageContainer maxWidth="sm">
-      <SectionBlock title="Error Page" description="Something went wrong while loading this page.">
+      <SectionBlock title={t("error.title")} description={t("error.description")}>
         <Stack spacing={2}>
           <Alert severity="error">
-            The requested page could not be loaded. Please retry from the previous page or sign in again.
+            {t("error.message")}
           </Alert>
           <Typography variant="body2" color="text.secondary">
-            This fallback view has been migrated to the same MUI-only shell as the main application.
+            {t("error.fallback")}
           </Typography>
         </Stack>
       </SectionBlock>

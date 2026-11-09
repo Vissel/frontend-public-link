@@ -3,6 +3,9 @@ import config from "./config";
 import { clearAuthStorage, getStoredAuth, storeAuth } from "../authStorage";
 
 export const CONTEXT_PATH = "/publiclink";
+// Zalo chat bridge lives in its own service and its own public namespace, so the
+// gateway routes /chat/** to chat-app rather than to publiclink-app.
+export const CHAT_CONTEXT_PATH = "/chat";
 
 const api = axios.create({
   baseURL: config.baseURL,
@@ -13,6 +16,15 @@ const api = axios.create({
 
 const pubApi = axios.create({
   baseURL: `${config.baseURL}${CONTEXT_PATH}`,
+  withCredentials: true,
+  timeout: config.timeout,
+  headers: { "ngrok-skip-browser-warning": "true" },
+});
+
+// Chat bridge calls. Public visitor endpoints work without a token; the admin
+// console endpoints get the same Authorization header the other instances attach.
+const chatApi = axios.create({
+  baseURL: `${config.baseURL}${CHAT_CONTEXT_PATH}`,
   withCredentials: true,
   timeout: config.timeout,
   headers: { "ngrok-skip-browser-warning": "true" },
@@ -201,5 +213,14 @@ pubApi.interceptors.response.use(
   createResponseErrorHandler(pubApi)
 );
 
+// ── Wire up chatApi ─────────────────────────────────────────────────────────
+// The admin console is JWT-guarded, so it needs the refresh-on-401 behaviour too.
+chatApi.interceptors.request.use(createRequestInterceptor());
+
+chatApi.interceptors.response.use(
+  (response) => response,
+  createResponseErrorHandler(chatApi)
+);
+
 export default api;
-export { pubApi, config };
+export { pubApi, chatApi, config };

@@ -1,7 +1,10 @@
-import { pubApi } from "./index";
+import { chatApi } from "./index";
 
 /**
  * Chat bridge API.
+ *
+ * Every call goes to the chat-app service through the gateway's /chat namespace
+ * (see CHAT_CONTEXT_PATH in api/index.js), not to publiclink-app.
  *
  * Client calls are public (visitors are recognised by device identity, not by an
  * account). Administrator calls live under /admin/v1/chat and therefore carry the
@@ -10,16 +13,16 @@ import { pubApi } from "./index";
 
 // ── client side ──────────────────────────────────────────────────────────────
 
-export const startChat = (payload) => pubApi.post("/api/v1/chat/start", payload);
+export const startChat = (payload) => chatApi.post("/api/v1/chat/start", payload);
 
-export const sendChatMessage = (payload) => pubApi.post("/api/v1/chat/message", payload);
+export const sendChatMessage = (payload) => chatApi.post("/api/v1/chat/message", payload);
 
-export const fetchChatHistory = (payload) => pubApi.post("/api/v1/chat/history", payload);
+export const fetchChatHistory = (payload) => chatApi.post("/api/v1/chat/history", payload);
 
-export const sendChatTyping = (payload) => pubApi.post("/api/v1/chat/typing", payload);
+export const sendChatTyping = (payload) => chatApi.post("/api/v1/chat/typing", payload);
 
 export const closeChatConversation = (conversationUuid) =>
-  pubApi.post("/api/v1/chat/close", null, { params: { conversationUuid } });
+  chatApi.post("/api/v1/chat/close", null, { params: { conversationUuid } });
 
 /**
  * Live status feed for a visitor. EventSource is used rather than axios because it
@@ -27,7 +30,7 @@ export const closeChatConversation = (conversationUuid) =>
  * server replay whatever arrived while the tab was closed.
  */
 export const clientStreamUrl = ({ deviceId, conversationUuid }) => {
-  const base = pubApi.defaults?.baseURL || "";
+  const base = chatApi.defaults?.baseURL || "";
   const params = new URLSearchParams();
   if (deviceId) params.set("deviceId", deviceId);
   if (conversationUuid) params.set("conversationUuid", conversationUuid);
@@ -40,20 +43,20 @@ export const clientStreamUrl = ({ deviceId, conversationUuid }) => {
 // /admin/v1/chat/stream for a future cookie- or signed-url-based upgrade.
 
 export const fetchAdminConversations = ({ page = 0, size = 50 } = {}) =>
-  pubApi.get("/admin/v1/chat/conversations", { params: { page, size } });
+  chatApi.get("/admin/v1/chat/conversations", { params: { page, size } });
 
 export const fetchAdminHistory = (conversationUuid) =>
-  pubApi.get("/admin/v1/chat/history", { params: { conversationUuid } });
+  chatApi.get("/admin/v1/chat/history", { params: { conversationUuid } });
 
-export const sendAdminReply = (payload) => pubApi.post("/admin/v1/chat/reply", payload);
+export const sendAdminReply = (payload) => chatApi.post("/admin/v1/chat/reply", payload);
 
-export const sendAdminTyping = (payload) => pubApi.post("/admin/v1/chat/typing", payload);
+export const sendAdminTyping = (payload) => chatApi.post("/admin/v1/chat/typing", payload);
 
 export const closeAdminConversation = (conversationUuid) =>
-  pubApi.post("/admin/v1/chat/close", null, { params: { conversationUuid } });
+  chatApi.post("/admin/v1/chat/close", null, { params: { conversationUuid } });
 
 // ── Zalo bridge diagnostics / setup ─────────────────────────────────────────
 
-export const fetchZaloStatus = () => pubApi.get("/admin/v1/chat/zalo/status");
+export const fetchZaloStatus = () => chatApi.get("/admin/v1/chat/zalo/status");
 
-export const beginZaloConsent = () => pubApi.post("/admin/v1/chat/zalo/consent/begin");
+export const beginZaloConsent = () => chatApi.post("/admin/v1/chat/zalo/consent/begin");

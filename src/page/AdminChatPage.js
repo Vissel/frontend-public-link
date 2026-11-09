@@ -134,10 +134,11 @@ const AdminChatPage = () => {
                 },
             );
             window.clearTimeout(typingTimerRef.current);
-            // Stop the indicator if the administrator abandons the draft.
+            // Stop the indicator if the administrator abandons the draft: twice the
+            // beacon interval, so a normal pause between keys never clears it.
             typingTimerRef.current = window.setTimeout(() => {
-                sendAdminTyping({ conversationUuid: selectedUuid, typing: false }).catch(() => {});
-            }, 6000);
+                sendAdminTyping({ conversationUuid: selectedUuid, typing: false }).catch(() => { });
+            }, TYPING_BEACON_MS * 2);
         },
         [selectedUuid],
     );
@@ -168,7 +169,7 @@ const AdminChatPage = () => {
                         size="small"
                         label={zalo?.ready ? t("adminChat.zaloReady") : t("adminChat.zaloLocal")}
                         color={zalo?.ready ? "success" : "default"}
-                        onClick={() => {}}
+                        onClick={() => { }}
                         clickable={false}
                     />
                     {zalo?.adminBound ? (
@@ -216,7 +217,7 @@ const AdminChatPage = () => {
                                                         size="small"
                                                         label={t("adminChat.awaiting")}
                                                         color="warning"
-                                                        onClick={() => {}}
+                                                        onClick={() => { }}
                                                         clickable={false}
                                                     />
                                                 ) : null}
@@ -274,7 +275,7 @@ const AdminChatPage = () => {
                                         <IconButton
                                             size="small"
                                             onClick={async () => {
-                                                await closeAdminConversation(selected.uuid).catch(() => {});
+                                                await closeAdminConversation(selected.uuid).catch(() => { });
                                                 loadConversations();
                                             }}
                                         >

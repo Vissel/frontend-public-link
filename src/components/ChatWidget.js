@@ -279,7 +279,7 @@ const ChatWidget = () => {
             return t("chat.returningVisitor", { count: conversation.visitCount });
         }
         return "";
-    }, [conversation]);
+    }, [conversation, t]);
 
     return (
         <Box sx={{ position: "fixed", right: { xs: 12, md: 24 }, bottom: { xs: 12, md: 24 }, zIndex: 1300 }}>

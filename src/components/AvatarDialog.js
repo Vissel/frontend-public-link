@@ -60,8 +60,8 @@ const AvatarDialog = ({ open, onClose, username, dataUrl, onChanged }) => {
     } catch (err) {
       setError(
         err?.response?.data?.errorMessage ||
-          err?.response?.data?.message ||
-          t("avatarDialog.errors.saveFailed"),
+        err?.response?.data?.message ||
+        t("avatarDialog.errors.saveFailed"),
       );
     } finally {
       setBusy(false);

@@ -113,7 +113,7 @@ const GenerationPage = () => {
       console.error(err);
       setError(
         err?.response?.data?.message ||
-          "Unable to save the generated product link."
+        "Unable to save the generated product link."
       );
     } finally {
       setSaving(false);

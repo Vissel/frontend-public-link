@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   const syncAuthState = useCallback(() => {
-  setAuthState(getAuthStateFromStorage());
+    setAuthState(getAuthStateFromStorage());
     setLoading(false);
   }, [getAuthStateFromStorage]);
 

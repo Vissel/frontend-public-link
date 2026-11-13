@@ -724,7 +724,7 @@ const PublinkPage = () => {
 
                 {/* Buyer: Order Form */}
 
-              {!isYoga && isEnvStateActive && <SectionBlock
+                {!isYoga && isEnvStateActive && <SectionBlock
                     title={t("publink.placeOrder")}
                     description={t("publink.placeOrderDesc")}
                 >
@@ -768,7 +768,7 @@ const PublinkPage = () => {
                         </Stack>
                     </Box>
                 </SectionBlock>
-                } 
+                }
             </Stack>
 
             {/* Product Edit Dialog */}

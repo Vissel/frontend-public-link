@@ -109,6 +109,6 @@ export const disablePush = async () => {
   const json = subscription.toJSON();
   // Tell the server first: a stale endpoint only ever answers 410 and makes
   // every later fan-out do useless work.
-  await removePushSubscription(json.endpoint).catch(() => {});
-  await subscription.unsubscribe().catch(() => {});
+  await removePushSubscription(json.endpoint).catch(() => { });
+  await subscription.unsubscribe().catch(() => { });
 };

@@ -160,7 +160,7 @@ const YogaPlansManager = () => {
       setTimeout(() => setCopiedKey(""), 2000);
     };
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(mark).catch(() => {});
+      navigator.clipboard.writeText(text).then(mark).catch(() => { });
     }
   };
 

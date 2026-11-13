@@ -394,12 +394,12 @@ const AdminChatPage = () => {
             setInput(value);
             if (!selectedUuid) return;
             const typing = value.length > 0;
-            sendAdminTyping({ conversationUuid: selectedUuid, typing }).catch(() => {});
+            sendAdminTyping({ conversationUuid: selectedUuid, typing }).catch(() => { });
             window.clearTimeout(typingTimerRef.current);
             // Clear the indicator if the draft is abandoned: twice the beacon
             // interval, so a normal pause between keys never stops the typing.
             typingTimerRef.current = window.setTimeout(() => {
-                sendAdminTyping({ conversationUuid: selectedUuid, typing: false }).catch(() => {});
+                sendAdminTyping({ conversationUuid: selectedUuid, typing: false }).catch(() => { });
             }, TYPING_BEACON_MS * 2);
         },
         [selectedUuid],

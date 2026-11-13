@@ -13,6 +13,7 @@ import {
     Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../AuthContext";
 import {
     clientStreamUrl,
     closeChatConversation,
@@ -92,11 +93,17 @@ const MessageStatus = ({ status, connected }) => {
 
 const ChatWidget = () => {
     const { t } = useTranslation();
+    const { isAuthenticated, username } = useAuth();
+    // The thread belongs to the signed-in account, not to the browser: two
+    // accounts on one machine share local storage, so the widget must forget
+    // everything whenever the account changes.
+    const accountKey = isAuthenticated ? username || "" : "";
 
     const [open, setOpen] = useState(false);
     const [starting, setStarting] = useState(false);
     const [started, setStarted] = useState(false);
     const [conversation, setConversation] = useState(null);
+    const [streamKey, setStreamKey] = useState("");
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
     const [connected, setConnected] = useState(false);
@@ -108,12 +115,34 @@ const ChatWidget = () => {
     const listRef = useRef(null);
     const lastTypingSentRef = useRef(0);
     const openRef = useRef(open);
-    const deviceIdRef = useRef(getDeviceId());
+    // Device identity is scoped to the tab's account: two accounts on one
+    // browser must not share a device row, visit counter or fingerprint.
+    const deviceIdRef = useRef(getDeviceId(accountKey));
+    // Refs are the source of truth for "already starting/started": the account
+    // switch resets them in the same commit that re-starts the thread, before
+    // React state has caught up.
+    const startedRef = useRef(false);
+    const startingRef = useRef(false);
 
     useEffect(() => {
         openRef.current = open;
         if (open) setUnread(0);
     }, [open]);
+
+    // Account switch (sign in, sign out, another user): drop the previous
+    // thread entirely. Keeping it would show one account the other's history.
+    useEffect(() => {
+        startedRef.current = false;
+        startingRef.current = false;
+        deviceIdRef.current = getDeviceId(accountKey);
+        setConversation(null);
+        setStreamKey("");
+        setMessages([]);
+        setStarted(false);
+        setAdminTyping(false);
+        setUnread(0);
+        setErrorText("");
+    }, [accountKey]);
 
     const scrollToEnd = useCallback(() => {
         const node = listRef.current;
@@ -126,32 +155,58 @@ const ChatWidget = () => {
 
     /** Opens or resumes the conversation the first time the widget is expanded. */
     const ensureStarted = useCallback(async () => {
-        if (started || starting) return;
+        if (startedRef.current || startingRef.current) return;
+        startingRef.current = true;
         setStarting(true);
         setErrorText("");
         const attributes = collectAttributes();
         rememberAttributes(attributes);
         try {
             const { data } = await startChat({ deviceId: deviceIdRef.current, attributes });
+            const owner = data.conversation?.ownerUsername || "";
+            if (owner !== accountKey) {
+                // The server bound this thread to a different identity than the
+                // tab's session. Never render or write into somebody else's
+                // conversation: reset and let the next open start clean.
+                startedRef.current = false;
+                setConversation(null);
+                setStreamKey("");
+                setMessages([]);
+                setStarted(false);
+                setErrorText(t("chat.errors.sessionChanged"));
+                return;
+            }
             setConversation(data.conversation);
+            setStreamKey(data.streamKey || "");
             setMessages(data.messages || []);
             deviceIdRef.current = data.deviceId;
+            startedRef.current = true;
             setStarted(true);
         } catch (error) {
             setErrorText(
                 error?.response?.data?.message || error?.message || t("chat.errors.startFailed"),
             );
         } finally {
+            startingRef.current = false;
             setStarting(false);
         }
-    }, [started, starting, t]);
+    }, [t, accountKey]);
+
+    // Account switched while the panel is already open: continue in the new
+    // account's thread without waiting for another click.
+    const accountRef = useRef(accountKey);
+    useEffect(() => {
+        if (accountRef.current === accountKey) return;
+        accountRef.current = accountKey;
+        if (openRef.current) ensureStarted();
+    }, [accountKey, ensureStarted]);
 
     // ── event stream: live messages, status transitions, typing, heartbeat ────
     useEffect(() => {
-        if (!started || !conversation?.uuid) return undefined;
+        if (!started || !conversation?.uuid || !streamKey) return undefined;
 
         const source = new EventSource(
-            clientStreamUrl({ deviceId: deviceIdRef.current, conversationUuid: conversation.uuid }),
+            clientStreamUrl({ conversationUuid: conversation.uuid, key: streamKey }),
         );
         streamRef.current = source;
 
@@ -162,6 +217,9 @@ const ChatWidget = () => {
 
         source.addEventListener("message", (event) => {
             const incoming = JSON.parse(event.data);
+            // Defense in depth: a frame for another conversation must never be
+            // rendered here, even if a proxy or stale sink misroutes it.
+            if (incoming.conversationUuid && incoming.conversationUuid !== conversation.uuid) return;
             setMessages((previous) => {
                 // Replace the optimistic copy of a message this tab just sent.
                 const index = previous.findIndex(
@@ -181,6 +239,7 @@ const ChatWidget = () => {
 
         source.addEventListener("status", (event) => {
             const patch = JSON.parse(event.data);
+            if (patch.conversationUuid && patch.conversationUuid !== conversation.uuid) return;
             setMessages((previous) =>
                 previous.map((item) => (item.id === patch.id ? { ...item, ...patch } : item)),
             );
@@ -200,7 +259,7 @@ const ChatWidget = () => {
             streamRef.current = null;
             setConnected(false);
         };
-    }, [started, conversation?.uuid]);
+    }, [started, conversation?.uuid, streamKey]);
 
     // A hidden tab drops its stream on most mobile browsers; reopen when visible.
     useEffect(() => {
@@ -241,7 +300,17 @@ const ChatWidget = () => {
                     item.clientMessageId === clientMessageId ? { ...item, status: "FAILED" } : item,
                 ),
             );
-            setErrorText(error?.response?.data?.message || t("chat.errors.sendFailed"));
+            if (error?.response?.status === 403) {
+                // The thread belongs to another participant (account switched in
+                // another tab): forget it and start clean on the next open.
+                startedRef.current = false;
+                setConversation(null);
+                setStreamKey("");
+                setStarted(false);
+                setErrorText(t("chat.errors.sessionChanged"));
+            } else {
+                setErrorText(error?.response?.data?.message || t("chat.errors.sendFailed"));
+            }
         }
     }, [conversation, input, t]);
 
@@ -300,6 +369,7 @@ const ChatWidget = () => {
                             <Typography variant="subtitle2">{t("chat.title")}</Typography>
                             <Typography variant="caption" color="text.secondary">
                                 {starting ? t("chat.connecting") : connected ? t("chat.online") : t("chat.offline")}
+                                {accountKey ? ` · ${t("chat.signedInAs", { name: accountKey })}` : ""}
                                 {headerNote ? ` · ${headerNote}` : ""}
                             </Typography>
                         </Box>
@@ -314,7 +384,9 @@ const ChatWidget = () => {
                                         /* closing is best effort; the local view resets anyway */
                                     }
                                     setConversation(null);
+                                    setStreamKey("");
                                     setMessages([]);
+                                    startedRef.current = false;
                                     setStarted(false);
                                     setOpen(false);
                                 }}

@@ -17,6 +17,7 @@ import api from "../api";
 import { useAuth } from "../AuthContext";
 import ProductForm from "./ProductForm";
 import { useTranslation } from "react-i18next";
+import { clampedDurationHours, effectiveLinkExpiry, formatDateTime } from "../util/planWindow";
 
 const contextPath = "/publiclink";
 
@@ -44,6 +45,7 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
   const [planNotice, setPlanNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [planGate, setPlanGate] = useState(null);
   const productDataRef = useRef({});
   const { logout } = useAuth();
 
@@ -64,6 +66,7 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
     setSelectedPlanCode("");
     setError("");
     setPlanNotice("");
+    setPlanGate(null);
     setSubmitting(false);
     productDataRef.current = {};
   }, []);
@@ -132,6 +135,7 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         setPlanNotice(data.message || t("generatePlan.quotaExhausted"));
         return;
       }
+      setPlanGate(data);
       setStep(2);
     } catch (err) {
       if (err?.response?.status === 403) {
@@ -150,8 +154,12 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
     setSubmitting(true);
 
     try {
-      // The plan length drives how long the public link stays valid.
-      const durationHours = Math.max(1, Number(selectedPlan?.planDay || 1) * 24);
+      // Never ask for more validity than the paid window allows; the backend
+      // clamps again, this keeps the UI honest about the real expiry.
+      const durationHours = clampedDurationHours(
+        selectedPlan?.planDay,
+        planGate?.endedDate || selectedPlan?.endedDate
+      );
       const sellerRequest = {
         username: username.trim(),
         link: "",
@@ -177,7 +185,9 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
       }
 
       const productData = productDataRef.current;
+      const isYoga = productData.productType === "YOGA_BOOKING";
       const hasProductData =
+        isYoga ||
         productData.productName ||
         productData.description ||
         productData.quantity ||
@@ -198,6 +208,7 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
           totalAmount: productData.quantity ? Number(productData.quantity) : 0,
           price: productData.price ? Number(productData.price) : 0,
           images: imageUrls,
+          productType: productData.productType || "STANDARD",
         };
       }
 
@@ -325,6 +336,10 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
                       <Typography variant="body2" color="text.secondary">
                         {t("generatePlan.remaining")}: {plan.remaining}
                       </Typography>
+                      <Divider orientation="vertical" flexItem />
+                      <Typography variant="caption" color="text.secondary">
+                        {t("generatePlan.validUntil")}: {plan.endedDate || "-"}
+                      </Typography>
                     </Box>
                   );
                 })}
@@ -333,6 +348,16 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
           ) : (
             <>
               {error && <Alert severity="error">{error}</Alert>}
+              <Alert severity="info">
+                {t("generatePlan.linkExpiryNotice", {
+                  expiry: formatDateTime(
+                    effectiveLinkExpiry(
+                      selectedPlan?.planDay,
+                      planGate?.endedDate || selectedPlan?.endedDate
+                    )
+                  ),
+                })}
+              </Alert>
               <ProductForm onDataChange={handleProductDataChange} />
             </>
           )}

@@ -116,12 +116,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     syncAuthState();
 
+    // Same-tab notifications only. The session now lives in sessionStorage, so
+    // there is deliberately NO cross-tab `storage` listener: a login in another
+    // tab must never rewrite this tab's account (that is what made micro08's
+    // tab chat as micro09 and write into micro09's thread).
     window.addEventListener(AUTH_STATE_EVENT, syncAuthState);
-    window.addEventListener("storage", syncAuthState);
 
     return () => {
       window.removeEventListener(AUTH_STATE_EVENT, syncAuthState);
-      window.removeEventListener("storage", syncAuthState);
     };
   }, [syncAuthState]);
 

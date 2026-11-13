@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Dialog,
@@ -8,7 +9,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  MenuItem,
   Stack,
   TextField,
   ToggleButton,
@@ -43,10 +43,40 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const usernameOptions = useMemo(
-    () => Array.from(new Set(users.map((user) => user?.username?.trim()).filter(Boolean))),
-    [users]
+  const sellerOptions = useMemo(() => {
+    const byUsername = new Map();
+    users.forEach((user) => {
+      const name = user?.username?.trim();
+      if (name && !byUsername.has(name)) {
+        byUsername.set(name, {
+          username: name,
+          name: user?.name?.trim() || "",
+          email: user?.email?.trim() || "",
+        });
+      }
+    });
+    return Array.from(byUsername.values()).sort((a, b) =>
+      a.username.localeCompare(b.username)
+    );
+  }, [users]);
+
+  const selectedSeller = useMemo(
+    () => sellerOptions.find((seller) => seller.username === username) || null,
+    [sellerOptions, username]
   );
+
+  // Client-side search: one term matches username, seller name or email/link
+  const filterSellers = (options, { inputValue }) => {
+    const term = inputValue.trim().toLowerCase();
+    if (!term) {
+      return options;
+    }
+    return options.filter((option) =>
+      [option.username, option.name, option.email]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(term))
+    );
+  };
 
   useEffect(() => {
     if (!open) {
@@ -89,6 +119,13 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
 
     if (!username.trim()) {
       setError(t("createPlan.errors.missingUser"));
+      return;
+    }
+
+    // Search accepts free text, so require an actual pick: the backend
+    // resolves the seller by exact username and would reject anything else
+    if (!selectedSeller) {
+      setError(t("createPlan.errors.invalidUser"));
       return;
     }
 
@@ -137,24 +174,45 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
           </Typography>
           {error && <Alert severity="error">{error}</Alert>}
 
-          <TextField
-            label={t("createPlan.field.user")}
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            select
-            size="small"
-          >
-            {usernameOptions.length === 0 && (
-              <MenuItem value="" disabled>
-                {t("createPlan.noUsers")}
-              </MenuItem>
+          <Autocomplete
+            options={sellerOptions}
+            value={selectedSeller}
+            onChange={(_event, nextValue) => setUsername(nextValue?.username || "")}
+            onInputChange={(_event, nextInput, reason) => {
+              if (reason === "input" || reason === "clear") {
+                setUsername(nextInput.trim());
+              }
+            }}
+            getOptionLabel={(option) => option?.username || ""}
+            isOptionEqualToValue={(option, value) => option.username === value?.username}
+            filterOptions={filterSellers}
+            noOptionsText={
+              username.trim()
+                ? t("createPlan.noMatchingUsers")
+                : t("createPlan.noUsers")
+            }
+            blurOnSelect
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ flexDirection: "column", alignItems: "flex-start", gap: 0.25 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {option.username}
+                </Typography>
+                {(option.name || option.email) && (
+                  <Typography variant="caption" color="text.secondary">
+                    {[option.name, option.email].filter(Boolean).join(" \u00b7 ")}
+                  </Typography>
+                )}
+              </Box>
             )}
-            {usernameOptions.map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label={t("createPlan.field.user")}
+                placeholder={t("createPlan.searchUserPlaceholder")}
+              />
+            )}
+          />
 
           <ToggleButtonGroup
             size="small"

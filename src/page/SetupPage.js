@@ -154,7 +154,7 @@ const PlanAssignmentTable = ({
   // Clearing the term drops back to plain server pagination.
   useEffect(() => {
     if (appliedSearch && !serverSearchActive && locallyFiltered.length === 0
-        && fallbackRef.current !== appliedSearch) {
+      && fallbackRef.current !== appliedSearch) {
       fallbackRef.current = appliedSearch;
       setServerSearchActive(true);
       setPage(1);

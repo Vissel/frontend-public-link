@@ -18,7 +18,10 @@
         "inactive": "Không hoạt động",
         "yes": "Có",
         "no": "Không",
-        "create": "Tạo"
+        "create": "Tạo",
+        "saving": "Đang lưu...",
+        "delete": "Xóa",
+        "done": "Xong"
     },
     "header": {
         "publicLink": "Liên kết công khai",
@@ -26,7 +29,26 @@
         "workspace": "Không gian làm việc",
         "logout": "Đăng xuất",
         "login": "Đăng nhập",
-        "setup": "Cài đặt"
+        "setup": "Cài đặt",
+        "chat": "Chat",
+        "account": "Tài khoản",
+        "changeAvatar": "Đổi ảnh đại diện"
+    },
+    "avatarDialog": {
+        "title": "Ảnh đại diện",
+        "choose": "Chọn ảnh",
+        "save": "Lưu",
+        "remove": "Xóa ảnh",
+        "hint": "Ảnh sẽ tự động cắt vuông và thu nhỏ về {{size}}×{{size}}.",
+        "errors": {
+            "notAnImage": "Vui lòng chọn tệp ảnh (png, jpeg hoặc webp).",
+            "saveFailed": "Không lưu được ảnh."
+        }
+    },
+    "chatNotify": {
+        "title": "Tin nhắn chat mới",
+        "open": "Mở",
+        "guestBody": "Khách #{{tag}}"
     },
     "footer": {
         "licensed": "Được cấp phép theo"
@@ -141,14 +163,21 @@
         "searchUsers": "Tìm kiếm người dùng",
         "noUsers": "Không tìm thấy người dùng nào.",
         "errors": {
-            "fetchRecords": "Không thể tải bản ghi liên kết sản phẩm.",
-            "fetchUsers": "Không thể tải bản ghi người dùng.",
-            "refreshRecords": "Tạo thành công, nhưng không thể làm mới bản ghi liên kết sản phẩm."
+            "fetchRecords": "Không tải được bản ghi liên kết sản phẩm.",
+            "fetchUsers": "Không tải được bản ghi người dùng.",
+            "refreshRecords": "Tạo thành công nhưng không làm mới được danh sách liên kết.",
+            "resetPassword": "Không thể đặt lại mật khẩu."
         },
         "success": {
             "generated": "Tạo môi trường người bán thành công."
         },
-        "createPaymentPlan": "Tạo gói thanh toán"
+        "createPaymentPlan": "Tạo gói thanh toán",
+        "action": "Hành động",
+        "resetPassword": "Đặt lại mật khẩu",
+        "resetPasswordTitle": "Đặt lại mật khẩu cho {{username}}",
+        "resetPasswordConfirm": "Thao tác này vô hiệu hóa mật khẩu hiện tại của {{username}} và tạo một liên kết đặt mật khẩu dùng một lần. Liên kết sẽ được gửi qua email nếu có địa chỉ, và bạn có thể sao chép bên dưới để gửi thủ công.",
+        "resetPasswordSuccess": "Đã vô hiệu hóa mật khẩu. Liên kết đặt mật khẩu mới đã được tạo.",
+        "setupLink": "Liên kết đặt mật khẩu"
     },
     "sellerForm": {
         "generateProductLink": "Tạo liên kết sản phẩm",
@@ -187,7 +216,13 @@
             "maxImages": "Bạn có thể tải lên tối đa 6 hình ảnh.",
             "fileType": "Chỉ cho phép hình ảnh JPEG, PNG và WebP.",
             "fileSize": "Mỗi hình ảnh phải dưới 1 MB (vận chuyển base64)."
-        }
+        },
+        "typeLabel": "Loại liên kết sản phẩm",
+        "typeStandard": "Đặt hàng thường",
+        "typeYoga": "Đặt lớp Yoga",
+        "typeStandardHint": "Người mua đặt hàng theo số lượng/giá trên trang công khai.",
+        "typeYogaHint": "Bạn xếp lịch lớp hàng tuần trên lịch; người mua đặt chỗ.",
+        "dropInPrice": "Giá mỗi lớp (VND)"
     },
     "generation": {
         "title": "Trang tạo",
@@ -471,6 +506,7 @@
         "placeholder": "Nhập tin nhắn…",
         "adminTyping": "Quản trị viên đang soạn tin…",
         "returningVisitor": "Chào mừng trở lại, lượt thứ {{count}}",
+        "signedInAs": "đang chat với tên {{name}}",
         "status": {
             "pending": "Đang gửi",
             "sent": "Đã gửi",
@@ -486,7 +522,8 @@
         },
         "errors": {
             "startFailed": "Không thể mở chat. Vui lòng thử lại.",
-            "sendFailed": "Tin nhắn của bạn không thể gửi được."
+            "sendFailed": "Tin nhắn của bạn không thể gửi được.",
+            "sessionChanged": "Phiên đăng nhập đã thay đổi. Hãy mở lại khung chat để tiếp tục trong cuộc trò chuyện của riêng bạn."
         }
     },
     "adminChat": {
@@ -507,6 +544,22 @@
         "adminNotBoundHint": "Chưa liên kết Zalo quản trị viên — hãy nhắn cho OA một lần với nội dung LINK-ADMIN.",
         "connectZalo": "Kết nối Zalo",
         "consentOpened": "Hoàn tất cấp quyền Zalo ở tab mới.",
+        "searchPlaceholder": "Tìm cuộc trò chuyện",
+        "you": "Bạn: ",
+        "guestLabel": "Khách",
+        "typing": "đang nhập…",
+        "online": "Trực tuyến",
+        "offline": "Không trực tuyến",
+        "back": "Quay lại",
+        "today": "Hôm nay",
+        "yesterday": "Hôm qua",
+        "jumpToLatest": "{{count}} tin nhắn mới",
+        "unreadCount": "{{count}} chưa đọc",
+        "notifyEnable": "Bật thông báo nền",
+        "notifyDisable": "Tắt thông báo nền",
+        "notifyDenied": "Thông báo đang bị chặn trong cài đặt trình duyệt cho trang này.",
+        "notifyUnsupported": "Trình duyệt này không hỗ trợ thông báo nền.",
+        "notifyNotConfigured": "Máy chủ chưa cấu hình push.",
         "status": {
             "ACTIVE": "Đang hoạt động",
             "IDLE": "Khách đã offline",
@@ -515,7 +568,8 @@
         "errors": {
             "loadFailed": "Không tải được hộp thư chat.",
             "replyFailed": "Không gửi được nội dung trả lời.",
-            "consentFailed": "Không thể bắt đầu cấp quyền Zalo."
+            "consentFailed": "Không thể bắt đầu cấp quyền Zalo.",
+            "streamFailed": "Không có cập nhật trực tiếp; danh sách sẽ tự làm mới sau vài giây."
         }
     },
     "createPlan": {
@@ -543,8 +597,11 @@
             "missingUser": "Vui lòng chọn người bán.",
             "missingPlan": "Vui lòng chọn gói thanh toán.",
             "invalidNewPlan": "Phí, số ngày và số link phải lớn hơn 0.",
-            "submit": "Không thể tạo gói thanh toán."
-        }
+            "submit": "Không thể tạo gói thanh toán.",
+            "invalidUser": "Vui lòng chọn người bán trong danh sách."
+        },
+        "searchUserPlaceholder": "Nhập để tìm người bán theo tài khoản, tên hoặc email",
+        "noMatchingUsers": "Không có người bán nào khớp với từ khóa này"
     },
     "paymentResult": {
         "successTitle": "Đã có link thanh toán",
@@ -562,7 +619,7 @@
         "noUsers": "Chưa có người bán nào",
         "pickPlan": "Chọn gói hoạt động",
         "noPlan": "Người bán này chưa có gói thanh toán hoạt động. Hãy tạo gói trước bằng nút Tạo gói thanh toán.",
-        "quotaExhausted": "Không thể tạo. Gói thanh toán đang hoạt động đã hết số link. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đã hết hạn hoặc đã hết chỗ. Vui lòng liên hệ quản trị qua chat hoặc mua thêm.",
         "remaining": "Còn lại",
         "unit": {
             "day": "ngày"
@@ -573,14 +630,16 @@
             "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
             "generateRequestId": "Không tạo được mã yêu cầu.",
             "submit": "Không thể tạo môi trường bán hàng ngay lúc này."
-        }
+        },
+        "validUntil": "Hiệu lực đến",
+        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
     },
     "sellerGenerate": {
         "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
         "titleStep2": "Tạo link sản phẩm - bước 2: thông tin sản phẩm",
         "subtitleStep1": "Chọn một gói thanh toán đang hoạt động của bạn. Mỗi gói cung cấp số link nhất định.",
         "noPlan": "Bạn chưa có gói thanh toán hoạt động. Vui lòng liên hệ quản trị để được hỗ trợ.",
-        "quotaExhausted": "Không thể tạo. Gói thanh toán đang hoạt động đã hết số link. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đã hết hạn hoặc đã hết chỗ. Vui lòng liên hệ quản trị qua chat hoặc mua thêm.",
         "remaining": "Còn lại",
         "unit": {
             "day": "ngày"
@@ -590,7 +649,9 @@
             "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
             "generateRequestId": "Không tạo được mã yêu cầu.",
             "submit": "Không thể tạo link sản phẩm ngay lúc này."
-        }
+        },
+        "validUntil": "Hiệu lực đến",
+        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán của bạn. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
     },
     "transferInfo": {
         "empty": "Chưa có tài khoản chuyển khoản nào.",
@@ -670,7 +731,7 @@
             "deactivate": "Ngủng kích hoạt",
             "markPaid": "Đã thu tiịn"
         },
-        "transferTitle": "Tài khoản nhận tiịn của tôi",
+        "transferTitle": "Tài khoản nhận tiền của tôi",
         "transferDesc": "Các tài khoản này hiển trên trang thanh toán của người bán. Chỉ có một tài khoản mặc định.",
         "success": {
             "approved": "Đã kích hoạt các gói đã chọn.",
@@ -695,7 +756,9 @@
         "transferDesc": "Người mua có thể chuyển vào các tài khoản này.",
         "errors": {
             "load": "Không tải được gói thanh toán của bạn."
-        }
+        },
+        "yogaPlansTitle": "Gói thanh toán Yoga",
+        "yogaPlansDesc": "Khai báo mỗi người mua đã trả bao nhiêu (số ngày ánh xạ tới số tiền VND) trên trang Yoga của bạn. Tạo gói sẽ lập tài khoản và liên kết mật khẩu cho người mua."
     },
     "payment": {
         "title": "Thanh toán",
@@ -737,6 +800,106 @@
             "missingToken": "Link thanh toán không hoàn chỉnh. Vui lòng yêu cầu quản trị gửi link mới.",
             "load": "Link thanh toán này không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ quản trị.",
             "confirm": "Không thể xác nhận thanh toán ngay lúc này. Vui lòng thử lại."
+        }
+    },
+    "yoga": {
+        "prevWeek": "Tuần trước",
+        "thisWeek": "Tuần này",
+        "nextWeek": "Tuần sau",
+        "time": "Giờ",
+        "date": "Ngày",
+        "class": "Lớp",
+        "coach": "HLV",
+        "day": "Thứ",
+        "start": "Bắt đầu",
+        "end": "Kết thúc",
+        "title": "Tên lớp",
+        "capacity": "Chỗ",
+        "remaining": "Còn lại",
+        "action": "Hành động",
+        "full": "Hết chỗ",
+        "book": "Đặt",
+        "booked": "Đã đặt",
+        "cancel": "Hủy",
+        "classListTitle": "Lớp trong khoảng ngày",
+        "dateFrom": "Từ",
+        "dateTo": "Đến",
+        "filter": "Lọc",
+        "noClasses": "Không có lớp trong khoảng này.",
+        "newClass": "Lớp mới",
+        "editClass": "Sửa lớp",
+        "bookTitle": "Đặt lớp này",
+        "bookFor": "Đặt cho",
+        "walkIn": "Vãng lai (trả từng lần)",
+        "daysLeft": "ngày còn",
+        "buyerName": "Tên của bạn",
+        "paymentMode": "Thanh toán",
+        "payWithPlan": "Dùng gói thanh toán",
+        "payAsYouGo": "Trả từng buổi",
+        "booking": "Đang đặt...",
+        "planBanner": "Gói của bạn: đã dùng {{used}}/{{total}} ngày, còn {{remaining}}.",
+        "anonymousHint": "Đăng nhập để đặt bằng gói thanh toán, hoặc nhập tên để trả từng buổi.",
+        "errors": {
+            "load": "Không tải được lịch.",
+            "titleRequired": "Tên lớp là bắt buộc.",
+            "saveClass": "Không lưu được lớp.",
+            "deleteClass": "Không xóa được lớp.",
+            "book": "Đặt lớp thất bại.",
+            "cancel": "Hủy thất bại."
+        },
+        "success": {
+            "classSaved": "Đã lưu lớp.",
+            "classDeleted": "Đã xóa lớp.",
+            "booked": "Đã giữ chỗ.",
+            "cancelled": "Đã hủy đặt chỗ."
+        }
+    },
+    "yogaPlans": {
+        "environment": "Trang Yoga",
+        "newPlan": "Gói mới",
+        "buyer": "Người mua",
+        "username": "Tên đăng nhập",
+        "email": "Email",
+        "days": "Số ngày",
+        "amount": "Số tiền (VND)",
+        "password": "Mật khẩu",
+        "setPassword": "Đã đặt",
+        "notSetPassword": "Chưa đặt",
+        "edit": "Sửa",
+        "resend": "Gửi lại liên kết",
+        "empty": "Chưa có gói nào.",
+        "noEnvironments": "Hãy tạo liên kết sản phẩm Yoga trước để quản lý gói người mua.",
+        "createTitle": "Gói người mua mới",
+        "editTitle": "Sửa gói người mua",
+        "errors": {
+            "loadEnvs": "Không tải được trang Yoga của bạn.",
+            "load": "Không tải được gói.",
+            "save": "Không lưu được gói.",
+            "resend": "Không gửi lại được liên kết.",
+            "buyerRequired": "Tên người mua là bắt buộc."
+        },
+        "success": {
+            "created": "Đã tạo gói và lập tài khoản người mua.",
+            "createdWithLink": "Đã tạo gói. Liên kết đặt mật khẩu đã được gửi / sẵn sàng để sao chép.",
+            "updated": "Đã cập nhật gói.",
+            "linkSent": "Liên kết đặt mật khẩu mới đã được tạo."
+        }
+    },
+    "buyerSetup": {
+        "title": "Đặt mật khẩu của bạn",
+        "resetTitle": "Đặt lại mật khẩu của bạn",
+        "subtitle": "Chọn mật khẩu cho tài khoản đặt lớp.",
+        "newPassword": "Mật khẩu mới",
+        "repeatPassword": "Nhập lại mật khẩu",
+        "submit": "Lưu mật khẩu",
+        "saving": "Đang lưu...",
+        "expiresAt": "Liên kết hết hạn",
+        "errors": {
+            "invalidLink": "Liên kết đặt mật khẩu không hợp lệ.",
+            "invalidOrExpired": "Liên kết này đã được dùng hoặc hết hạn. Hãy yêu cầu liên kết mới.",
+            "mismatch": "Mật khẩu không khớp.",
+            "encryptFailed": "Không bảo mật được mật khẩu của bạn.",
+            "failed": "Không lưu được mật khẩu."
         }
     }
 }

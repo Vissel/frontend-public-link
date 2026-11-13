@@ -18,7 +18,10 @@
         "inactive": "Inactive",
         "yes": "Yes",
         "no": "No",
-        "create": "Create"
+        "create": "Create",
+        "saving": "Saving...",
+        "delete": "Delete",
+        "done": "Done"
     },
     "header": {
         "publicLink": "Public Link",
@@ -26,7 +29,26 @@
         "workspace": "Workspace",
         "logout": "Logout",
         "login": "Login",
-        "setup": "Setup"
+        "setup": "Setup",
+        "chat": "Chat",
+        "account": "Account",
+        "changeAvatar": "Change avatar"
+    },
+    "avatarDialog": {
+        "title": "Profile picture",
+        "choose": "Choose image",
+        "save": "Save",
+        "remove": "Remove picture",
+        "hint": "The image is cropped to a square and resized to {{size}}×{{size}} automatically.",
+        "errors": {
+            "notAnImage": "Please choose an image file (png, jpeg or webp).",
+            "saveFailed": "The picture could not be saved."
+        }
+    },
+    "chatNotify": {
+        "title": "New message in chat",
+        "open": "Open",
+        "guestBody": "Guest #{{tag}}"
     },
     "footer": {
         "licensed": "Licensed under the"
@@ -143,12 +165,19 @@
         "errors": {
             "fetchRecords": "Failed to fetch product link records.",
             "fetchUsers": "Failed to fetch user records.",
-            "refreshRecords": "Generated successfully, but failed to refresh product link records."
+            "refreshRecords": "Generated successfully, but failed to refresh product link records.",
+            "resetPassword": "Failed to reset the password."
         },
         "success": {
             "generated": "Generated seller environment successfully."
         },
-        "createPaymentPlan": "Create payment plan"
+        "createPaymentPlan": "Create payment plan",
+        "action": "Action",
+        "resetPassword": "Reset password",
+        "resetPasswordTitle": "Reset password for {{username}}",
+        "resetPasswordConfirm": "This invalidates {{username}}'s current password and issues a single-use setup link. The link is emailed when an address is on file, and you can copy it below to forward manually.",
+        "resetPasswordSuccess": "Password invalidated. A new setup link was issued.",
+        "setupLink": "Setup link"
     },
     "sellerForm": {
         "generateProductLink": "Generate Product Link",
@@ -187,7 +216,13 @@
             "maxImages": "You can upload up to 6 images total.",
             "fileType": "Only JPEG, PNG, and WebP images are allowed.",
             "fileSize": "Each image must be under 1 MB (base64 transport)."
-        }
+        },
+        "typeLabel": "Product link type",
+        "typeStandard": "Standard order",
+        "typeYoga": "Yoga booking",
+        "typeStandardHint": "Buyers place quantity/price orders on the public page.",
+        "typeYogaHint": "You schedule weekly classes on a calendar; buyers book slots.",
+        "dropInPrice": "Drop-in price per class (VND)"
     },
     "generation": {
         "title": "Generation Page",
@@ -471,6 +506,7 @@
         "placeholder": "Type your message…",
         "adminTyping": "Administrator is typing…",
         "returningVisitor": "Welcome back, visit {{count}}",
+        "signedInAs": "chatting as {{name}}",
         "status": {
             "pending": "Sending",
             "sent": "Sent",
@@ -486,7 +522,8 @@
         },
         "errors": {
             "startFailed": "Unable to open the chat. Please try again.",
-            "sendFailed": "Your message could not be sent."
+            "sendFailed": "Your message could not be sent.",
+            "sessionChanged": "Your session changed. Reopen the chat to continue in your own thread."
         }
     },
     "adminChat": {
@@ -507,6 +544,22 @@
         "adminNotBoundHint": "Administrator Zalo not bound yet — DM the OA the word LINK-ADMIN once.",
         "connectZalo": "Connect Zalo",
         "consentOpened": "Complete the Zalo consent in the new tab.",
+        "searchPlaceholder": "Search conversations",
+        "you": "You: ",
+        "guestLabel": "Guest",
+        "typing": "typing…",
+        "online": "Online",
+        "offline": "Offline",
+        "back": "Back",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "jumpToLatest": "{{count}} new messages",
+        "unreadCount": "{{count}} unread",
+        "notifyEnable": "Enable background notifications",
+        "notifyDisable": "Disable background notifications",
+        "notifyDenied": "Notifications are blocked in the browser settings for this site.",
+        "notifyUnsupported": "This browser cannot receive background notifications.",
+        "notifyNotConfigured": "Push is not configured on the server yet.",
         "status": {
             "ACTIVE": "Active",
             "IDLE": "Visitor offline",
@@ -515,7 +568,8 @@
         "errors": {
             "loadFailed": "Unable to load the chat inbox.",
             "replyFailed": "Your reply could not be sent.",
-            "consentFailed": "Unable to start the Zalo consent."
+            "consentFailed": "Unable to start the Zalo consent.",
+            "streamFailed": "Live updates are unavailable; the list refreshes every few seconds instead."
         }
     },
     "createPlan": {
@@ -543,8 +597,11 @@
             "missingUser": "Please select a seller.",
             "missingPlan": "Please select a plan.",
             "invalidNewPlan": "Fee, days and links must all be greater than zero.",
-            "submit": "Unable to create the payment plan."
-        }
+            "submit": "Unable to create the payment plan.",
+            "invalidUser": "Please pick a seller from the dropdown list."
+        },
+        "searchUserPlaceholder": "Type to search seller by username, name or email",
+        "noMatchingUsers": "No seller matches this search"
     },
     "paymentResult": {
         "successTitle": "Payment link is ready",
@@ -562,7 +619,7 @@
         "noUsers": "No seller available",
         "pickPlan": "Select an active plan",
         "noPlan": "This seller has no active payment plan. Please create one from the Create payment plan dialog first.",
-        "quotaExhausted": "Unable to create. No environment is left in the active payment plan. Please contact admin to get support.",
+        "quotaExhausted": "Unable to create. Your payment plan has ended or has no slot left. Please contact admin via chat or buy more.",
         "remaining": "Remaining",
         "unit": {
             "day": "day(s)"
@@ -573,14 +630,16 @@
             "checkQuota": "Unable to check the remaining payment plan quota.",
             "generateRequestId": "Unable to generate the request ID.",
             "submit": "Unable to generate the seller environment right now."
-        }
+        },
+        "validUntil": "Valid until",
+        "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of the paid plan. To keep selling after that, contact admin via chat or buy a new plan."
     },
     "sellerGenerate": {
         "titleStep1": "Generate Product Link - step 1: payment plan",
         "titleStep2": "Generate Product Link - step 2: product detail",
         "subtitleStep1": "Choose one of your active payment plans. Each plan grants a fixed number of product links.",
         "noPlan": "You have no active payment plan yet. Please contact admin to get support.",
-        "quotaExhausted": "Unable to create. No environment is left in your active payment plan. Please contact admin to get support.",
+        "quotaExhausted": "Unable to create. Your payment plan has ended or has no slot left. Please contact admin via chat or buy more.",
         "remaining": "Remaining",
         "unit": {
             "day": "day(s)"
@@ -590,7 +649,9 @@
             "checkQuota": "Unable to check the remaining payment plan quota.",
             "generateRequestId": "Unable to generate the request ID.",
             "submit": "Unable to generate the product link right now."
-        }
+        },
+        "validUntil": "Valid until",
+        "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of your paid plan. To keep selling after that, contact admin via chat or buy a new plan."
     },
     "transferInfo": {
         "empty": "No transfer account yet.",
@@ -695,7 +756,9 @@
         "transferDesc": "Buyers can use these accounts when paying for your orders.",
         "errors": {
             "load": "Failed to load your payment plans."
-        }
+        },
+        "yogaPlansTitle": "Yoga payment plans",
+        "yogaPlansDesc": "Define what each buyer paid for (days mapped to a VND amount) on your yoga pages. Creating a plan sets up the buyer's account and password link."
     },
     "payment": {
         "title": "Payment",
@@ -737,6 +800,106 @@
             "missingToken": "This payment link is incomplete. Please ask admin for a new one.",
             "load": "This payment link is invalid or expired. Please contact admin.",
             "confirm": "Unable to confirm the payment right now. Please try again."
+        }
+    },
+    "yoga": {
+        "prevWeek": "Prev week",
+        "thisWeek": "This week",
+        "nextWeek": "Next week",
+        "time": "Time",
+        "date": "Date",
+        "class": "Class",
+        "coach": "Coach",
+        "day": "Day",
+        "start": "Start",
+        "end": "End",
+        "title": "Title",
+        "capacity": "Slots",
+        "remaining": "Remaining",
+        "action": "Action",
+        "full": "Full",
+        "book": "Book",
+        "booked": "Booked",
+        "cancel": "Cancel",
+        "classListTitle": "Classes in range",
+        "dateFrom": "From",
+        "dateTo": "To",
+        "filter": "Filter",
+        "noClasses": "No classes in this range.",
+        "newClass": "New class",
+        "editClass": "Edit class",
+        "bookTitle": "Book this class",
+        "bookFor": "Book for",
+        "walkIn": "Walk-in (pay as you go)",
+        "daysLeft": "days left",
+        "buyerName": "Your name",
+        "paymentMode": "Payment",
+        "payWithPlan": "Use my payment plan",
+        "payAsYouGo": "Pay per visit",
+        "booking": "Booking...",
+        "planBanner": "Your plan: {{used}}/{{total}} days used, {{remaining}} left.",
+        "anonymousHint": "Log in to book with your payment plan, or enter your name to pay per visit.",
+        "errors": {
+            "load": "Failed to load the calendar.",
+            "titleRequired": "Class title is required.",
+            "saveClass": "Failed to save the class.",
+            "deleteClass": "Failed to delete the class.",
+            "book": "Booking failed.",
+            "cancel": "Cancellation failed."
+        },
+        "success": {
+            "classSaved": "Class saved.",
+            "classDeleted": "Class removed.",
+            "booked": "Slot booked.",
+            "cancelled": "Booking cancelled."
+        }
+    },
+    "yogaPlans": {
+        "environment": "Yoga page",
+        "newPlan": "New plan",
+        "buyer": "Buyer",
+        "username": "Username",
+        "email": "Email",
+        "days": "Days",
+        "amount": "Amount (VND)",
+        "password": "Password",
+        "setPassword": "Set",
+        "notSetPassword": "Not set",
+        "edit": "Edit",
+        "resend": "Resend link",
+        "empty": "No plans yet.",
+        "noEnvironments": "Create a yoga product link first to manage buyer plans.",
+        "createTitle": "New buyer plan",
+        "editTitle": "Edit buyer plan",
+        "errors": {
+            "loadEnvs": "Failed to load your yoga pages.",
+            "load": "Failed to load plans.",
+            "save": "Failed to save the plan.",
+            "resend": "Failed to resend the link.",
+            "buyerRequired": "Buyer name is required."
+        },
+        "success": {
+            "created": "Plan created and buyer account provisioned.",
+            "createdWithLink": "Plan created. The setup link was emailed / is ready to copy.",
+            "updated": "Plan updated.",
+            "linkSent": "A fresh setup link was issued."
+        }
+    },
+    "buyerSetup": {
+        "title": "Set your password",
+        "resetTitle": "Reset your password",
+        "subtitle": "Choose the password for your booking account.",
+        "newPassword": "New password",
+        "repeatPassword": "Repeat password",
+        "submit": "Save password",
+        "saving": "Saving...",
+        "expiresAt": "Link expires",
+        "errors": {
+            "invalidLink": "This setup link is not valid.",
+            "invalidOrExpired": "This link has already been used or expired. Ask for a new one.",
+            "mismatch": "The passwords do not match.",
+            "encryptFailed": "Could not secure your password.",
+            "failed": "Could not save your password."
         }
     }
 }

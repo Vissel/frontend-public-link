@@ -32,6 +32,7 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
+import YogaSection from "../components/YogaSection";
 import { useTranslation } from "react-i18next";
 import { getExportLocale } from "../i18n/exportLocale";
 
@@ -401,6 +402,7 @@ const PublinkPage = () => {
     const isAdmin = String(userRole || "").toLowerCase() === "admin";
     const canManageOrders = isSeller || isAdmin;
     const isEnvStateActive = saleSpace.envState === "ACTIVE";
+    const isYoga = saleSpace.productType === "YOGA_BOOKING";
 
     const exportToExcel = async () => {
         const requestUUID = saleSpace.reqUuid;
@@ -488,8 +490,12 @@ const PublinkPage = () => {
                     </Stack>
                 </SectionBlock>
 
+                {/* Yoga booking: the single weekly calendar screen replaces the
+                    product cards and the order form for this link type. */}
+                {isYoga && <YogaSection token={token} />}
+
                 {/* Products */}
-                {saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
+                {!isYoga && saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
                     <SectionBlock
                         title={t("publink.products")}
                         description={
@@ -573,7 +579,7 @@ const PublinkPage = () => {
                 )}
 
                 {/* Seller/Admin: Orders Table */}
-                {canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
+                {!isYoga && canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
                     <SectionBlock
                         title={t("publink.orders")}
                         description={t("publink.ordersDesc")}
@@ -704,7 +710,7 @@ const PublinkPage = () => {
                 )}
 
                 {/* Seller/Admin: No orders yet */}
-                {canManageOrders && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
+                {!isYoga && canManageOrders && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
                     <CardWrapper>
                         <Typography
                             variant="body2"
@@ -718,7 +724,7 @@ const PublinkPage = () => {
 
                 {/* Buyer: Order Form */}
 
-              {isEnvStateActive && <SectionBlock
+              {!isYoga && isEnvStateActive && <SectionBlock
                     title={t("publink.placeOrder")}
                     description={t("publink.placeOrderDesc")}
                 >

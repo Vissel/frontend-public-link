@@ -16,6 +16,7 @@ import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import TransferInfoManager from "../components/TransferInfoManager";
+import YogaPlansManager from "../components/YogaPlansManager";
 import { useTranslation } from "react-i18next";
 
 const contextPath = "/publiclink";
@@ -110,6 +111,13 @@ const SellerSetupPage = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        </SectionBlock>
+
+        <SectionBlock
+          title={t("sellerSetup.yogaPlansTitle")}
+          description={t("sellerSetup.yogaPlansDesc")}
+        >
+          <YogaPlansManager />
         </SectionBlock>
 
         <SectionBlock

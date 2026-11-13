@@ -3,6 +3,10 @@ import {
   Alert,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Link,
   Stack,
   Table,
@@ -154,6 +158,10 @@ const AdminHomePage = () => {
   const [openPlanResult, setOpenPlanResult] = useState(false);
   const [planResult, setPlanResult] = useState(null);
   const [planError, setPlanError] = useState("");
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetResult, setResetResult] = useState(null);
+  const [resetError, setResetError] = useState("");
+  const [resetting, setResetting] = useState(false);
   const contextPath = "/publiclink";
   const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
@@ -376,6 +384,28 @@ const AdminHomePage = () => {
   const handleUserSearchKeyDown = (event) => {
     if (event.key === "Enter") {
       setUserAppliedSearchText(userSearchText);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetTarget) return;
+    setResetting(true);
+    setResetError("");
+    setResetResult(null);
+    try {
+      const res = await api.post(`${contextPath}/admin/v1/user/resetPassword`, {
+        username: resetTarget.username,
+      });
+      setResetResult(res.data);
+    } catch (err) {
+      console.error("Reset password failed", err);
+      setResetError(
+        err?.response?.data?.errorMessage ||
+        err?.response?.data?.message ||
+        t("adminHome.errors.resetPassword")
+      );
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -698,12 +728,13 @@ const AdminHomePage = () => {
                   <TableCell>{t("adminHome.name")}</TableCell>
                   <TableCell>{t("adminHome.email")}</TableCell>
                   <TableCell>{t("adminHome.role")}</TableCell>
+                  <TableCell align="right">{t("adminHome.action")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       {t("adminHome.noUsers")}
                     </TableCell>
                   </TableRow>
@@ -721,6 +752,19 @@ const AdminHomePage = () => {
                           onClick={() => { }}
                           clickable={false}
                         />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            setResetTarget(user);
+                            setResetResult(null);
+                            setResetError("");
+                          }}
+                        >
+                          {t("adminHome.resetPassword")}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -742,6 +786,54 @@ const AdminHomePage = () => {
           />
         </SectionBlock>
       </Stack>
+
+      {/* Admin-triggered password reset: invalidates the account's password
+          and returns a single-use setup link to forward to the user. */}
+      <Dialog open={Boolean(resetTarget)} onClose={resetting ? undefined : () => setResetTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {t("adminHome.resetPasswordTitle", { username: resetTarget?.username || "" })}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            {resetError && <Alert severity="error">{resetError}</Alert>}
+            {resetResult ? (
+              <>
+                <Alert severity="success">{t("adminHome.resetPasswordSuccess")}</Alert>
+                <TextField
+                  label={t("adminHome.setupLink")}
+                  value={resetResult.setupLink || ""}
+                  fullWidth
+                  multiline
+                  rows={2}
+                  InputProps={{ readOnly: true }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => handleCopyText(`reset-${resetResult.username}`, resetResult.setupLink)}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  {copiedKey === `reset-${resetResult.username}` ? t("common.copied") : t("common.copy")}
+                </Button>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {t("adminHome.resetPasswordConfirm", { username: resetTarget?.username || "" })}
+              </Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetTarget(null)} disabled={resetting}>{t("common.close")}</Button>
+          {!resetResult && (
+            <Button onClick={handleResetPassword} variant="contained" disabled={resetting}>
+              {resetting ? t("common.loading") : t("adminHome.resetPassword")}
+            </Button>
+          )}
+          {resetResult && (
+            <Button onClick={() => setResetTarget(null)} variant="contained">{t("common.done")}</Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

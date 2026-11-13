@@ -12,6 +12,7 @@ import AdminChatPage from "./page/AdminChatPage";
 import SetupPage from "./page/SetupPage";
 import SellerSetupPage from "./page/SellerSetupPage";
 import PaymentPage from "./page/PaymentPage";
+import BuyerSetupPage from "./page/BuyerSetupPage";
 
 import { AuthProvider } from "./AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -20,11 +21,16 @@ import ErrorPage from "./page/ErrorPage";
 import RedirectionPage from "./page/RedirectionPage";
 import PublinkPage from "./page/PublinkPage";
 import Layout from "./Layout";
+import ChatNotifier from "./components/ChatNotifier";
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+        {/* Lives outside the route tree on purpose: the unread badge in the
+            header and the notification sound have to survive every navigation,
+            including away from the chat page. */}
+        <ChatNotifier />
         <Routes>
           <Route
             path="/login"
@@ -89,6 +95,15 @@ function App() {
             element={
               <Layout>
                 <PaymentPage />
+              </Layout>
+            }
+          />
+          {/* Buyer / reset password setup page: opened from the emailed link */}
+          <Route
+            path="/buyer-setup"
+            element={
+              <Layout>
+                <BuyerSetupPage />
               </Layout>
             }
           />

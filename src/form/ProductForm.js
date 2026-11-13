@@ -5,8 +5,11 @@ import {
     Grid,
     Stack,
     TextField,
+    ToggleButton,
+    ToggleButtonGroup,
     Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import CardWrapper from "../components/CardWrapper";
 
 const MAX_IMAGES = 6;
@@ -14,12 +17,15 @@ const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB (base64 encoding adds ~33% 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const ProductForm = ({ initialData = {}, onDataChange }) => {
+    const { t } = useTranslation();
     const [form, setForm] = useState({
         productName: initialData.productName || "",
         description: initialData.description || "",
         quantity: initialData.quantity || "",
         price: initialData.price || "",
+        productType: initialData.productType || "STANDARD",
     });
+    const isYoga = form.productType === "YOGA_BOOKING";
 
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
@@ -108,6 +114,26 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
                 Fill in any product information below. All fields are optional.
             </Typography>
 
+            <Stack spacing={1}>
+                <Typography variant="subtitle2">
+                    {t("productForm.typeLabel")}
+                </Typography>
+                <ToggleButtonGroup
+                    value={form.productType}
+                    exclusive
+                    size="small"
+                    onChange={(_event, next) => {
+                        if (next) handleFieldChange("productType", next);
+                    }}
+                >
+                    <ToggleButton value="STANDARD">{t("productForm.typeStandard")}</ToggleButton>
+                    <ToggleButton value="YOGA_BOOKING">{t("productForm.typeYoga")}</ToggleButton>
+                </ToggleButtonGroup>
+                <Typography variant="caption" color="text.secondary">
+                    {isYoga ? t("productForm.typeYogaHint") : t("productForm.typeStandardHint")}
+                </Typography>
+            </Stack>
+
             <TextField
                 label="Product Name"
                 name="productName"
@@ -127,17 +153,19 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
             />
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                {!isYoga && (
+                    <TextField
+                        label="Quantity"
+                        name="quantity"
+                        type="number"
+                        inputProps={{ min: 0 }}
+                        value={form.quantity}
+                        onChange={(e) => handleFieldChange("quantity", e.target.value)}
+                        fullWidth
+                    />
+                )}
                 <TextField
-                    label="Quantity"
-                    name="quantity"
-                    type="number"
-                    inputProps={{ min: 0 }}
-                    value={form.quantity}
-                    onChange={(e) => handleFieldChange("quantity", e.target.value)}
-                    fullWidth
-                />
-                <TextField
-                    label="Price for one (VND)"
+                    label={isYoga ? t("productForm.dropInPrice") : "Price for one (VND)"}
                     name="price"
                     type="text"
                     inputRef={priceInputRef}

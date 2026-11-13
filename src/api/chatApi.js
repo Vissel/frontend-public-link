@@ -25,22 +25,25 @@ export const closeChatConversation = (conversationUuid) =>
   chatApi.post("/api/v1/chat/close", null, { params: { conversationUuid } });
 
 /**
- * Live status feed for a visitor. EventSource is used rather than axios because it
- * reconnects on its own and resends Last-Event-ID, which is exactly what lets the
- * server replay whatever arrived while the tab was closed.
+ * Live status feed for one conversation. EventSource is used rather than axios
+ * because it reconnects on its own and resends Last-Event-ID, which is exactly
+ * what lets the server replay whatever arrived while the tab was closed.
+ *
+ * The per-conversation key issued by /start is the credential: a device id is
+ * shared by every account on one browser, so it must never key the live feed.
  */
-export const clientStreamUrl = ({ deviceId, conversationUuid }) => {
+export const clientStreamUrl = ({ conversationUuid, key }) => {
   const base = chatApi.defaults?.baseURL || "";
   const params = new URLSearchParams();
-  if (deviceId) params.set("deviceId", deviceId);
   if (conversationUuid) params.set("conversationUuid", conversationUuid);
+  if (key) params.set("key", key);
   return `${base}/api/v1/chat/stream?${params.toString()}`;
 };
 
 // ── administrator console ────────────────────────────────────────────────────
-// The console polls instead of opening an event stream: EventSource cannot send an
-// Authorization header, and these routes are JWT-protected. The backend does expose
-// /admin/v1/chat/stream for a future cookie- or signed-url-based upgrade.
+// The console no longer polls for live data: it opens /admin/v1/chat/stream with
+// a single-use ticket. EventSource cannot send an Authorization header, so the
+// ticket (issued by a normal JWT call below) is the credential on that URL.
 
 export const fetchAdminConversations = ({ page = 0, size = 50 } = {}) =>
   chatApi.get("/admin/v1/chat/conversations", { params: { page, size } });
@@ -60,3 +63,23 @@ export const closeAdminConversation = (conversationUuid) =>
 export const fetchZaloStatus = () => chatApi.get("/admin/v1/chat/zalo/status");
 
 export const beginZaloConsent = () => chatApi.post("/admin/v1/chat/zalo/consent/begin");
+
+// ── console event stream credential ──────────────────────────────────────────
+
+export const fetchStreamTicket = () => chatApi.post("/admin/v1/chat/stream-ticket");
+
+/** Ticket must be fresh per connection: the backend consumes it on first use. */
+export const adminStreamUrl = (ticket) => {
+  const base = chatApi.defaults?.baseURL || "";
+  return `${base}/admin/v1/chat/stream?ticket=${encodeURIComponent(ticket)}`;
+};
+
+// ── background notifications ─────────────────────────────────────────────────
+
+export const fetchVapidPublicKey = () => chatApi.get("/admin/v1/chat/push/vapid-public-key");
+
+export const registerPushSubscription = (payload) =>
+  chatApi.post("/admin/v1/chat/push/subscribe", payload);
+
+export const removePushSubscription = (endpoint) =>
+  chatApi.post("/admin/v1/chat/push/unsubscribe", { endpoint });

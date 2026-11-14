@@ -27,6 +27,7 @@ const emptyDraft = {
   type: TYPE_BANK,
   transferIssuer: "",
   issuerFullName: "",
+  bankBin: "",
   transferNumber: "",
   accountName: "",
   qrImage: "",
@@ -117,6 +118,7 @@ const TransferInfoManager = () => {
       ...prev,
       transferIssuer: option?.shortName || "",
       issuerFullName: option?.fullName || "",
+      bankBin: option?.bin || "",
     }));
   };
 

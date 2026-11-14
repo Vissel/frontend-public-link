@@ -21,7 +21,8 @@
         "create": "Create",
         "saving": "Saving...",
         "delete": "Delete",
-        "done": "Done"
+        "done": "Done",
+        "edit": "Edit"
     },
     "header": {
         "publicLink": "Public Link",
@@ -317,8 +318,10 @@
         "status": "Status",
         "createdAt": "Created At",
         "endedAt": "Ended At",
+        "plannedStartedAt": "Planned Start",
         "plannedEndedAt": "Planned Ended At",
         "orderNumTotal": "Order Num/Total",
+        "actions": "Actions",
         "export": "Export",
         "excel": "Excel",
         "noEnvironments": "No sale environments found. Contact an administrator to set up your public link.",
@@ -338,7 +341,9 @@
         "buyerViewLabel": "Buyer View",
         "created": "Created:",
         "willEnded": "Will Ended:",
+        "plannedStartedAt": "Planned Start:",
         "plannedEndedAt": "Planned Ended At:",
+        "notStartedYet": "This sale starts at {{start}}. Orders are not accepted until then.",
         "products": "Products",
         "productsSellerDesc": "Tap edit to modify product details.",
         "productsBuyerDesc": "Available items for purchase.",
@@ -574,12 +579,13 @@
     },
     "createPlan": {
         "title": "Create Payment Plan",
-        "subtitle": "Assign an existing plan to the seller, or define a new one on the spot.",
+        "subtitle": "Create a payment plan on its own, or link one to a seller. The seller is optional.",
         "field": {
             "user": "Seller",
             "fee": "Fee (VND)",
             "planDay": "Days",
-            "envCount": "Links"
+            "envCount": "Links",
+            "userOptional": "Seller (optional)"
         },
         "mode": {
             "existing": "Existing plan",
@@ -596,18 +602,26 @@
             "loadCatalog": "Failed to load the payment plan catalog.",
             "missingUser": "Please select a seller.",
             "missingPlan": "Please select a plan.",
-            "invalidNewPlan": "Fee, days and links must all be greater than zero.",
+            "invalidNewPlan": "Days and links must be greater than zero, and the fee cannot be negative.",
             "submit": "Unable to create the payment plan.",
-            "invalidUser": "Please pick a seller from the dropdown list."
+            "invalidUser": "Please pick a seller from the dropdown list.",
+            "sellerRequiredForExisting": "Select a seller to link this plan to, or switch to New plan to create one."
         },
         "searchUserPlaceholder": "Type to search seller by username, name or email",
-        "noMatchingUsers": "No seller matches this search"
+        "noMatchingUsers": "No seller matches this search",
+        "sellerOptionalHint": "Leave empty to only create the plan; it can be linked to a seller later."
     },
     "paymentResult": {
         "successTitle": "Payment link is ready",
         "errorTitle": "Could not create the payment plan",
         "hint": "Send this link to the seller so they can complete the payment. It stays valid for a few days.",
-        "unknownError": "An unexpected error happened. Please try again."
+        "unknownError": "An unexpected error happened. Please try again.",
+        "planCreatedTitle": "Payment plan created",
+        "planCreatedHint": "The plan is now in the catalog. Select a seller and create again, or pick it from the Existing plan tab, to link it and get a payment link.",
+        "unit": {
+            "day": "day(s)",
+            "link": "link(s)"
+        }
     },
     "generatePlan": {
         "titleStep1": "Generate Product Link - step 1: payment plan",
@@ -633,6 +647,32 @@
         },
         "validUntil": "Valid until",
         "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of the paid plan. To keep selling after that, contact admin via chat or buy a new plan."
+    },
+    "saleWindow": {
+        "title": "Sale window",
+        "start": "Starts at",
+        "end": "Ends at",
+        "limitHint": "The link stops working at the end time and can never run past your plan end: {{planEnd}}.",
+        "noPlanEnd": "The link stops working at the end time you choose.",
+        "scheduledHint": "The start is in the future: buyers can open the page, but orders are refused until it starts.",
+        "editTitle": "Edit sale window",
+        "newEnd": "New end time",
+        "currentStart": "Starts",
+        "currentEnd": "Ends",
+        "startedOnCreate": "started on creation",
+        "editHint": "Move the end earlier to stop taking orders sooner, or close it now. The end cannot be pushed later than the current planned end.",
+        "closeNow": "Close now",
+        "save": "Save",
+        "updated": "Sale window updated",
+        "errors": {
+            "required": "Pick both a start and an end time for the sale.",
+            "endBeforeStart": "The end time must be after the start time.",
+            "endAfterPlan": "The end time cannot be after the plan end ({{planEnd}}).",
+            "startAfterPlan": "The start time cannot be after the plan end ({{planEnd}}).",
+            "endInPast": "The end time must be in the future.",
+            "cannotExtend": "The end time cannot be later than the current planned end ({{planEnd}}).",
+            "update": "Failed to update the sale window. Please try again."
+        }
     },
     "sellerGenerate": {
         "titleStep1": "Generate Product Link - step 1: payment plan",
@@ -702,7 +742,7 @@
         "total": "Total records:",
         "selected": "Selected",
         "activeDate": "Activation date",
-        "activeDateHint": "Used when you approve the selected plans. The end date is derived from the plan length.",
+        "activeDateHint": "Applied when you approve the selected plans. Defaults to today; the end date is derived from the plan length.",
         "pendingTitle": "Waiting for approval",
         "pendingDesc": "Payment plans created by admin and still in CREATE state.",
         "pendingEmpty": "No payment plan is waiting for approval.",
@@ -742,7 +782,8 @@
         "errors": {
             "load": "Failed to load payment plans.",
             "bulkAction": "The action failed. Please try again.",
-            "noSelection": "Please select at least one payment plan."
+            "noSelection": "Please select at least one payment plan.",
+            "activeDateRequired": "Pick an activation date above to enable this action."
         }
     },
     "sellerSetup": {
@@ -800,7 +841,10 @@
             "missingToken": "This payment link is incomplete. Please ask admin for a new one.",
             "load": "This payment link is invalid or expired. Please contact admin.",
             "confirm": "Unable to confirm the payment right now. Please try again."
-        }
+        },
+        "qrTitle": "Scan to pay",
+        "qrContent": "Transfer content",
+        "qrHint": "Open your banking app and scan this QR. The amount and transfer content are filled in automatically."
     },
     "yoga": {
         "prevWeek": "Prev week",

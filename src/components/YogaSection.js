@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     Alert,
     Box,
@@ -25,15 +25,22 @@ import { useAuth } from "../AuthContext";
 import {
     ISO_WEEKDAYS,
     addDays,
+    currentHour,
     hourLabel,
-    mondayOf,
+    isoWeekday,
     shortDate,
+    todayIso,
     weekDates,
+    weekdayLabel,
 } from "../util/yoga";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const YOGA = "/api/v1/publish/yoga";
 const SELLER = "/api/v1/yoga/seller";
+// The grid shows a fixed 5-row window of hours that scrolls vertically through
+// all 24 hours, centred on the current hour; 7 day-columns scroll horizontally.
+const ROW_HEIGHT = 64;
+const VISIBLE_HOURS = 5;
 
 /**
  * The single yoga screen: a weekly Mon..Sun grid over the 24h clock with the
@@ -45,11 +52,12 @@ const YogaSection = ({ token }) => {
     const { t } = useTranslation();
     const { isAuthenticated } = useAuth();
 
-    const [weekStart, setWeekStart] = useState(() => mondayOf());
+    const [anchor, setAnchor] = useState(() => todayIso());
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [notice, setNotice] = useState("");
+    const scrollRef = useRef(null);
 
     // class editor (seller)
     const [editorOpen, setEditorOpen] = useState(false);
@@ -64,17 +72,20 @@ const YogaSection = ({ token }) => {
     const [submitting, setSubmitting] = useState(false);
 
     // below-calendar list
-    const [range, setRange] = useState({ from: mondayOf(), to: addDays(mondayOf(), 6) });
+    const [range, setRange] = useState({ from: addDays(todayIso(), -3), to: addDays(todayIso(), 3) });
     const [rangeItems, setRangeItems] = useState([]);
 
     const sellerView = Boolean(data?.sellerView);
+    // The 7 visible columns are centred on the anchor day (today by default),
+    // so the window starts 3 days before it.
+    const windowStart = addDays(anchor, -3);
 
     const loadCalendar = useCallback(async () => {
         if (!token) return;
         setLoading(true);
         setError("");
         try {
-            const res = await pubApi.post(`${YOGA}/calendar`, { token, weekStart });
+            const res = await pubApi.post(`${YOGA}/calendar`, { token, weekStart: windowStart });
             setData(res.data);
         } catch (err) {
             console.error("Calendar load failed", err);
@@ -82,11 +93,20 @@ const YogaSection = ({ token }) => {
         } finally {
             setLoading(false);
         }
-    }, [token, weekStart, t]);
+    }, [token, windowStart, t]);
 
     useEffect(() => {
         loadCalendar();
     }, [loadCalendar]);
+
+    // Keep the current hour as the middle of the 5-row viewport after each load.
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (el) {
+            const target = Math.max(0, (currentHour() - Math.floor(VISIBLE_HOURS / 2)) * ROW_HEIGHT);
+            el.scrollTop = target;
+        }
+    }, [data, anchor]);
 
     const loadRange = async () => {
         if (!token || !range.from || !range.to) return;
@@ -116,7 +136,7 @@ const YogaSection = ({ token }) => {
         return map;
     }, [data]);
 
-    const dates = weekDates(weekStart);
+    const dates = weekDates(windowStart);
 
     const openEditor = (dayOfWeek, hour, occurrence) => {
         setEditorDraft({
@@ -245,19 +265,19 @@ const YogaSection = ({ token }) => {
             {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
             {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
 
-            {/* week navigation */}
+            {/* week navigation: shifts the today-centred window by whole weeks */}
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                <Button size="small" variant="outlined" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                <Button size="small" variant="outlined" onClick={() => setAnchor(addDays(anchor, -7))}>
                     {t("yoga.prevWeek")}
                 </Button>
-                <Button size="small" variant="outlined" onClick={() => setWeekStart(mondayOf())}>
+                <Button size="small" variant="outlined" onClick={() => setAnchor(todayIso())}>
                     {t("yoga.thisWeek")}
                 </Button>
-                <Button size="small" variant="outlined" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                <Button size="small" variant="outlined" onClick={() => setAnchor(addDays(anchor, 7))}>
                     {t("yoga.nextWeek")}
                 </Button>
                 <Typography variant="body2" color="text.secondary" sx={{ ml: "auto" }}>
-                    {shortDate(weekStart)} – {shortDate(addDays(weekStart, 6))}
+                    {shortDate(windowStart)} – {shortDate(addDays(windowStart, 6))}
                 </Typography>
             </Stack>
 
@@ -274,110 +294,164 @@ const YogaSection = ({ token }) => {
                 <Alert severity="info">{t("yoga.anonymousHint")}</Alert>
             )}
 
-            {/* the weekly grid */}
-            <TableContainer sx={{ overflowX: "auto" }}>
-                <Table size="small" sx={{ minWidth: 900, tableLayout: "fixed" }}>
+            {/* the calendar: 7 day-columns centred on today, a 5-row time
+                viewport centred on the current hour, with vertical + horizontal
+                scroll and a divider line on every column. */}
+            <TableContainer
+                ref={scrollRef}
+                sx={{ overflow: "auto", height: 56 + VISIBLE_HOURS * ROW_HEIGHT, maxWidth: "100%" }}
+            >
+                <Table stickyHeader size="small" sx={{ minWidth: 72 + 7 * 112, tableLayout: "fixed" }}>
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ width: 72, bgcolor: "primary.main" }}>
+                            <TableCell
+                                sx={{
+                                    width: 72,
+                                    bgcolor: "primary.main",
+                                    position: "sticky",
+                                    left: 0,
+                                    zIndex: 3,
+                                    borderRight: "1px solid",
+                                    borderColor: "rgba(255,255,255,0.35)",
+                                }}
+                            >
                                 <Typography variant="caption" sx={{ color: "white" }}>
                                     {t("yoga.time")}
                                 </Typography>
                             </TableCell>
-                            {dates.map((iso, idx) => (
-                                <TableCell key={iso} align="center" sx={{ bgcolor: "primary.main" }}>
-                                    <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 700 }}>
-                                        {ISO_WEEKDAYS[idx]}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: "white" }}>
-                                        {shortDate(iso)}
-                                    </Typography>
-                                </TableCell>
-                            ))}
+                            {dates.map((iso) => {
+                                const isToday = iso === todayIso();
+                                return (
+                                    <TableCell
+                                        key={iso}
+                                        align="center"
+                                        sx={{
+                                            width: 112,
+                                            bgcolor: isToday ? "secondary.main" : "primary.main",
+                                            borderRight: "1px solid",
+                                            borderColor: "rgba(255,255,255,0.35)",
+                                        }}
+                                    >
+                                        <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 700 }}>
+                                            {weekdayLabel(iso)}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ color: "white" }}>
+                                            {shortDate(iso)}
+                                        </Typography>
+                                    </TableCell>
+                                );
+                            })}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {HOURS.map((hour) => (
-                            <TableRow key={hour}>
-                                <TableCell sx={{ bgcolor: "action.hover", fontWeight: 600 }}>
-                                    {hourLabel(hour)}
-                                </TableCell>
-                                {ISO_WEEKDAYS.map((_, dayIdx) => {
-                                    const dayOfWeek = dayIdx + 1;
-                                    const cellOccurrences = cellMap[`${dayOfWeek}-${hour}`] || [];
-                                    return (
-                                        <TableCell
-                                            key={dayOfWeek}
-                                            sx={{ height: 52, p: 0.5, verticalAlign: "top" }}
-                                            onClick={() => {
-                                                if (sellerView && cellOccurrences.length === 0) {
-                                                    openEditor(dayOfWeek, hour, null);
-                                                }
-                                            }}
-                                        >
-                                            <Stack spacing={0.5}>
-                                                {cellOccurrences.map((occ) => (
-                                                    <Box
-                                                        key={`${occ.classCode}-${occ.date}`}
-                                                        onClick={() =>
-                                                            sellerView
-                                                                ? openEditor(dayOfWeek, hour, occ)
-                                                                : openBook(occ)
-                                                        }
-                                                        sx={{
-                                                            cursor: "pointer",
-                                                            p: 0.5,
-                                                            borderRadius: 1,
-                                                            border: "1px solid",
-                                                            borderColor: occ.myBookingCode
-                                                                ? "success.main"
-                                                                : "divider",
-                                                            bgcolor: occ.past
-                                                                ? "action.disabledBackground"
-                                                                : occ.remaining <= 0
-                                                                    ? "error.light"
-                                                                    : "primary.light",
-                                                            color: occ.past || occ.remaining <= 0
-                                                                ? "common.white"
-                                                                : "primary.contrastText",
-                                                            minHeight: 34,
-                                                        }}
-                                                    >
-                                                        <Typography variant="caption" sx={{ display: "block", fontWeight: 700 }}>
-                                                            {occ.title}
-                                                        </Typography>
-                                                        <Typography variant="caption" sx={{ display: "block" }}>
-                                                            {occ.startTime}-{occ.endTime}
-                                                            {occ.coach ? ` · ${occ.coach}` : ""}
-                                                        </Typography>
-                                                        <Chip
-                                                            size="small"
-                                                            color={remainingColor(occ)}
-                                                            label={occ.remaining <= 0
-                                                                ? t("yoga.full")
-                                                                : `${occ.remaining}/${occ.capacity}`}
-                                                            sx={{ mt: 0.25, height: 18, fontSize: "0.65rem" }}
-                                                        />
-                                                        {occ.myBookingCode && (
-                                                            <Button
+                        {HOURS.map((hour) => {
+                            const isNowRow = hour === currentHour();
+                            return (
+                                <TableRow key={hour} sx={{ height: ROW_HEIGHT }}>
+                                    <TableCell
+                                        sx={{
+                                            width: 72,
+                                            bgcolor: isNowRow ? "action.selected" : "action.hover",
+                                            fontWeight: 600,
+                                            position: "sticky",
+                                            left: 0,
+                                            zIndex: 1,
+                                            borderRight: "1px solid",
+                                            borderColor: "divider",
+                                        }}
+                                    >
+                                        {hourLabel(hour)}
+                                    </TableCell>
+                                    {dates.map((iso) => {
+                                        const dayOfWeek = isoWeekday(iso);
+                                        const cellOccurrences = cellMap[`${dayOfWeek}-${hour}`] || [];
+                                        const isToday = iso === todayIso();
+                                        return (
+                                            <TableCell
+                                                key={iso}
+                                                sx={{
+                                                    width: 112,
+                                                    height: ROW_HEIGHT,
+                                                    p: 0.5,
+                                                    verticalAlign: "top",
+                                                    borderRight: "1px solid",
+                                                    borderColor: "divider",
+                                                    bgcolor: isNowRow && isToday
+                                                        ? "action.selected"
+                                                        : isToday
+                                                            ? "action.hover"
+                                                            : "transparent",
+                                                }}
+                                                onClick={() => {
+                                                    if (sellerView && cellOccurrences.length === 0) {
+                                                        openEditor(dayOfWeek, hour, null);
+                                                    }
+                                                }}
+                                            >
+                                                <Stack spacing={0.5}>
+                                                    {cellOccurrences.map((occ) => (
+                                                        <Box
+                                                            key={`${occ.classCode}-${occ.date}`}
+                                                            onClick={() =>
+                                                                sellerView
+                                                                    ? openEditor(dayOfWeek, hour, occ)
+                                                                    : openBook(occ)
+                                                            }
+                                                            sx={{
+                                                                cursor: "pointer",
+                                                                p: 0.5,
+                                                                borderRadius: 1,
+                                                                border: "1px solid",
+                                                                borderColor: occ.myBookingCode
+                                                                    ? "success.main"
+                                                                    : "divider",
+                                                                bgcolor: occ.past
+                                                                    ? "action.disabledBackground"
+                                                                    : occ.remaining <= 0
+                                                                        ? "error.light"
+                                                                        : "primary.light",
+                                                                color: occ.past || occ.remaining <= 0
+                                                                    ? "common.white"
+                                                                    : "primary.contrastText",
+                                                                minHeight: 34,
+                                                            }}
+                                                        >
+                                                            <Typography variant="caption" sx={{ display: "block", fontWeight: 700 }}>
+                                                                {occ.title}
+                                                            </Typography>
+                                                            <Typography variant="caption" sx={{ display: "block" }}>
+                                                                {occ.startTime}-{occ.endTime}
+                                                                {occ.coach ? ` · ${occ.coach}` : ""}
+                                                            </Typography>
+                                                            <Chip
                                                                 size="small"
-                                                                color="error"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleCancel(occ.myBookingCode);
-                                                                }}
-                                                            >
-                                                                {t("yoga.cancel")}
-                                                            </Button>
-                                                        )}
-                                                    </Box>
-                                                ))}
-                                            </Stack>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
+                                                                color={remainingColor(occ)}
+                                                                label={occ.remaining <= 0
+                                                                    ? t("yoga.full")
+                                                                    : `${occ.remaining}/${occ.capacity}`}
+                                                                sx={{ mt: 0.25, height: 18, fontSize: "0.65rem" }}
+                                                            />
+                                                            {occ.myBookingCode && (
+                                                                <Button
+                                                                    size="small"
+                                                                    color="error"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleCancel(occ.myBookingCode);
+                                                                    }}
+                                                                >
+                                                                    {t("yoga.cancel")}
+                                                                </Button>
+                                                            )}
+                                                        </Box>
+                                                    ))}
+                                                </Stack>
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            );
+                        })}
                     </TableBody>
                 </Table>
             </TableContainer>

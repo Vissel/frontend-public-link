@@ -62,3 +62,56 @@ export const formatDateTime = (date) => {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} `
         + `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
+
+const pad = (n) => String(n).padStart(2, "0");
+
+/**
+ * Local-time "yyyy-MM-ddTHH:mm" value for an <input type="datetime-local">.
+ * Built from the local getters on purpose: toISOString() would render the UTC
+ * day and quietly shift the chosen window by the browser offset.
+ */
+export const toInputValue = (date) => {
+    if (!date || Number.isNaN(date.getTime?.())) {
+        return "";
+    }
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+        + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+/** Parse a datetime-local value back to a Date; null when empty/invalid. */
+export const fromInputValue = (value) => {
+    if (!value || typeof value !== "string") {
+        return null;
+    }
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+/**
+ * Validate a chosen sale window. Returns an error key (plus the plan end for
+ * the message) or null when the window is usable. The backend re-checks all of
+ * it; this only keeps the UI from submitting an obviously wrong window.
+ */
+export const validateSaleWindow = (startValue, endValue, planEndedDate, now = new Date()) => {
+    const start = fromInputValue(startValue);
+    const end = fromInputValue(endValue);
+    if (!start || !end) {
+        return { key: "required" };
+    }
+    if (end.getTime() <= start.getTime()) {
+        return { key: "endBeforeStart" };
+    }
+    const planEnd = parsePlanDate(planEndedDate);
+    // Start first: a start past the plan end drags the end past it too, so
+    // checking the end first would always blame the wrong field.
+    if (planEnd && start.getTime() > planEnd.getTime()) {
+        return { key: "startAfterPlan", planEnd: formatDateTime(planEnd) };
+    }
+    if (planEnd && end.getTime() > planEnd.getTime()) {
+        return { key: "endAfterPlan", planEnd: formatDateTime(planEnd) };
+    }
+    if (end.getTime() <= now.getTime()) {
+        return { key: "endInPast" };
+    }
+    return null;
+};

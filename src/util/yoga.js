@@ -41,6 +41,12 @@ export const todayIso = () => toIsoDate(new Date());
 
 export const hourLabel = (hour) => `${pad(hour)}:00`;
 
+/** Mon..Sun label derived from the actual date, so a rolling window reads right. */
+export const weekdayLabel = (iso) => ISO_WEEKDAYS[(parseIsoDate(iso).getDay() + 6) % 7];
+
+/** Current hour (0..23) on the client clock, used to centre the time rows. */
+export const currentHour = () => new Date().getHours();
+
 export const shortDate = (iso) => {
   const d = parseIsoDate(iso);
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;

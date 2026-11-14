@@ -17,6 +17,7 @@ const normalizeFromVietqr = (list) =>
     .filter((entry) => entry && (entry.shortName || entry.name))
     .map((entry) => ({
       code: entry.code || entry.bin,
+      bin: entry.bin || "",
       shortName: entry.shortName || entry.name,
       fullName: entry.name || entry.shortName,
       logo: entry.logo || buildLogo(entry.code || entry.bin),
@@ -28,6 +29,7 @@ const normalizeFromVietqr = (list) =>
 const normalizeFromFallback = (list) =>
   list.map((entry) => ({
     code: entry.code,
+    bin: entry.bin || "",
     shortName: entry.shortName,
     fullName: entry.fullName,
     logo: buildLogo(entry.code),

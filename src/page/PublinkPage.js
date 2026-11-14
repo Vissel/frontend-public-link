@@ -402,6 +402,11 @@ const PublinkPage = () => {
     const isAdmin = String(userRole || "").toLowerCase() === "admin";
     const canManageOrders = isSeller || isAdmin;
     const isEnvStateActive = saleSpace.envState === "ACTIVE";
+    // A window that has not opened yet still reports ACTIVE - the row is only
+    // flipped closed by the hourly job - so the order form is gated on the
+    // server-computed flag as well, matching what the backend refuses at order
+    // time. The server decides it against DB time, not the browser clock.
+    const isScheduled = Boolean(saleSpace.notStartedYet);
     const isYoga = saleSpace.productType === "YOGA_BOOKING";
 
     const exportToExcel = async () => {
@@ -482,12 +487,22 @@ const PublinkPage = () => {
                                 {t("publink.willEnded")} {saleSpace.endedAt}
                             </Typography>
                         )}
+                        {saleSpace.plannedStartedAt && (
+                            <Typography variant="caption" color="text.secondary">
+                                {t("publink.plannedStartedAt")} {saleSpace.plannedStartedAt}
+                            </Typography>
+                        )}
                         {saleSpace.plannedEndedAt && (
                             <Typography variant="caption" color="text.secondary">
                                 {t("publink.plannedEndedAt")} {saleSpace.plannedEndedAt}
                             </Typography>
                         )}
                     </Stack>
+                    {isScheduled && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                            {t("publink.notStartedYet", { start: saleSpace.plannedStartedAt })}
+                        </Alert>
+                    )}
                 </SectionBlock>
 
                 {/* Yoga booking: the single weekly calendar screen replaces the
@@ -724,7 +739,7 @@ const PublinkPage = () => {
 
                 {/* Buyer: Order Form */}
 
-                {!isYoga && isEnvStateActive && <SectionBlock
+                {!isYoga && isEnvStateActive && !isScheduled && <SectionBlock
                     title={t("publink.placeOrder")}
                     description={t("publink.placeOrderDesc")}
                 >

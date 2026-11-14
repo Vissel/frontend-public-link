@@ -16,8 +16,15 @@ import {
 import api from "../api";
 import { useAuth } from "../AuthContext";
 import ProductForm from "./ProductForm";
+import SaleWindowFields from "./SaleWindowFields";
 import { useTranslation } from "react-i18next";
-import { clampedDurationHours, effectiveLinkExpiry, formatDateTime } from "../util/planWindow";
+import {
+  clampedDurationHours,
+  effectiveLinkExpiry,
+  fromInputValue,
+  toInputValue,
+  validateSaleWindow,
+} from "../util/planWindow";
 
 const contextPath = "/publiclink";
 
@@ -46,6 +53,10 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [planGate, setPlanGate] = useState(null);
+  // The sale window picked for this environment; defaults to now .. plan end
+  // once the quota gate passes. datetime-local strings in browser time.
+  const [windowStart, setWindowStart] = useState("");
+  const [windowEnd, setWindowEnd] = useState("");
   const productDataRef = useRef({});
   const { logout } = useAuth();
 
@@ -67,6 +78,8 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
     setError("");
     setPlanNotice("");
     setPlanGate(null);
+    setWindowStart("");
+    setWindowEnd("");
     setSubmitting(false);
     productDataRef.current = {};
   }, []);
@@ -136,6 +149,12 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         return;
       }
       setPlanGate(data);
+      // Default window: open now, close when the seller's paid plan ends.
+      const planEndedDate = data.endedDate || selectedPlan?.endedDate;
+      setWindowStart(toInputValue(new Date()));
+      setWindowEnd(
+        toInputValue(effectiveLinkExpiry(selectedPlan?.planDay, planEndedDate))
+      );
       setStep(2);
     } catch (err) {
       if (err?.response?.status === 403) {
@@ -151,11 +170,24 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
 
   const handleSubmit = async () => {
     setError("");
+
+    const windowError = validateSaleWindow(
+      windowStart,
+      windowEnd,
+      planGate?.endedDate || selectedPlan?.endedDate
+    );
+    if (windowError) {
+      setError(
+        t(`saleWindow.errors.${windowError.key}`, { planEnd: windowError.planEnd })
+      );
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Never ask for more validity than the paid window allows; the backend
-      // clamps again, this keeps the UI honest about the real expiry.
+      // Still sent for callers that omit the window; the backend prefers the
+      // explicit startAt/endAt below and clamps to the paid plan either way.
       const durationHours = clampedDurationHours(
         selectedPlan?.planDay,
         planGate?.endedDate || selectedPlan?.endedDate
@@ -194,7 +226,12 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
         productData.price ||
         (productData.images && productData.images.length > 0);
 
-      const requestBody = { requestUuid, sellerRequest };
+      const requestBody = {
+        requestUuid,
+        sellerRequest,
+        startAt: fromInputValue(windowStart)?.getTime() ?? null,
+        endAt: fromInputValue(windowEnd)?.getTime() ?? null,
+      };
 
       if (hasProductData) {
         const imageUrls =
@@ -348,16 +385,14 @@ const CreatePlanForm = ({ open, onClose, onSuccess, users = [] }) => {
           ) : (
             <>
               {error && <Alert severity="error">{error}</Alert>}
-              <Alert severity="info">
-                {t("generatePlan.linkExpiryNotice", {
-                  expiry: formatDateTime(
-                    effectiveLinkExpiry(
-                      selectedPlan?.planDay,
-                      planGate?.endedDate || selectedPlan?.endedDate
-                    )
-                  ),
-                })}
-              </Alert>
+              <SaleWindowFields
+                startValue={windowStart}
+                endValue={windowEnd}
+                onStartChange={setWindowStart}
+                onEndChange={setWindowEnd}
+                planEndedDate={planGate?.endedDate || selectedPlan?.endedDate}
+                disabled={submitting}
+              />
               <ProductForm onDataChange={handleProductDataChange} />
             </>
           )}

@@ -21,7 +21,8 @@
         "create": "Tạo",
         "saving": "Đang lưu...",
         "delete": "Xóa",
-        "done": "Xong"
+        "done": "Xong",
+        "edit": "Sửa"
     },
     "header": {
         "publicLink": "Liên kết công khai",
@@ -317,8 +318,10 @@
         "status": "Trạng thái",
         "createdAt": "Ngày tạo",
         "endedAt": "Ngày kết thúc",
+        "plannedStartedAt": "Bắt đầu dự kiến",
         "plannedEndedAt": "Kết thúc dự kiến",
         "orderNumTotal": "Số đơn/Tổng",
+        "actions": "Thao tác",
         "export": "Xuất",
         "excel": "Excel",
         "noEnvironments": "Không tìm thấy môi trường bán hàng nào. Liên hệ quản trị viên để thiết lập liên kết công khai của bạn.",
@@ -338,7 +341,9 @@
         "buyerViewLabel": "Chế độ người mua",
         "created": "Đã tạo:",
         "willEnded": "Sẽ kết thúc:",
+        "plannedStartedAt": "Bắt đầu dự kiến:",
         "plannedEndedAt": "Kết thúc dự kiến:",
+        "notStartedYet": "Phiên bán này bắt đầu lúc {{start}}. Chưa thể đặt hàng cho đến thời điểm đó.",
         "products": "Sản phẩm",
         "productsSellerDesc": "Nhấn chỉnh sửa để thay đổi chi tiết sản phẩm.",
         "productsBuyerDesc": "Các mặt hàng có sẵn để mua.",
@@ -574,12 +579,13 @@
     },
     "createPlan": {
         "title": "Tạo gói thanh toán",
-        "subtitle": "Gán một gói hiện có cho người bán, hoặc tạo mới ngay tại đây.",
+        "subtitle": "Tạo một gói thanh toán độc lập, hoặc gán nó cho một người bán. Người bán là tùy chọn.",
         "field": {
             "user": "Người bán",
             "fee": "Phí (VND)",
             "planDay": "Số ngày",
-            "envCount": "Số link"
+            "envCount": "Số link",
+            "userOptional": "Người bán (tùy chọn)"
         },
         "mode": {
             "existing": "Gói có sẵn",
@@ -596,18 +602,26 @@
             "loadCatalog": "Không tải được danh mục gói thanh toán.",
             "missingUser": "Vui lòng chọn người bán.",
             "missingPlan": "Vui lòng chọn gói thanh toán.",
-            "invalidNewPlan": "Phí, số ngày và số link phải lớn hơn 0.",
+            "invalidNewPlan": "Số ngày và số link phải lớn hơn 0, phí không được âm.",
             "submit": "Không thể tạo gói thanh toán.",
-            "invalidUser": "Vui lòng chọn người bán trong danh sách."
+            "invalidUser": "Vui lòng chọn người bán trong danh sách.",
+            "sellerRequiredForExisting": "Hãy chọn người bán để gán gói này, hoặc chuyển sang Gói mới để tạo gói."
         },
         "searchUserPlaceholder": "Nhập để tìm người bán theo tài khoản, tên hoặc email",
-        "noMatchingUsers": "Không có người bán nào khớp với từ khóa này"
+        "noMatchingUsers": "Không có người bán nào khớp với từ khóa này",
+        "sellerOptionalHint": "Để trống để chỉ tạo gói; bạn có thể gán nó cho người bán sau."
     },
     "paymentResult": {
         "successTitle": "Đã có link thanh toán",
         "errorTitle": "Không thể tạo gói thanh toán",
         "hint": "Gửi link này cho người bán để họ thanh toán. Link còn hiệu lực trong vài ngày.",
-        "unknownError": "Đã xảy ra lỗi. Vui lòng thử lại."
+        "unknownError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "planCreatedTitle": "Đã tạo gói thanh toán",
+        "planCreatedHint": "Gói đã có trong danh mục. Chọn người bán rồi tạo lại, hoặc chọn gói ở tab Gói có sẵn, để gán và lấy link thanh toán.",
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        }
     },
     "generatePlan": {
         "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
@@ -633,6 +647,32 @@
         },
         "validUntil": "Hiệu lực đến",
         "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
+    },
+    "saleWindow": {
+        "title": "Thời gian bán",
+        "start": "Bắt đầu lúc",
+        "end": "Kết thúc lúc",
+        "limitHint": "Liên kết ngừng hoạt động vào thời điểm kết thúc và không bao giờ vượt quá ngày hết hạn gói: {{planEnd}}.",
+        "noPlanEnd": "Liên kết ngừng hoạt động vào thời điểm kết thúc bạn chọn.",
+        "scheduledHint": "Thời điểm bắt đầu ở tương lai: người mua vẫn mở được trang nhưng đơn hàng sẽ bị từ chối cho đến khi bắt đầu.",
+        "editTitle": "Chỉnh thời gian bán",
+        "newEnd": "Thời điểm kết thúc mới",
+        "currentStart": "Bắt đầu",
+        "currentEnd": "Kết thúc",
+        "startedOnCreate": "bắt đầu ngay khi tạo",
+        "editHint": "Kéo thời điểm kết thúc sớm hơn để ngừng nhận đơn, hoặc đóng ngay. Không thể dời kết thúc muộn hơn mốc dự kiến hiện tại.",
+        "closeNow": "Đóng ngay",
+        "save": "Lưu",
+        "updated": "Đã cập nhật thời gian bán",
+        "errors": {
+            "required": "Hãy chọn cả thời điểm bắt đầu và kết thúc.",
+            "endBeforeStart": "Thời điểm kết thúc phải sau thời điểm bắt đầu.",
+            "endAfterPlan": "Thời điểm kết thúc không được vượt quá ngày hết hạn gói ({{planEnd}}).",
+            "startAfterPlan": "Thời điểm bắt đầu không được vượt quá ngày hết hạn gói ({{planEnd}}).",
+            "endInPast": "Thời điểm kết thúc phải ở tương lai.",
+            "cannotExtend": "Thời điểm kết thúc không được muộn hơn mốc dự kiến hiện tại ({{planEnd}}).",
+            "update": "Không thể cập nhật thời gian bán. Vui lòng thử lại."
+        }
     },
     "sellerGenerate": {
         "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
@@ -702,7 +742,7 @@
         "total": "Tổng:",
         "selected": "Đã chọn",
         "activeDate": "Ngày kích hoạt",
-        "activeDateHint": "Dùng khi duyệt các gói đã chọn. Ngày hết hạn được tính theo độ dài gói.",
+        "activeDateHint": "Áp dụng khi bạn duyệt các gói đã chọn. Mặc định là hôm nay; ngày hết hạn được tính theo độ dài gói.",
         "pendingTitle": "Chờ duyệt",
         "pendingDesc": "Gói thanh toán quản trị tạo và vẫn ở trạng thái CREATE.",
         "pendingEmpty": "Không có gói nào đang chờ duyệt.",
@@ -742,7 +782,8 @@
         "errors": {
             "load": "Không tải được danh sách gói thanh toán.",
             "bulkAction": "Thao tác thất bại. Vui lòng thử lại.",
-            "noSelection": "Vui lòng chọn ít nhất một gói thanh toán."
+            "noSelection": "Vui lòng chọn ít nhất một gói thanh toán.",
+            "activeDateRequired": "Hãy chọn ngày kích hoạt ở trên để bật thao tác này."
         }
     },
     "sellerSetup": {
@@ -800,7 +841,10 @@
             "missingToken": "Link thanh toán không hoàn chỉnh. Vui lòng yêu cầu quản trị gửi link mới.",
             "load": "Link thanh toán này không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ quản trị.",
             "confirm": "Không thể xác nhận thanh toán ngay lúc này. Vui lòng thử lại."
-        }
+        },
+        "qrTitle": "Quét mã để thanh toán",
+        "qrContent": "Nội dung chuyển khoản",
+        "qrHint": "Mở ứng dụng ngân hàng và quét mã này. Số tiền và nội dung chuyển khoản được điền tự động."
     },
     "yoga": {
         "prevWeek": "Tuần trước",

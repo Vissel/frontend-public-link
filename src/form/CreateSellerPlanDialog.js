@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Autocomplete,
@@ -27,6 +27,25 @@ const formatVND = (value) => {
   if (!Number.isFinite(num)) return "-";
   return num.toLocaleString("en-US");
 };
+
+/**
+ * Fee, days and links come from type="number" inputs, so the state holds a
+ * number or "" when the box is empty. An empty box must not be read as 0.
+ */
+const isFilledNumber = (value) =>
+  value !== "" && value !== null && value !== undefined && !Number.isNaN(Number(value));
+
+/**
+ * A free plan is a real plan: a fee of 0 is valid and only has to be filled in.
+ * Days and links are what must be greater than zero.
+ */
+const isValidNewPlan = (plan) =>
+  isFilledNumber(plan.fee) &&
+  Number(plan.fee) >= 0 &&
+  isFilledNumber(plan.planDay) &&
+  Number(plan.planDay) > 0 &&
+  isFilledNumber(plan.envCount) &&
+  Number(plan.envCount) > 0;
 
 /**
  * Admin dialog that assigns a payment plan to a seller. The plan can be picked
@@ -78,6 +97,20 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
     );
   };
 
+  const loadCatalog = useCallback(async () => {
+    try {
+      const res = await api.get(`${contextPath}/admin/v1/paymentPlan/catalog`);
+      const items = res.data?.items || [];
+      setCatalog(items);
+      if (items.length > 0) {
+        setPlanCode((prev) => prev || items[0].planCode);
+      }
+    } catch (err) {
+      console.error("Failed to load payment plan catalog", err);
+      setError(t("createPlan.errors.loadCatalog"));
+    }
+  }, [t]);
+
   useEffect(() => {
     if (!open) {
       setUsername("");
@@ -89,22 +122,8 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
       return;
     }
 
-    const loadCatalog = async () => {
-      try {
-        const res = await api.get(`${contextPath}/admin/v1/paymentPlan/catalog`);
-        const items = res.data?.items || [];
-        setCatalog(items);
-        if (items.length > 0) {
-          setPlanCode((prev) => prev || items[0].planCode);
-        }
-      } catch (err) {
-        console.error("Failed to load payment plan catalog", err);
-        setError(t("createPlan.errors.loadCatalog"));
-      }
-    };
-
     loadCatalog();
-  }, [open, t]);
+  }, [open, loadCatalog]);
 
   const handleNewPlanChange = (field, value) => {
     const parsed = field === "description" ? value : Number(String(value).replace(/,/g, ""));
@@ -114,47 +133,70 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
     }));
   };
 
+  /**
+   * Two independent steps, matching the backend split:
+   * 1. the plan is created on its own, with no seller involved;
+   * 2. linking it to a seller is a follow-up call, done only when one was
+   *    picked. Without a seller the plan simply joins the catalog.
+   */
   const handleSubmit = async () => {
     setError("");
 
-    if (!username.trim()) {
-      setError(t("createPlan.errors.missingUser"));
-      return;
-    }
-
-    // Search accepts free text, so require an actual pick: the backend
-    // resolves the seller by exact username and would reject anything else
-    if (!selectedSeller) {
+    // Free text is allowed in the search box, so a filled-in seller must be an
+    // actual pick: the backend resolves it by exact username
+    if (username.trim() && !selectedSeller) {
       setError(t("createPlan.errors.invalidUser"));
       return;
     }
 
-    const payload = { username: username.trim() };
+    const linkToSeller = Boolean(selectedSeller);
+
     if (mode === MODE_EXISTING) {
       if (!planCode) {
         setError(t("createPlan.errors.missingPlan"));
         return;
       }
-      payload.planCode = planCode;
-    } else {
-      if (!newPlan.fee || !newPlan.planDay || !newPlan.envCount) {
-        setError(t("createPlan.errors.invalidNewPlan"));
+      // Assigning an already existing plan is the only thing this tab can do
+      if (!linkToSeller) {
+        setError(t("createPlan.errors.sellerRequiredForExisting"));
         return;
       }
-      payload.newPlan = {
-        fee: Number(newPlan.fee),
-        planDay: Number(newPlan.planDay),
-        envCount: Number(newPlan.envCount),
-        description: newPlan.description?.trim() || "",
-      };
+    } else if (!isValidNewPlan(newPlan)) {
+      setError(t("createPlan.errors.invalidNewPlan"));
+      return;
     }
 
     try {
       setSubmitting(true);
-      const res = await api.post(`${contextPath}/admin/v1/createSellerPlan`, payload);
-      onSuccess?.(res.data || {});
+
+      let resolvedPlanCode = planCode;
+      let createdPlan = null;
+
+      if (mode === MODE_NEW) {
+        const createRes = await api.post(`${contextPath}/admin/v1/paymentPlan/create`, {
+          fee: Number(newPlan.fee),
+          planDay: Number(newPlan.planDay),
+          envCount: Number(newPlan.envCount),
+          description: newPlan.description?.trim() || "",
+        });
+        createdPlan = createRes.data || {};
+        resolvedPlanCode = createdPlan.planCode;
+        // keep the Existing plan tab in sync with what was just created
+        await loadCatalog();
+      }
+
+      if (!linkToSeller) {
+        onSuccess?.({ createdPlan });
+        return;
+      }
+
+      const res = await api.post(`${contextPath}/admin/v1/createSellerPlan`, {
+        username: username.trim(),
+        planCode: resolvedPlanCode,
+      });
+      onSuccess?.({ ...(res.data || {}), createdPlan });
     } catch (err) {
-      console.error("Failed to create seller plan", err);
+      console.error("Failed to create payment plan", err);
       // Success and failure both belong to the "Next" dialog per the flow spec
       onError?.(
         err?.response?.data?.errorMessage || t("createPlan.errors.submit")
@@ -208,8 +250,9 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
               <TextField
                 {...params}
                 size="small"
-                label={t("createPlan.field.user")}
+                label={t("createPlan.field.userOptional")}
                 placeholder={t("createPlan.searchUserPlaceholder")}
+                helperText={t("createPlan.sellerOptionalHint")}
               />
             )}
           />

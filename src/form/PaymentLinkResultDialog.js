@@ -22,12 +22,19 @@ const PaymentLinkResultDialog = ({ open, onClose, result, errorMessage }) => {
   const [copied, setCopied] = useState(false);
 
   const paymentUrl = result?.paymentUrl || "";
+  const createdPlan = result?.createdPlan || null;
   const absoluteUrl = React.useMemo(() => {
     if (!paymentUrl) return "";
     return /^https?:\/\//i.test(paymentUrl)
       ? paymentUrl
       : `${window.location.origin}${paymentUrl}`;
   }, [paymentUrl]);
+
+  const dialogTitle = absoluteUrl
+    ? t("paymentResult.successTitle")
+    : createdPlan
+      ? t("paymentResult.planCreatedTitle")
+      : t("paymentResult.errorTitle");
 
   useEffect(() => {
     if (!open) {
@@ -61,9 +68,7 @@ const PaymentLinkResultDialog = ({ open, onClose, result, errorMessage }) => {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        {absoluteUrl ? t("paymentResult.successTitle") : t("paymentResult.errorTitle")}
-      </DialogTitle>
+      <DialogTitle>{dialogTitle}</DialogTitle>
       <DialogContent>
         {absoluteUrl ? (
           <Stack spacing={2}>
@@ -89,6 +94,33 @@ const PaymentLinkResultDialog = ({ open, onClose, result, errorMessage }) => {
                 {copied ? t("common.copied") : t("common.copy")}
               </Button>
             </Stack>
+          </Stack>
+        ) : createdPlan ? (
+          <Stack spacing={1.5}>
+            <Typography variant="body2" color="text.secondary">
+              {t("paymentResult.planCreatedHint")}
+            </Typography>
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {Number(createdPlan.fee || 0).toLocaleString("en-US")} VND
+                {" | "}
+                {createdPlan.planDay} {t("paymentResult.unit.day")}
+                {" | "}
+                {createdPlan.envCount} {t("paymentResult.unit.link")}
+              </Typography>
+              {createdPlan.description && (
+                <Typography variant="caption" color="text.secondary">
+                  {createdPlan.description}
+                </Typography>
+              )}
+            </Box>
           </Stack>
         ) : (
           <Alert severity="error">

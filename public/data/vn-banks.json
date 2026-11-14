@@ -6,187 +6,218 @@
       "code": "VCB",
       "shortName": "Vietcombank",
       "fullName": "Ngân hàng TMCP Ngoại Thương Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970436"
     },
     {
       "code": "TCB",
       "shortName": "Techcombank",
       "fullName": "Ngân hàng TMCP Kỹ Thương Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970407"
     },
     {
       "code": "MBB",
       "shortName": "MB Bank",
       "fullName": "Ngân hàng TMCP Quân Đội",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970422"
     },
     {
       "code": "BIDV",
       "shortName": "BIDV",
       "fullName": "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970418"
     },
     {
       "code": "ICT",
       "shortName": "VietinBank",
       "fullName": "Ngân hàng TMCP Công Thương Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970415"
     },
     {
       "code": "VPB",
       "shortName": "VPBank",
       "fullName": "Ngân hàng TMCP Việt Nam Thịnh Vượng",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970432"
     },
     {
       "code": "ACB",
       "shortName": "ACB",
       "fullName": "Ngân hàng TMCP Á Châu",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970416"
     },
     {
       "code": "STB",
       "shortName": "Sacombank",
       "fullName": "Ngân hàng TMCP Sài Gòn Thương Tín",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970403"
     },
     {
       "code": "VIB",
       "shortName": "VIB",
       "fullName": "Ngân hàng Quốc Tế Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970441"
     },
     {
       "code": "TPB",
       "shortName": "TPBank",
       "fullName": "Ngân hàng TMCP Tiên Phong",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970423"
     },
     {
       "code": "HDB",
       "shortName": "HDBank",
       "fullName": "Ngân hàng TMCP Phát Triển Thành Phố Hồ Chí Minh",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970437"
     },
     {
       "code": "MSB",
       "shortName": "MSB",
       "fullName": "Ngân hàng TMCP Hàng Hải Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970426"
     },
     {
       "code": "OCB",
       "shortName": "OCB",
       "fullName": "Ngân hàng TMCP Phương Đông",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970448"
     },
     {
       "code": "EIB",
       "shortName": "Eximbank",
       "fullName": "Ngân hàng TMCP Xuất Nhập khẩu Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970431"
     },
     {
       "code": "VTP",
       "shortName": "LPBank",
       "fullName": "Ngân hàng TMCP Bưu Điện Liên Việt",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970449"
     },
     {
       "code": "ABB",
       "shortName": "AB Bank",
       "fullName": "Ngân hàng TMCP An Bình",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970425"
     },
     {
       "code": "SGOB",
       "shortName": "Saigonbank",
       "fullName": "Ngân hàng TMCP Sài Gòn Công Thương",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970400"
     },
     {
       "code": "KLB",
       "shortName": "KienlongBank",
       "fullName": "Ngân hàng TMCP Kiên Long",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970452"
     },
     {
       "code": "PVB",
       "shortName": "PVcomBank",
       "fullName": "Ngân hàng TMCP Đại Chúng Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970412"
     },
     {
       "code": "NAB",
       "shortName": "Nam A Bank",
       "fullName": "Ngân hàng TMCP Nam Á",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970428"
     },
     {
       "code": "BVB",
       "shortName": "VietBank",
       "fullName": "Ngân hàng TMCP Việt Nam Thương Tín",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970433"
     },
     {
       "code": "SCB",
       "shortName": "Shinhan Bank",
       "fullName": "Ngân hàng TNHH MTV Shinhan Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970429"
     },
     {
       "code": "AGB",
       "shortName": "Agribank",
       "fullName": "Ngân hàng Nông nghiệp và Phát triển Nông thôn Việt Nam",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970405"
     },
     {
       "code": "BAB",
       "shortName": "Bac A Bank",
       "fullName": "Ngân hàng TMCP Bắc Á",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": "970409"
     },
     {
       "code": "SGNB",
       "shortName": "Saigon Bank",
       "fullName": "Ngân hàng TMCP Sài Gòn",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": ""
     },
     {
       "code": "VB",
       "shortName": "BVBank",
       "fullName": "Ngân hàng TMCP Bản Việt",
-      "category": "BANK"
+      "category": "BANK",
+      "bin": ""
     },
     {
       "code": "MOMO",
       "shortName": "MoMo",
       "fullName": "Ví MoMo",
-      "category": "EWALLET"
+      "category": "EWALLET",
+      "bin": ""
     },
     {
       "code": "ZALOPAY",
       "shortName": "ZaloPay",
       "fullName": "Ví ZaloPay",
-      "category": "EWALLET"
+      "category": "EWALLET",
+      "bin": ""
     },
     {
       "code": "VNPAY",
       "shortName": "VNPay QR",
       "fullName": "Ví VNPay",
-      "category": "EWALLET"
+      "category": "EWALLET",
+      "bin": ""
     },
     {
       "code": "SHOPEEPAY",
       "shortName": "ShopeePay",
       "fullName": "Ví ShopeePay",
-      "category": "EWALLET"
+      "category": "EWALLET",
+      "bin": ""
     },
     {
       "code": "PAYOO",
       "shortName": "Payoo",
       "fullName": "Payoo",
-      "category": "EWALLET"
+      "category": "EWALLET",
+      "bin": ""
     }
   ]
 }

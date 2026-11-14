@@ -19,13 +19,18 @@ import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
 
-const contextPath = "/publiclink";
-
 const formatVND = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "-";
   return num.toLocaleString("en-US");
 };
+
+/**
+ * The DTO field is `isDefault`, but its boolean getter makes Jackson serialize
+ * the flag as `default`. Accept both so the default account keeps its highlight.
+ */
+const isDefaultTransfer = (transfer) =>
+  Boolean(transfer?.isDefault ?? transfer?.default);
 
 /**
  * Public payment page opened from the URL the admin sends. No login needed:
@@ -56,7 +61,7 @@ const PaymentPage = () => {
     try {
       setLoading(true);
       setError("");
-      const res = await pubApi.post(`${contextPath}/api/v1/publish/payment/info`, { token });
+      const res = await pubApi.post("/api/v1/publish/payment/info", { token });
       setInfo(res.data || null);
     } catch (err) {
       console.error("Failed to load payment information", err);
@@ -78,7 +83,7 @@ const PaymentPage = () => {
   const canConfirm = !loading && status === "CREATE";
 
   const defaultTransfer = useMemo(
-    () => (info?.transferInfos || []).find((item) => item.isDefault) || null,
+    () => (info?.transferInfos || []).find(isDefaultTransfer) || null,
     [info]
   );
 
@@ -110,7 +115,7 @@ const PaymentPage = () => {
     setError("");
     try {
       setConfirming(true);
-      const res = await pubApi.post(`${contextPath}/api/v1/publish/payment/confirm`, {
+      const res = await pubApi.post("/api/v1/publish/payment/confirm", {
         token,
         email: contact.email.trim(),
         phone: contact.phone.trim(),
@@ -218,6 +223,30 @@ const PaymentPage = () => {
               </Stack>
             </CardWrapper>
 
+            {info.qrUrl && (
+              <CardWrapper>
+                <Stack spacing={1.5} alignItems="center">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    {t("payment.qrTitle")}
+                  </Typography>
+                  <Box
+                    component="img"
+                    src={info.qrUrl}
+                    alt={t("payment.qrTitle")}
+                    sx={{ width: 260, height: 260, objectFit: "contain" }}
+                  />
+                  {info.qrAddInfo && (
+                    <Typography variant="caption" color="text.secondary">
+                      {t("payment.qrContent")}: {info.qrAddInfo}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="text.secondary" align="center">
+                    {t("payment.qrHint")}
+                  </Typography>
+                </Stack>
+              </CardWrapper>
+            )}
+
             <CardWrapper>
               <Stack spacing={2}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
@@ -235,7 +264,7 @@ const PaymentPage = () => {
                       p: 2,
                       borderRadius: 1,
                       border: "1px solid",
-                      borderColor: transfer.isDefault ? "primary.main" : "divider",
+                      borderColor: isDefaultTransfer(transfer) ? "primary.main" : "divider",
                     }}
                   >
                     <Stack spacing={1.5}>
@@ -243,7 +272,7 @@ const PaymentPage = () => {
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {transfer.transferIssuer}
                         </Typography>
-                        {transfer.isDefault && (
+                        {isDefaultTransfer(transfer) && (
                           <Chip size="small" color="primary" label={t("transferInfo.chip.default")} />
                         )}
                       </Stack>

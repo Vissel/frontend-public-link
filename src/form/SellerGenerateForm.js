@@ -14,10 +14,15 @@ import {
 import { pubApi } from "../api";
 import { useAuth } from "../AuthContext";
 import ProductForm from "./ProductForm";
+import SaleWindowFields from "./SaleWindowFields";
 import { useTranslation } from "react-i18next";
-import { clampedDurationHours, effectiveLinkExpiry, formatDateTime } from "../util/planWindow";
-
-const contextPath = "/publiclink";
+import {
+  clampedDurationHours,
+  effectiveLinkExpiry,
+  fromInputValue,
+  toInputValue,
+  validateSaleWindow,
+} from "../util/planWindow";
 
 const formatVND = (value) => {
   const num = Number(value);
@@ -49,6 +54,10 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [planGate, setPlanGate] = useState(null);
+  // The sale window the seller picks; defaults to now .. plan end when the
+  // quota gate passes. Both are datetime-local strings in browser time.
+  const [windowStart, setWindowStart] = useState("");
+  const [windowEnd, setWindowEnd] = useState("");
   const productDataRef = useRef({});
 
   const selectedPlan = useMemo(
@@ -63,6 +72,8 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
     setError("");
     setPlanNotice("");
     setPlanGate(null);
+    setWindowStart("");
+    setWindowEnd("");
     setSubmitting(false);
     productDataRef.current = {};
   }, []);
@@ -76,7 +87,7 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
     const loadPlans = async () => {
       try {
         setLoadingPlans(true);
-        const res = await pubApi.get(`${contextPath}/api/v1/sellerPlan/myPlans`);
+        const res = await pubApi.get("/api/v1/sellerPlan/myPlans");
         const items = res.data?.items || [];
         setPlans(items);
         setSelectedPlanCode(items.length > 0 ? items[0].planUserCode : "");
@@ -109,13 +120,20 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
     }
 
     try {
-      const res = await pubApi.post(`${contextPath}/api/v1/sellerPlan/check`);
+      const res = await pubApi.post("/api/v1/sellerPlan/check");
       const data = res.data || {};
       if (!data.allowed) {
         setPlanNotice(data.message || t("sellerGenerate.quotaExhausted"));
         return;
       }
       setPlanGate(data);
+      // Default window: open now, close when the paid plan ends — the same
+      // instant the link used to expire at before the pickers existed.
+      const planEndedDate = data.endedDate || selectedPlan?.endedDate;
+      setWindowStart(toInputValue(new Date()));
+      setWindowEnd(
+        toInputValue(effectiveLinkExpiry(selectedPlan?.planDay, planEndedDate))
+      );
       setStep(2);
     } catch (err) {
       if (err?.response?.status === 403) {
@@ -129,11 +147,24 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
 
   const handleSubmit = async () => {
     setError("");
+
+    const windowError = validateSaleWindow(
+      windowStart,
+      windowEnd,
+      planGate?.endedDate || selectedPlan?.endedDate
+    );
+    if (windowError) {
+      setError(
+        t(`saleWindow.errors.${windowError.key}`, { planEnd: windowError.planEnd })
+      );
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Never ask for more validity than the paid window allows; the backend
-      // clamps again, this keeps the UI honest about the real expiry.
+      // Still sent for callers that omit the window; the backend prefers the
+      // explicit startAt/endAt below and clamps to the paid plan either way.
       const durationHours = clampedDurationHours(
         selectedPlan?.planDay,
         planGate?.endedDate || selectedPlan?.endedDate
@@ -149,7 +180,7 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
         },
       };
 
-      const generatorResponse = await pubApi.post(`${contextPath}/api/generator/generateRequestId`, {
+      const generatorResponse = await pubApi.post("/api/generator/generateRequestId", {
         sellerRequest,
         productName: "",
       });
@@ -171,7 +202,12 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
         productData.price ||
         (productData.images && productData.images.length > 0);
 
-      const requestBody = { requestUuid, sellerRequest };
+      const requestBody = {
+        requestUuid,
+        sellerRequest,
+        startAt: fromInputValue(windowStart)?.getTime() ?? null,
+        endAt: fromInputValue(windowEnd)?.getTime() ?? null,
+      };
 
       if (hasProductData) {
         const imageUrls =
@@ -190,7 +226,7 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
       }
 
       const environmentResponse = await pubApi.post(
-        `${contextPath}/api/generator/createSaleEnvironment`,
+        "/api/generator/createSaleEnvironment",
         requestBody
       );
 
@@ -291,16 +327,14 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
           ) : (
             <>
               {error && <Alert severity="error">{error}</Alert>}
-              <Alert severity="info">
-                {t("sellerGenerate.linkExpiryNotice", {
-                  expiry: formatDateTime(
-                    effectiveLinkExpiry(
-                      selectedPlan?.planDay,
-                      planGate?.endedDate || selectedPlan?.endedDate
-                    )
-                  ),
-                })}
-              </Alert>
+              <SaleWindowFields
+                startValue={windowStart}
+                endValue={windowEnd}
+                onStartChange={setWindowStart}
+                onEndChange={setWindowEnd}
+                planEndedDate={planGate?.endedDate || selectedPlan?.endedDate}
+                disabled={submitting}
+              />
               <ProductForm onDataChange={handleProductDataChange} />
             </>
           )}

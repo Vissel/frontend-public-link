@@ -19,8 +19,6 @@ import TransferInfoManager from "../components/TransferInfoManager";
 import YogaPlansManager from "../components/YogaPlansManager";
 import { useTranslation } from "react-i18next";
 
-const contextPath = "/publiclink";
-
 const formatVND = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "-";
@@ -40,7 +38,7 @@ const SellerSetupPage = () => {
   useEffect(() => {
     const loadPlans = async () => {
       try {
-        const res = await pubApi.get(`${contextPath}/api/v1/sellerPlan/myPlans`);
+        const res = await pubApi.get("/api/v1/sellerPlan/myPlans");
         setPlans(res.data?.items || []);
       } catch (err) {
         console.error("Failed to load own payment plans", err);

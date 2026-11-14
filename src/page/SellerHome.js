@@ -21,6 +21,7 @@ import { useAuth } from "../AuthContext";
 import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SellerGenerateForm from "../form/SellerGenerateForm";
+import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
@@ -43,6 +44,8 @@ const SellerHome = () => {
   const [openGenerate, setOpenGenerate] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  // Environment whose sale window the seller is editing; null keeps the dialog shut.
+  const [windowEnv, setWindowEnv] = useState(null);
   const frontendOrigin = window.location.origin;
   const { t } = useTranslation();
 
@@ -321,6 +324,16 @@ const SellerHome = () => {
           }}
         />
 
+        <SaleWindowEditDialog
+          open={Boolean(windowEnv)}
+          environment={windowEnv}
+          onClose={() => setWindowEnv(null)}
+          onSaved={() => {
+            setSuccessMessage(t("saleWindow.updated"));
+            setRefreshKey((prev) => prev + 1);
+          }}
+        />
+
         {(saleEnvs.length > 0 || total > 0) && (
           <SectionBlock
             title={t("sellerHome.saleEnvironments")}
@@ -349,7 +362,7 @@ const SellerHome = () => {
               </Typography>
             </Stack>
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table size="small" sx={{ minWidth: 1100 }}>
+              <Table size="small" sx={{ minWidth: 1200 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>{t("sellerHome.requestUuid")}</TableCell>
@@ -358,9 +371,10 @@ const SellerHome = () => {
                     <TableCell>{t("sellerHome.status")}</TableCell>
                     <TableCell>{t("sellerHome.createdAt")}</TableCell>
                     <TableCell>{t("sellerHome.endedAt")}</TableCell>
+                    <TableCell>{t("sellerHome.plannedStartedAt")}</TableCell>
                     <TableCell>{t("sellerHome.plannedEndedAt")}</TableCell>
                     <TableCell>{t("sellerHome.orderNumTotal")}</TableCell>
-                    <TableCell>{t("sellerHome.export")}</TableCell>
+                    <TableCell>{t("sellerHome.actions")}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -462,25 +476,33 @@ const SellerHome = () => {
                           </TableCell>
                           <TableCell>{env.createdAt || "\u2014"}</TableCell>
                           <TableCell>{env.endedAt || "\u2014"}</TableCell>
+                          <TableCell>{env.plannedStartedAt || "\u2014"}</TableCell>
                           <TableCell>{env.plannedEndedAt || "\u2014"}</TableCell>
                           <TableCell>
                             {env.orderTotal != null || env.totalProductQuantity != null
                               ? `${env.orderTotal ?? 0}/${env.totalProductQuantity ?? 0}`
                               : "\u2014"}
                           </TableCell>
-                          <TableCell
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExport(env.requestUUID);
-                            }}
-                          >
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              sx={{ minWidth: 60, fontSize: "0.7rem" }}
-                            >
-                              {t("sellerHome.excel")}
-                            </Button>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={!env.envStatus}
+                                onClick={() => setWindowEnv(env)}
+                                sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                              >
+                                {t("common.edit")}
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => handleExport(env.requestUUID)}
+                                sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                              >
+                                {t("sellerHome.excel")}
+                              </Button>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );

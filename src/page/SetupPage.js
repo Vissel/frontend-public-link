@@ -31,6 +31,17 @@ const STATE_CREATE = "CREATE";
 const STATE_ACTIVE = "ACTIVE";
 const STATE_ALL = "ALL";
 
+/**
+ * Today in the admin's own time zone, as the yyyy-MM-dd a date input expects.
+ * toISOString() would hand back the UTC day, which is a day behind in the
+ * evening for UTC+7 and would silently activate plans on the wrong date.
+ */
+const todayInputValue = () => {
+  const now = new Date();
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+};
+
 const formatVND = (value) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return "-";
@@ -250,6 +261,13 @@ const PlanAssignmentTable = ({
                 variant={action.variant || "outlined"}
                 color={action.color || "primary"}
                 disabled={action.needsDate && !action.dateValue}
+                // The button greys out when the activation date is empty, which
+                // used to give no clue about what was missing.
+                title={
+                  action.needsDate && !action.dateValue
+                    ? t("setup.errors.activeDateRequired")
+                    : undefined
+                }
                 onClick={() =>
                   runBulk((codes) => action.handler(codes, action), action.successMessage)
                 }
@@ -356,7 +374,7 @@ const PlanAssignmentTable = ({
  */
 const SetupPage = () => {
   const { t } = useTranslation();
-  const [activeDate, setActiveDate] = useState("");
+  const [activeDate, setActiveDate] = useState(todayInputValue);
 
   const dateValue = useMemo(() => (activeDate || "").slice(0, 10), [activeDate]);
 

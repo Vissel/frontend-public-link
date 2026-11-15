@@ -5,6 +5,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  Link,
   Stack,
   Table,
   TableBody,
@@ -18,6 +19,8 @@ import {
 } from "@mui/material";
 import api from "../api";
 import PageContainer from "../components/PageContainer";
+import ExtendPlanDialog from "../components/ExtendPlanDialog";
+import PaymentLinksDialog from "../components/PaymentLinksDialog";
 import SectionBlock from "../components/SectionBlock";
 import TransferInfoManager from "../components/TransferInfoManager";
 import { useTranslation } from "react-i18next";
@@ -73,10 +76,32 @@ const stateColor = (state) => {
   return "default";
 };
 
+// Payment money flow: CREATE (nothing received) -> WAITING_CONFIRM (seller said
+// it was sent) -> PAID. Anything else is a dead end, so it stays grey.
+const paymentColor = (status) => {
+  if (status === "PAID" || status === "CONFIRMED") return "success";
+  if (status === "WAITING_CONFIRM") return "warning";
+  if (status === "REJECTED") return "error";
+  return "default";
+};
+
+const frontendOrigin = window.location.origin;
+
+const addHostToHref = (link) => {
+  if (!link) return "";
+  return /^https?:\/\//i.test(link) ? link : `${frontendOrigin}${link}`;
+};
+
 /**
  * One payment-plan assignment table (search / filter / pagination /
  * multi-select). The JS-first search rule: the typed term filters the loaded
  * rows; only when nothing matches is the server queried with the same term.
+ * Actions live in a toolbar above the table and run on the checked rows, so
+ * the admin never has to hunt for a button inside a long row. A per-row action
+ * is the exception: it belongs to one plan and has no bulk meaning.
+ * Every table of the page shares the page's reload token: when an action moves
+ * a plan from one table to the other, the token changes and both tables
+ * re-fetch, so the admin sees the result without reloading the browser.
  */
 const PlanAssignmentTable = ({
   title,
@@ -86,8 +111,10 @@ const PlanAssignmentTable = ({
   actionLabel,
   onRowsChange,
   bulkActions,
-  rowAction,
   emptyMessage,
+  rowAction,
+  reloadToken,
+  onCompleted,
 }) => {
   const { t } = useTranslation();
   const [rows, setRows] = useState([]);
@@ -99,6 +126,7 @@ const PlanAssignmentTable = ({
   const [searchText, setSearchText] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [selected, setSelected] = useState([]);
+  const [copiedKey, setCopiedKey] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [serverSearchActive, setServerSearchActive] = useState(false);
@@ -148,6 +176,19 @@ const PlanAssignmentTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, effectiveState]);
 
+  // The mount render already loaded, so only an actual token change re-fetches.
+  // Comparing against the seen value keeps a double effect run (StrictMode) a
+  // no-op instead of a duplicate request.
+  const seenTokenRef = useRef(reloadToken);
+  useEffect(() => {
+    if (reloadToken === seenTokenRef.current) {
+      return;
+    }
+    seenTokenRef.current = reloadToken;
+    loadFromServer(page, rowsPerPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadToken]);
+
   // Local (JavaScript first) filtering of the loaded page
   const locallyFiltered = useMemo(() => {
     if (!appliedSearch || serverSearchActive) {
@@ -195,6 +236,37 @@ const PlanAssignmentTable = ({
     setSelected(allSelected ? [] : locallyFiltered.map((row) => row.planUserCode));
   };
 
+  const markCopied = (key) => {
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(""), 2000);
+  };
+
+  const fallbackCopy = (text, onDone) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      onDone();
+    } catch (err) {
+      console.error("Copy failed", err);
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleCopyText = (key, text) => {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => markCopied(key)).catch(() => fallbackCopy(text, () => markCopied(key)));
+      return;
+    }
+    fallbackCopy(text, () => markCopied(key));
+  };
+
   const runBulk = async (handler, successMessage) => {
     if (selected.length === 0) {
       setError(t("setup.errors.noSelection"));
@@ -208,7 +280,13 @@ const PlanAssignmentTable = ({
       if (successMessage) {
         setNotice(successMessage);
       }
-      await loadFromServer(page, rowsPerPage);
+      // Let the page refresh every table instead of only this one: a plan that
+      // just became active has left this queue and belongs to the other table.
+      if (onCompleted) {
+        onCompleted();
+      } else {
+        await loadFromServer(page, rowsPerPage);
+      }
     } catch (err) {
       console.error("Bulk action failed", err);
       setError(err?.response?.data?.errorMessage || t("setup.errors.bulkAction"));
@@ -251,30 +329,36 @@ const PlanAssignmentTable = ({
 
         {bulkActions && bulkActions.length > 0 && (
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
               {t("setup.selected")}: {selected.length}
             </Typography>
-            {bulkActions.map((action) => (
-              <Button
-                key={action.key}
-                size="small"
-                variant={action.variant || "outlined"}
-                color={action.color || "primary"}
-                disabled={action.needsDate && !action.dateValue}
-                // The button greys out when the activation date is empty, which
-                // used to give no clue about what was missing.
-                title={
-                  action.needsDate && !action.dateValue
-                    ? t("setup.errors.activeDateRequired")
-                    : undefined
-                }
-                onClick={() =>
-                  runBulk((codes) => action.handler(codes, action), action.successMessage)
-                }
-              >
-                {action.label}
-              </Button>
-            ))}
+            {bulkActions.map((action) => {
+              // The actions only ever mean "do this to what I picked", so an
+              // empty selection greys them out instead of failing on click.
+              const dateMissing = action.needsDate && !action.dateValue;
+              const selectionMissing = selected.length === 0;
+              return (
+                <Button
+                  key={action.key}
+                  size="small"
+                  variant={action.variant || "outlined"}
+                  color={action.color || "primary"}
+                  disabled={dateMissing || selectionMissing}
+                  title={
+                    dateMissing
+                      ? t("setup.errors.activeDateRequired")
+                      : selectionMissing
+                        ? t("setup.errors.noSelection")
+                        : undefined
+                  }
+                  onClick={() =>
+                    runBulk((codes) => action.handler(codes, action), action.successMessage)
+                  }
+                >
+                  {action.label}
+                </Button>
+              );
+            })}
           </Stack>
         )}
 
@@ -294,7 +378,9 @@ const PlanAssignmentTable = ({
                 <TableCell>{t("setup.column.activeDate")}</TableCell>
                 <TableCell>{t("setup.column.endedDate")}</TableCell>
                 <TableCell>{t("setup.column.payment")}</TableCell>
-                {rowAction && <TableCell align="right">{t("setup.column.action")}</TableCell>}
+                {rowAction && (
+                  <TableCell align="right">{t("setup.column.action")}</TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -324,24 +410,75 @@ const PlanAssignmentTable = ({
                     {row.usedCount}/{row.envQuota}
                   </TableCell>
                   <TableCell>
-                    <Chip size="small" color={stateColor(row.planState)} label={row.planState} />
+                    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap">
+                      <Chip size="small" color={stateColor(row.planState)} label={row.planState} />
+                      {row.extendDays ? (
+                        // A queue row that buys days on another plan: no quota of
+                        // its own, so say so instead of leaving "0/0" unexplained.
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          color="info"
+                          label={t("setup.extensionTag")}
+                          onClick={() => { }}
+                          clickable={false}
+                        />
+                      ) : null}
+                    </Stack>
                   </TableCell>
                   <TableCell>{row.activeDate || "-"}</TableCell>
                   <TableCell>{row.endedDate || "-"}</TableCell>
                   <TableCell>
-                    <Stack spacing={0.5}>
-                      <Typography variant="caption">{row.paymentStatus || "-"}</Typography>
-                      {row.paymentCode && (
-                        <Typography variant="caption" color="text.secondary">
-                          {row.paymentCode.slice(0, 8)}…
-                        </Typography>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                      <Chip
+                        size="small"
+                        label={row.paymentStatus || "-"}
+                        color={paymentColor(row.paymentStatus)}
+                        onClick={() => { }}
+                        clickable={false}
+                      />
+                      {row.paymentUrl && (
+                        <>
+                          <Link
+                            href={addHostToHref(row.paymentUrl)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            underline="hover"
+                            title={addHostToHref(row.paymentUrl)}
+                          >
+                            {t("setup.column.paymentLink")}
+                          </Link>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleCopyText(`link-${row.planUserCode}`, addHostToHref(row.paymentUrl));
+                            }}
+                            title={addHostToHref(row.paymentUrl)}
+                            sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                          >
+                            {copiedKey === `link-${row.planUserCode}`
+                              ? t("common.copied")
+                              : t("common.copy")}
+                          </Button>
+                        </>
                       )}
                     </Stack>
                   </TableCell>
                   {rowAction && (
                     <TableCell align="right">
-                      <Button size="small" onClick={() => rowAction(row)}>
-                        {t("setup.action.markPaid")}
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={!!rowAction.reasonFor?.(row)}
+                        title={rowAction.reasonFor?.(row)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          rowAction.handler(row);
+                        }}
+                      >
+                        {rowAction.label}
                       </Button>
                     </TableCell>
                   )}
@@ -369,12 +506,17 @@ const PlanAssignmentTable = ({
 };
 
 /**
- * Admin setup page: approve the CREATE queue, review every assignment and
- * maintain the admin transfer accounts used on the seller payment page.
+ * Admin setup page: collect the money of the "Waiting for pay" queue, approve
+ * the assignments, review every plan and maintain the admin transfer accounts
+ * used on the seller payment page.
  */
 const SetupPage = () => {
   const { t } = useTranslation();
   const [activeDate, setActiveDate] = useState(todayInputValue);
+  const [linkItems, setLinkItems] = useState([]);
+  const [linksOpen, setLinksOpen] = useState(false);
+  const [extendRow, setExtendRow] = useState(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const dateValue = useMemo(() => (activeDate || "").slice(0, 10), [activeDate]);
 
@@ -389,15 +531,73 @@ const SetupPage = () => {
     await api.post(`${contextPath}/admin/v1/paymentPlan/reject`, { planUserCodes: codes });
   };
 
-  const markPaid = async (row) => {
-    if (!row.paymentCode) {
-      return;
-    }
+  // Both tables re-fetch on a token change, so a plan that just moved from one
+  // queue to the other shows up in its new table without a browser reload.
+  const refreshTables = () => setReloadToken((token) => token + 1);
+
+  // Receiving the money starts the plan on the activation date above, so the
+  // row leaves "Waiting for pay" and lands in the plan list.
+  const markPaid = async (codes) => {
     await api.post(`${contextPath}/admin/v1/paymentPlan/payment/markPaid`, {
-      paymentCode: row.paymentCode,
+      planUserCodes: codes,
       note: t("setup.billNote"),
+      activeDate: dateValue || null,
     });
   };
+
+  // The server builds a fresh token per selected plan and answers with the
+  // links; the dialog is the feedback, so no success alert on top of it.
+  const regenerateLinks = async (codes) => {
+    const res = await api.post(
+      `${contextPath}/admin/v1/paymentPlan/payment/regenerateLink`,
+      { planUserCodes: codes }
+    );
+    setLinkItems(res.data?.items || []);
+    setLinksOpen(true);
+  };
+
+  // Sell extra days on a running plan. The order lands in "Waiting for pay"
+  // with its own link; the plan's end date only moves once that order is paid.
+  const submitExtend = async (days) => {
+    if (!extendRow) return;
+    try {
+      const res = await api.post(`${contextPath}/admin/v1/paymentPlan/extend`, {
+        planUserCode: extendRow.planUserCode,
+        days,
+      });
+      setExtendRow(null);
+      refreshTables();
+      setLinkItems([
+        {
+          planUserCode: res.data?.extensionPlanUserCode,
+          username: res.data?.sellerUsername || extendRow.username,
+          paymentStatus: res.data?.status,
+          paymentUrl: res.data?.paymentUrl,
+        },
+      ]);
+      setLinksOpen(true);
+    } catch (err) {
+      console.error("Failed to extend plan", err);
+      alert(err?.response?.data?.errorMessage || t("setup.errors.actionFailed"));
+    }
+  };
+
+  const paymentActions = [
+    {
+      key: "markPaid",
+      label: t("setup.action.markPaid"),
+      handler: markPaid,
+      variant: "contained",
+      color: "success",
+      successMessage: t("setup.success.paid"),
+    },
+    {
+      key: "regenerateLink",
+      label: t("setup.action.regenerateLink"),
+      handler: regenerateLinks,
+      color: "info",
+    },
+  ];
 
   return (
     <PageContainer maxWidth="xl">
@@ -430,7 +630,10 @@ const SetupPage = () => {
           description={t("setup.pendingDesc")}
           state={STATE_CREATE}
           emptyMessage={t("setup.pendingEmpty")}
+          reloadToken={reloadToken}
+          onCompleted={refreshTables}
           bulkActions={[
+            ...paymentActions,
             {
               key: "approve",
               label: t("setup.action.approve"),
@@ -456,7 +659,8 @@ const SetupPage = () => {
           state={STATE_ACTIVE}
           showStateToggle
           actionLabel={t("setup.toggleState")}
-          rowAction={markPaid}
+          reloadToken={reloadToken}
+          onCompleted={refreshTables}
           bulkActions={[
             {
               key: "activate",
@@ -475,11 +679,32 @@ const SetupPage = () => {
               successMessage: t("setup.success.deactivated"),
             },
           ]}
+          rowAction={{
+            label: t("setup.action.extend"),
+            handler: setExtendRow,
+            // Only a running plan has an end date to push back; the server
+            // refuses anything else, so the button says why it is greyed out.
+            reasonFor: (row) =>
+              row.planState === STATE_ACTIVE ? undefined : t("setup.extend.onlyActive"),
+          }}
         />
 
         <SectionBlock title={t("setup.transferTitle")} description={t("setup.transferDesc")}>
           <TransferInfoManager />
         </SectionBlock>
+
+        <PaymentLinksDialog
+          open={linksOpen}
+          items={linkItems}
+          onClose={() => setLinksOpen(false)}
+        />
+
+        <ExtendPlanDialog
+          open={!!extendRow}
+          row={extendRow}
+          onClose={() => setExtendRow(null)}
+          onSubmit={submitExtend}
+        />
       </Stack>
     </PageContainer>
   );

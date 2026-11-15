@@ -22,7 +22,16 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
       (role) => normalizeRole(role) === normalizedUserRole
     );
     if (!allowed) {
-      return <Navigate to="/login" replace />;
+      // The session is valid, the account simply is not allowed here. Without
+      // a reason this lands the user on a spotless login form, so they sign in
+      // again and get bounced with nothing to read.
+      return (
+        <Navigate
+          to="/login"
+          replace
+          state={{ deniedRole: normalizeRole(userRole) || "none" }}
+        />
+      );
     }
   }
 

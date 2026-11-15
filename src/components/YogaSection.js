@@ -71,6 +71,13 @@ const YogaSection = ({ token }) => {
     const [plans, setPlans] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
+    // seller: registered buyers of the clicked occurrence
+    const [attendeesOpen, setAttendeesOpen] = useState(false);
+    const [attendeesOccurrence, setAttendeesOccurrence] = useState(null);
+    const [attendees, setAttendees] = useState([]);
+    const [attendeesLoading, setAttendeesLoading] = useState(false);
+    const [attendeeBusy, setAttendeeBusy] = useState("");
+
     // below-calendar list
     const [range, setRange] = useState({ from: addDays(todayIso(), -3), to: addDays(todayIso(), 3) });
     const [rangeItems, setRangeItems] = useState([]);
@@ -253,6 +260,52 @@ const YogaSection = ({ token }) => {
         }
     };
 
+    const loadAttendees = async (occurrence) => {
+        if (!token || !occurrence) return;
+        setAttendeesLoading(true);
+        try {
+            const res = await pubApi.post(`${YOGA}/attendees`, {
+                token,
+                classCode: occurrence.classCode,
+                date: occurrence.date,
+            });
+            setAttendees(res.data || []);
+        } catch (err) {
+            console.error("Buyer list load failed", err);
+            setAttendees([]);
+            setError(err?.response?.data?.errorMessage || t("yoga.errors.loadAttendees"));
+        } finally {
+            setAttendeesLoading(false);
+        }
+    };
+
+    const openAttendees = (occurrence) => {
+        setAttendeesOccurrence(occurrence);
+        setAttendees([]);
+        setError("");
+        setAttendeesOpen(true);
+        loadAttendees(occurrence);
+    };
+
+    /** flips paid / attended, same interaction as the plain order list chips */
+    const handleToggleBooking = async (booking, field) => {
+        setAttendeeBusy(`${booking.bookingCode}-${field}`);
+        try {
+            await pubApi.post(`${SELLER}/booking/toggle`, {
+                token,
+                bookingCode: booking.bookingCode,
+                paid: field === "paid" ? !booking.paid : booking.paid,
+                attended: field === "attended" ? !booking.attended : booking.attended,
+            });
+            await loadAttendees(attendeesOccurrence);
+        } catch (err) {
+            console.error("Booking toggle failed", err);
+            setError(err?.response?.data?.errorMessage || t("yoga.errors.toggle"));
+        } finally {
+            setAttendeeBusy("");
+        }
+    };
+
     const remainingColor = (occ) => {
         if (occ.past) return "default";
         if (occ.remaining <= 0) return "error";
@@ -394,7 +447,7 @@ const YogaSection = ({ token }) => {
                                                             key={`${occ.classCode}-${occ.date}`}
                                                             onClick={() =>
                                                                 sellerView
-                                                                    ? openEditor(dayOfWeek, hour, occ)
+                                                                    ? openAttendees(occ)
                                                                     : openBook(occ)
                                                             }
                                                             sx={{
@@ -518,14 +571,25 @@ const YogaSection = ({ token }) => {
                                             />
                                         </TableCell>
                                         <TableCell align="right">
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                disabled={occ.past || (occ.remaining <= 0 && !occ.myBookingCode)}
-                                                onClick={() => openBook(occ)}
-                                            >
-                                                {occ.myBookingCode ? t("yoga.booked") : t("yoga.book")}
-                                            </Button>
+                                            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                                                {sellerView && (
+                                                    <Button
+                                                        size="small"
+                                                        variant="outlined"
+                                                        onClick={() => openAttendees(occ)}
+                                                    >
+                                                        {t("yoga.attendees")}
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    size="small"
+                                                    variant="contained"
+                                                    disabled={occ.past || (occ.remaining <= 0 && !occ.myBookingCode)}
+                                                    onClick={() => openBook(occ)}
+                                                >
+                                                    {occ.myBookingCode ? t("yoga.booked") : t("yoga.book")}
+                                                </Button>
+                                            </Stack>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -660,6 +724,124 @@ const YogaSection = ({ token }) => {
                     <Button onClick={() => setBookOpen(false)} disabled={submitting}>{t("common.cancel")}</Button>
                     <Button onClick={handleBook} variant="contained" disabled={submitting}>
                         {submitting ? t("yoga.booking") : t("yoga.book")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* seller: the buyers registered for the clicked class, laid out like
+                the plain product order list (paid / attended chips toggle the
+                booking through the seller endpoints). */}
+            <Dialog open={attendeesOpen} onClose={() => setAttendeesOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                        <Typography variant="subtitle1" fontWeight={700}>
+                            {t("yoga.attendeesTitle")}
+                        </Typography>
+                        {attendeesOccurrence && (
+                            <Chip
+                                size="small"
+                                color={remainingColor(attendeesOccurrence)}
+                                label={`${attendeesOccurrence.booked}/${attendeesOccurrence.capacity}`}
+                            />
+                        )}
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary">
+                        {attendeesOccurrence?.title}
+                        {" · "}
+                        {attendeesOccurrence?.date} {attendeesOccurrence?.startTime}-{attendeesOccurrence?.endTime}
+                        {attendeesOccurrence?.coach ? ` · ${attendeesOccurrence.coach}` : ""}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <TableContainer sx={{ overflowX: "auto" }}>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>{t("yoga.buyer")}</TableCell>
+                                    <TableCell>{t("yoga.paymentMode")}</TableCell>
+                                    <TableCell>{t("yoga.bookedAt")}</TableCell>
+                                    <TableCell>{t("yoga.paid")}</TableCell>
+                                    <TableCell>{t("yoga.attended")}</TableCell>
+                                    <TableCell>{t("yoga.note")}</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {attendeesLoading ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} align="center">{t("common.loading")}</TableCell>
+                                    </TableRow>
+                                ) : attendees.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} align="center">{t("yoga.attendeesEmpty")}</TableCell>
+                                    </TableRow>
+                                ) : (
+                                    attendees.map((booking) => (
+                                        <TableRow key={booking.bookingCode} hover>
+                                            <TableCell>
+                                                <Typography variant="body2">
+                                                    {booking.buyerName || booking.buyerUsername || "\u2014"}
+                                                </Typography>
+                                                {booking.buyerName && booking.buyerUsername && (
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {booking.buyerUsername}
+                                                    </Typography>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {booking.paymentMode === "PLAN"
+                                                    ? t("yoga.payWithPlan")
+                                                    : t("yoga.payAsYouGo")}
+                                            </TableCell>
+                                            <TableCell>{booking.bookedAt || "\u2014"}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={booking.paid ? t("common.yes") : t("common.no")}
+                                                    size="small"
+                                                    color={booking.paid ? "success" : "default"}
+                                                    clickable
+                                                    disabled={Boolean(attendeeBusy)}
+                                                    onClick={() => handleToggleBooking(booking, "paid")}
+                                                />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={booking.attended ? t("common.yes") : t("common.no")}
+                                                    size="small"
+                                                    color={booking.attended ? "success" : "default"}
+                                                    clickable
+                                                    disabled={Boolean(attendeeBusy)}
+                                                    onClick={() => handleToggleBooking(booking, "attended")}
+                                                />
+                                            </TableCell>
+                                            <TableCell>{booking.note || "\u2014"}</TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => {
+                            const occ = attendeesOccurrence;
+                            setAttendeesOpen(false);
+                            if (occ) openEditor(occ.dayOfWeek, parseInt((occ.startTime || "0").slice(0, 2), 10), occ);
+                        }}
+                    >
+                        {t("yoga.editClass")}
+                    </Button>
+                    <Button
+                        onClick={() => {
+                            const occ = attendeesOccurrence;
+                            setAttendeesOpen(false);
+                            if (occ) openBook(occ);
+                        }}
+                    >
+                        {t("yoga.book")}
+                    </Button>
+                    <Button variant="contained" onClick={() => setAttendeesOpen(false)}>
+                        {t("common.close")}
                     </Button>
                 </DialogActions>
             </Dialog>

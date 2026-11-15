@@ -135,8 +135,17 @@ function Header() {
             {!isAuthenticated && (
               <Button
                 component={RouterLink}
+                to="/register"
+                variant={location.pathname === "/register" ? "contained" : "outlined"}
+              >
+                {t("header.register")}
+              </Button>
+            )}
+            {!isAuthenticated && (
+              <Button
+                component={RouterLink}
                 to="/login"
-                variant={location.pathname === "/login" ? "contained" : "outlined"}
+                variant={location.pathname === "/login" ? "contained" : "text"}
               >
                 {t("header.login")}
               </Button>

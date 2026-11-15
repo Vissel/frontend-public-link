@@ -15,19 +15,24 @@ import { pubApi } from "../api";
 import { formatDateTime, fromInputValue, parsePlanDate, toInputValue } from "../util/planWindow";
 
 /**
- * Seller edit of an existing sale window: the closing time may be moved
- * earlier, or the sale closed immediately.
+ * Seller edit of an existing sale window: move the closing time earlier, close
+ * the sale immediately, or extend it as far as the paid plan covers.
  *
- * Moving it later is refused on purpose (client and server): the public link
- * token was minted to expire at the original end, so a later value would
- * promise validity the token cannot deliver. Shortening can therefore never
- * push the window past the paid plan end either.
+ * Extending re-issues the public link, because the token inside the shared
+ * address expires together with the end it was minted for — so the seller gets
+ * a new address and is warned before submitting. The plan ceiling comes from
+ * the same gate the create flow reads; the server re-checks it either way.
  */
 const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
     const { t } = useTranslation();
     const [endValue, setEndValue] = useState("");
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    // Latest paid moment across the seller's plans, quota ignored: the ceiling
+    // for stretching a window that already exists. null once loaded means the
+    // seller has no plan reaching into the future, so nothing can be extended.
+    const [coverage, setCoverage] = useState(null);
+    const [coverageLoaded, setCoverageLoaded] = useState(false);
 
     const currentEnd = useMemo(
         () => parsePlanDate(environment?.plannedEndedAt),
@@ -47,6 +52,36 @@ const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
         setEndValue(currentEnd ? toInputValue(currentEnd) : "");
     }, [open, currentEnd]);
 
+    // Loaded once per open rather than per keystroke; a failure only costs the
+    // hint, the server still refuses an end beyond the plan.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+        let ignore = false;
+        setCoverage(null);
+        setCoverageLoaded(false);
+        pubApi
+            .post("/api/v1/sellerPlan/check")
+            .then((res) => {
+                if (ignore) {
+                    return;
+                }
+                setCoverage(parsePlanDate(res?.data?.coverageEndedDate));
+            })
+            .catch((err) => {
+                console.error("Failed to load plan coverage", err);
+            })
+            .finally(() => {
+                if (!ignore) {
+                    setCoverageLoaded(true);
+                }
+            });
+        return () => {
+            ignore = true;
+        };
+    }, [open]);
+
     const submit = async (endAt) => {
         setError("");
         setSubmitting(true);
@@ -65,15 +100,22 @@ const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
         }
     };
 
+    const chosenEnd = useMemo(() => fromInputValue(endValue), [endValue]);
+    const extendsSale = !!(chosenEnd && currentEnd && chosenEnd.getTime() > currentEnd.getTime());
+
     const handleSave = () => {
         const end = fromInputValue(endValue);
         if (!end) {
             setError(t("saleWindow.errors.required"));
             return;
         }
-        if (currentEnd && end.getTime() > currentEnd.getTime()) {
+        if (end.getTime() <= Date.now()) {
+            setError(t("saleWindow.errors.endInPast"));
+            return;
+        }
+        if (extendsSale && coverage && end.getTime() > coverage.getTime()) {
             setError(
-                t("saleWindow.errors.cannotExtend", { planEnd: formatDateTime(currentEnd) })
+                t("saleWindow.errors.endAfterPlan", { planEnd: formatDateTime(coverage) })
             );
             return;
         }
@@ -102,6 +144,13 @@ const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
                         {" · "}
                         {t("saleWindow.currentEnd")}:{" "}
                         {currentEnd ? formatDateTime(currentEnd) : "\u2014"}
+                        {" · "}
+                        {t("saleWindow.planCoverage")}:{" "}
+                        {coverage
+                            ? formatDateTime(coverage)
+                            : coverageLoaded
+                                ? "\u2014"
+                                : "\u2026"}
                     </Typography>
 
                     <TextField
@@ -114,13 +163,19 @@ const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
                         onChange={(event) => setEndValue(event.target.value)}
                         slotProps={{
                             inputLabel: { shrink: true },
-                            htmlInput: currentEnd ? { max: toInputValue(currentEnd) } : undefined,
+                            htmlInput: coverage ? { max: toInputValue(coverage) } : undefined,
                         }}
                     />
 
                     <Alert severity="info" variant="outlined">
                         {t("saleWindow.editHint")}
                     </Alert>
+
+                    {extendsSale && (
+                        <Alert severity="warning" variant="outlined">
+                            {t("saleWindow.extendWarning")}
+                        </Alert>
+                    )}
                 </Stack>
             </DialogContent>
             <DialogActions>

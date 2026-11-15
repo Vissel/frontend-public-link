@@ -6,6 +6,8 @@ import AdminHomePage from "./page/AdminHomePage";
 import GenerationPage from "./page/GenerationPage";
 import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
+import SelfRegisterPage from "./page/SelfRegisterPage";
+import PlanSelectPage from "./page/PlanSelectPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 import NotificationPage from "./page/NotificationPage";
 import AdminChatPage from "./page/AdminChatPage";
@@ -69,6 +71,15 @@ function App() {
             element={
               <Layout>
                 <RegisterPage />
+              </Layout>
+            }
+          />
+          {/* Open self-registration: no admin invitation needed. */}
+          <Route
+            path="/register"
+            element={
+              <Layout>
+                <SelfRegisterPage />
               </Layout>
             }
           />
@@ -165,6 +176,15 @@ function App() {
               element={
                 <Layout>
                   <SellerHome />
+                </Layout>
+              }
+            />
+            {/* Pick a plan, transfer the money, wait for activation. */}
+            <Route
+              path="/plans"
+              element={
+                <Layout>
+                  <PlanSelectPage />
                 </Layout>
               }
             />

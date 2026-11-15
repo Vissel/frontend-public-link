@@ -46,6 +46,9 @@ const SellerHome = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   // Environment whose sale window the seller is editing; null keeps the dialog shut.
   const [windowEnv, setWindowEnv] = useState(null);
+  // Payment plan verdict of the signed-in seller: a seller without a usable
+  // plan has to buy one before a link can be generated.
+  const [planGate, setPlanGate] = useState(null);
   const frontendOrigin = window.location.origin;
   const { t } = useTranslation();
 
@@ -226,6 +229,25 @@ const SellerHome = () => {
     fetchSellerData();
   }, [state, username, page, rowsPerPage, refreshKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+    pubApi
+      .post("/api/v1/sellerPlan/check")
+      .then((res) => {
+        if (!cancelled) {
+          setPlanGate(res.data || null);
+        }
+      })
+      .catch((err) => {
+        // The banner is guidance, not a gate: when the check fails the seller
+        // simply does not see it, and the generate flow still explains itself.
+        console.error("Failed to check the payment plan", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
   if (loading) {
     return (
       <PageContainer maxWidth="md">
@@ -258,6 +280,21 @@ const SellerHome = () => {
   return (
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
+        {planGate && !planGate.allowed && (
+          <Alert
+            severity={planGate.reason === "QUOTA_EXHAUSTED" ? "warning" : "info"}
+            sx={{ alignItems: "center" }}
+            action={
+              <Button color="inherit" size="small" onClick={() => navigate("/plans")}>
+                {t("sellerHome.planBanner.action")}
+              </Button>
+            }
+          >
+            {t(`sellerHome.planBanner.${planGate.reason}`, {
+              defaultValue: planGate.message || t("sellerHome.planBanner.fallback"),
+            })}
+          </Alert>
+        )}
         <SectionBlock
           title={t("sellerHome.title")}
           description={t("sellerHome.subtitle")}

@@ -24,6 +24,8 @@ import { useTranslation } from "react-i18next";
  * password is RSA-encrypted in the browser and only the setup token travels
  * as the credential.
  */
+const MIN_PASSWORD_LENGTH = 8;
+
 const BuyerSetupPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -36,6 +38,7 @@ const BuyerSetupPage = () => {
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [mismatch, setMismatch] = useState(false);
+  const [tooShort, setTooShort] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,6 +59,14 @@ const BuyerSetupPage = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    // The account service rejects anything under 8 characters, and it answers
+    // with a 4xx that carries no body, so the rule is checked here first.
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setTooShort(true);
+      setError(t("buyerSetup.errors.tooShort"));
+      return;
+    }
+    setTooShort(false);
     if (password !== repeatPassword) {
       setMismatch(true);
       setError(t("buyerSetup.errors.mismatch"));
@@ -79,10 +90,18 @@ const BuyerSetupPage = () => {
       navigate("/login");
     } catch (err) {
       console.error("Setup failed", err);
+      // Errors reach us as a status only: the response body is empty, so each
+      // code is translated here instead of showing one generic failure.
+      const status = err?.response?.status;
       setError(
         err?.response?.data?.errorMessage ||
-        err?.response?.data?.message ||
-        t("buyerSetup.errors.failed")
+        (status === 400
+          ? t("buyerSetup.errors.tooShort")
+          : status === 404
+            ? t("buyerSetup.errors.accountMissing")
+            : status === 502 || status === 503 || status === 504
+              ? t("buyerSetup.errors.serviceUnreachable")
+              : t("buyerSetup.errors.failed"))
       );
     } finally {
       setSubmitting(false);
@@ -135,8 +154,11 @@ const BuyerSetupPage = () => {
                   label={t("buyerSetup.newPassword")}
                   type="password"
                   value={password}
+                  error={tooShort}
+                  helperText={tooShort ? t("buyerSetup.errors.tooShort") : t("buyerSetup.passwordHint")}
                   onChange={(e) => {
                     setPassword(e.target.value);
+                    if (tooShort) setTooShort(e.target.value.length < MIN_PASSWORD_LENGTH);
                     if (repeatPassword) setMismatch(e.target.value !== repeatPassword);
                   }}
                   required

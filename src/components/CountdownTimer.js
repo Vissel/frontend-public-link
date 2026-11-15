@@ -98,8 +98,18 @@ export function CountdownBadge({ targetDate }) {
 
 /**
  * Chip variant — for page headers / prominent placement.
+ *
+ * Passing onClick turns the countdown into an edit affordance: the number is
+ * the sale closing time, so seller pages hand it out as the entry point of the
+ * sale window dialog.
+ *
+ * MUI 7's Chip calls onClick on every click even when the chip is not
+ * clickable, so an absent onClick would throw for buyers / signed-out viewers.
+ * Non-editable viewers therefore get an inert handler: clicking does nothing.
  */
-export function CountdownChip({ targetDate }) {
+const noop = () => {};
+
+export function CountdownChip({ targetDate, onClick, title }) {
     const [remaining, setRemaining] = useState(() => parseRemaining(targetDate));
     const { t } = useTranslation();
 
@@ -118,10 +128,14 @@ export function CountdownChip({ targetDate }) {
 
     const urgency = getUrgency(remaining);
     const style = URGENCY_STYLES[urgency];
+    const editable = typeof onClick === "function";
 
     return (
         <Chip
             {...(style.icon ? { icon: <span style={{ fontSize: 16 }}>{style.icon}</span> } : {})}
+            onClick={editable ? onClick : noop}
+            clickable={editable}
+            {...(editable && title ? { title } : {})}
             label={
                 <span style={{ fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
                     {formatCountdown(remaining, t)}
@@ -133,6 +147,12 @@ export function CountdownChip({ targetDate }) {
                 color: style.color,
                 fontWeight: 700,
                 "& .MuiChip-label": { color: style.color },
+                ...(editable
+                    ? {
+                        cursor: "pointer",
+                        "&:hover": { filter: "brightness(0.95)" },
+                    }
+                    : {}),
             }}
         />
     );

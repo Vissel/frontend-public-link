@@ -22,7 +22,8 @@
         "saving": "Saving...",
         "delete": "Delete",
         "done": "Done",
-        "edit": "Edit"
+        "edit": "Edit",
+        "submitting": "Submitting…"
     },
     "header": {
         "publicLink": "Public Link",
@@ -30,6 +31,7 @@
         "workspace": "Workspace",
         "logout": "Logout",
         "login": "Login",
+        "register": "Register",
         "setup": "Setup",
         "chat": "Chat",
         "account": "Account",
@@ -61,6 +63,9 @@
         "password": "Password",
         "requestId": "Request ID",
         "loginButton": "Log in",
+        "noAccount": "New here?",
+        "registerLink": "Create an account",
+        "registeredNote": "Account created. Sign in to choose your payment plan.",
         "errors": {
             "preLogin": "Pre-login got failure!",
             "missingAuth": "Login response is missing required authentication data.",
@@ -68,7 +73,8 @@
             "wrongCredentials": "Wrong username/password.",
             "unexpected": "An unexpected error occurred during login.",
             "noResponse": "No response from server. Please check your network connection.",
-            "setupError": "Error setting up the login request."
+            "setupError": "Error setting up the login request.",
+            "noWorkspace": "You are signed in, but this account is not a seller workspace account (role: {{role}}). Contact our team to activate your payment plan."
         }
     },
     "changePassword": {
@@ -104,6 +110,71 @@
             "unexpected": "An unexpected error occurred during registration.",
             "noResponse": "No response from server. Please check your network connection.",
             "setupError": "Error setting up the register request."
+        }
+    },
+    "onboarding": {
+        "steps": {
+            "account": "Create account",
+            "plan": "Choose plan & transfer",
+            "activate": "Start selling"
+        },
+        "hints": {
+            "account": "Pick a username, tell us who you are and leave an email we can reach you on.",
+            "plan": "Select the plan that fits, then transfer the amount with your banking app.",
+            "activate": "We verify the transfer, activate your plan and you can create product links."
+        }
+    },
+    "selfRegister": {
+        "title": "Create your seller account",
+        "subtitle": "Register yourself, pick a plan and start selling - no invitation needed.",
+        "username": "Username",
+        "usernameHint": "3-30 characters: letters, numbers, dot, dash or underscore. This is your login.",
+        "name": "Full name",
+        "nameHint": "Shown to your buyers and on the transfer content.",
+        "email": "Email",
+        "emailHint": "We use it to contact you about your plan and your payment.",
+        "password": "Password",
+        "passwordHint": "At least 8 characters.",
+        "repeatPassword": "Repeat password",
+        "submit": "Create account",
+        "submitting": "Creating account…",
+        "afterNote": "Next you choose a payment plan and transfer the fee by bank transfer.",
+        "loginLink": "I already have an account",
+        "errors": {
+            "usernamePattern": "Use 3-30 characters: letters, numbers, dot, dash or underscore.",
+            "nameRequired": "Please tell us your name.",
+            "emailInvalid": "Please enter a valid email address.",
+            "tooShort": "The password must be at least 8 characters.",
+            "mismatch": "The passwords do not match.",
+            "usernameTaken": "This username is already taken. Please choose another one.",
+            "invalidInput": "Some details are missing or invalid. Please check the form.",
+            "serviceDown": "We could not reach the account service. Please try again in a moment.",
+            "encryptFailed": "The password could not be secured for transport. Please try again.",
+            "noResponse": "No response from server. Please check your network connection.",
+            "failed": "Registration failed. Please try again."
+        }
+    },
+    "plans": {
+        "title": "Choose your payment plan",
+        "subtitle": "Buy a plan yourself, pay by bank transfer, and start selling once it is activated.",
+        "catalogTitle": "Plans on offer",
+        "catalogHint": "Pick one plan. The fee covers the days listed and that many product links.",
+        "catalogEmpty": "No plan is on sale right now. Please contact us via chat.",
+        "selected": "Selected",
+        "continueToPayment": "Continue to payment",
+        "buying": "Opening your order…",
+        "transferGuide": "You will get a VietQR code and the account to transfer to on the next step.",
+        "activeMessage": "Your plan is active from {{from}} to {{to}} with {{links}} product link(s).",
+        "goWorkspace": "Go to my workspace",
+        "waitingMessage": "We received your confirmation. An admin verifies the bank transfer and activates your plan, usually within a few minutes.",
+        "pollingNote": "This screen updates by itself once the plan is activated.",
+        "orderWithoutInstructions": "Your order is open but the transfer details could not be loaded. Please retry, or contact us via chat.",
+        "retry": "Try again",
+        "errors": {
+            "load": "We could not load your plan status. Please reload this page.",
+            "catalog": "The plan list could not be loaded. Please try again.",
+            "pickFirst": "Please select a plan first.",
+            "buy": "Your order could not be created. Please try again."
         }
     },
     "saleUrl": {
@@ -306,6 +377,14 @@
         "username": "Username:",
         "email": "Email:",
         "usePublicLink": "Use the public link provided to manage customer orders from mobile or desktop.",
+        "planBanner": {
+            "action": "Choose a plan",
+            "NO_PLAN": "You have no payment plan yet. Pick one and start selling after it is activated.",
+            "NOT_STARTED": "Your plan has not started yet. It activates on its start date.",
+            "EXPIRED": "Your plan has ended. Buy a new one to keep creating product links.",
+            "QUOTA_EXHAUSTED": "All product links of your plan are used. Buy a new plan to create more.",
+            "fallback": "You have no usable payment plan yet. Choose one to continue."
+        },
         "saleEnvironments": "Sale Environments",
         "saleEnvironmentsDesc": "Your active and past sale environments.",
         "searchByProduct": "Search by Product Name",
@@ -337,6 +416,8 @@
         "sellerView": "Seller view — manage orders and products.",
         "buyerView": "Browse products and place your order.",
         "exportExcel": "Export Excel",
+        "shareLink": "Share link",
+        "editTimeHint": "Click to change the sale end time",
         "sellerViewLabel": "Seller View",
         "buyerViewLabel": "Buyer View",
         "created": "Created:",
@@ -344,6 +425,28 @@
         "plannedStartedAt": "Planned Start:",
         "plannedEndedAt": "Planned Ended At:",
         "notStartedYet": "This sale starts at {{start}}. Orders are not accepted until then.",
+        "transfer": {
+            "title": "Transfer account",
+            "add": "Add transfer account",
+            "change": "Change",
+            "remove": "Remove",
+            "zoomHint": "Click to enlarge the QR code",
+            "copyNumber": "Copy account number",
+            "noQr": "This account has no QR image.",
+            "scanHint": "Open your banking app and scan the code to transfer.",
+            "contentLabel": "Transfer content",
+            "emptyTitle": "No transfer account shown yet",
+            "emptyDesc": "Add an account so buyers can scan the QR and pay right on this page.",
+            "qrDialogTitle": "Scan to transfer",
+            "pickTitle": "Choose a transfer account",
+            "pickDesc": "The chosen account is shown to buyers on this page.",
+            "noAccounts": "You have no transfer accounts yet.",
+            "goSetup": "Add one on the setup page",
+            "errors": {
+                "load": "Unable to load your transfer accounts.",
+                "save": "Unable to update the transfer account."
+            }
+        },
         "products": "Products",
         "productsSellerDesc": "Tap edit to modify product details.",
         "productsBuyerDesc": "Available items for purchase.",
@@ -445,7 +548,29 @@
         "hoursAgo": "{{count}}h ago",
         "from": "From:",
         "admin": "Admin",
-        "environment": "Environment:"
+        "environment": "Environment:",
+        "payment": {
+            "seller": "Seller",
+            "plan": "Plan",
+            "extension": "Extension",
+            "days": "{{count}} day(s)",
+            "contact": "Contact",
+            "code": "Payment code",
+            "noContact": "Not provided",
+            "close": "Close",
+            "markPaid": "Mark paid",
+            "markingPaid": "Marking...",
+            "markPaidSuccess": "Payment received. The plan is activated.",
+            "markPaidFailed": "Could not mark the payment as paid.",
+            "billNote": "Payment confirmed by admin"
+        },
+        "paymentStatus": {
+            "CREATE": "Waiting for transfer",
+            "WAITING_CONFIRM": "Waiting confirmation",
+            "CONFIRMED": "Confirmed",
+            "PAID": "Paid",
+            "REJECTED": "Rejected"
+        }
     },
     "countdown": {
         "expired": "Expired"
@@ -660,7 +785,9 @@
         "currentStart": "Starts",
         "currentEnd": "Ends",
         "startedOnCreate": "started on creation",
-        "editHint": "Move the end earlier to stop taking orders sooner, or close it now. The end cannot be pushed later than the current planned end.",
+        "editHint": "Move the end earlier to stop taking orders sooner, close it now, or extend it up to your plan end.",
+        "planCoverage": "Plan covers until",
+        "extendWarning": "Extending re-issues the public link of this sale. Share the new address with your buyers; the old link keeps working until the previous end time.",
         "closeNow": "Close now",
         "save": "Save",
         "updated": "Sale window updated",
@@ -670,7 +797,6 @@
             "endAfterPlan": "The end time cannot be after the plan end ({{planEnd}}).",
             "startAfterPlan": "The start time cannot be after the plan end ({{planEnd}}).",
             "endInPast": "The end time must be in the future.",
-            "cannotExtend": "The end time cannot be later than the current planned end ({{planEnd}}).",
             "update": "Failed to update the sale window. Please try again."
         }
     },
@@ -737,15 +863,15 @@
     },
     "setup": {
         "title": "Setup",
-        "subtitle": "Approve pending payment plans, review every assignment and maintain your transfer accounts.",
+        "subtitle": "Collect the payments of sellers that still have to pay, activate their plans, review every assignment and maintain your transfer accounts.",
         "search": "Search seller",
         "total": "Total records:",
         "selected": "Selected",
         "activeDate": "Activation date",
-        "activeDateHint": "Applied when you approve the selected plans. Defaults to today; the end date is derived from the plan length.",
-        "pendingTitle": "Waiting for approval",
-        "pendingDesc": "Payment plans created by admin and still in CREATE state.",
-        "pendingEmpty": "No payment plan is waiting for approval.",
+        "activeDateHint": "Applied when you approve the selected plans or mark them as paid. Defaults to today; the end date is derived from the plan length.",
+        "pendingTitle": "Waiting for pay",
+        "pendingDesc": "Plans linked to a seller where the payment has not been received yet.",
+        "pendingEmpty": "No seller is waiting to pay.",
         "allTitle": "Payment plans",
         "allDesc": "Active plans are shown by default; use the button to display every state.",
         "toggleState": "Display all states",
@@ -762,14 +888,17 @@
             "activeDate": "Active date",
             "endedDate": "Ended date",
             "payment": "Payment",
-            "action": "Action"
+            "action": "Action",
+            "paymentLink": "Link"
         },
         "action": {
             "approve": "Approve",
             "reject": "Reject",
             "activate": "Activate",
             "deactivate": "Deactivate",
-            "markPaid": "Mark paid"
+            "markPaid": "Mark paid",
+            "regenerateLink": "Regenerate payment link",
+            "extend": "Extend plan"
         },
         "transferTitle": "My transfer accounts",
         "transferDesc": "These accounts are shown on the seller payment page. Only one can be the default.",
@@ -777,13 +906,34 @@
             "approved": "Selected payment plans are activated.",
             "rejected": "Selected payment plans are deactivated.",
             "activated": "Selected payment plans are activated.",
-            "deactivated": "Selected payment plans are deactivated."
+            "deactivated": "Selected payment plans are deactivated.",
+            "paid": "Payment received. The selected plans are activated and moved to the payment plan list."
         },
         "errors": {
             "load": "Failed to load payment plans.",
             "bulkAction": "The action failed. Please try again.",
             "noSelection": "Please select at least one payment plan.",
-            "activeDateRequired": "Pick an activation date above to enable this action."
+            "activeDateRequired": "Pick an activation date above to enable this action.",
+            "actionFailed": "The action failed. Please try again."
+        },
+        "links": {
+            "title": "New payment links",
+            "hint": "Send each link to its seller. A new link stays valid for a few days.",
+            "open": "Open",
+            "copyAll": "Copy all"
+        },
+        "extensionTag": "Extension",
+        "extend": {
+            "title": "Extend plan",
+            "hint": "The days are added to the plan end date once this order is paid.",
+            "days": "Extra days",
+            "submit": "Create payment link",
+            "currentEnd": "Current end date",
+            "newEnd": "New end date",
+            "amount": "Amount",
+            "amountNote": "Charged at the plan's daily price. Send the link to the seller; the plan is extended after you mark the order paid.",
+            "daysInvalid": "Enter at least 1 day",
+            "onlyActive": "Only an active plan can be extended"
         }
     },
     "sellerSetup": {
@@ -813,7 +963,9 @@
             "accountNumber": "Account number",
             "accountName": "Account holder",
             "email": "Your email",
-            "phone": "Your phone number"
+            "phone": "Your phone number",
+            "extendFrom": "Extends from",
+            "extendTo": "Extended until"
         },
         "unit": {
             "day": "day(s)",
@@ -844,7 +996,9 @@
         },
         "qrTitle": "Scan to pay",
         "qrContent": "Transfer content",
-        "qrHint": "Open your banking app and scan this QR. The amount and transfer content are filled in automatically."
+        "qrHint": "Open your banking app and scan this QR. The amount and transfer content are filled in automatically.",
+        "extendNotice": "This link extends your current plan by {{days}} day(s).",
+        "extendDateNote": "The extra days are added after the admin confirms your transfer."
     },
     "yoga": {
         "prevWeek": "Prev week",
@@ -883,13 +1037,23 @@
         "booking": "Booking...",
         "planBanner": "Your plan: {{used}}/{{total}} days used, {{remaining}} left.",
         "anonymousHint": "Log in to book with your payment plan, or enter your name to pay per visit.",
+        "buyer": "Buyer",
+        "paid": "Paid",
+        "attended": "Attended",
+        "note": "Note",
+        "bookedAt": "Booked at",
+        "attendees": "Buyers",
+        "attendeesTitle": "Registered buyers",
+        "attendeesEmpty": "No buyers registered for this class yet.",
         "errors": {
             "load": "Failed to load the calendar.",
             "titleRequired": "Class title is required.",
             "saveClass": "Failed to save the class.",
             "deleteClass": "Failed to delete the class.",
             "book": "Booking failed.",
-            "cancel": "Cancellation failed."
+            "cancel": "Cancellation failed.",
+            "loadAttendees": "Failed to load the buyer list.",
+            "toggle": "Failed to update the booking."
         },
         "success": {
             "classSaved": "Class saved.",
@@ -938,11 +1102,15 @@
         "submit": "Save password",
         "saving": "Saving...",
         "expiresAt": "Link expires",
+        "passwordHint": "At least 8 characters.",
         "errors": {
             "invalidLink": "This setup link is not valid.",
             "invalidOrExpired": "This link has already been used or expired. Ask for a new one.",
             "mismatch": "The passwords do not match.",
+            "tooShort": "The password must be at least 8 characters.",
             "encryptFailed": "Could not secure your password.",
+            "accountMissing": "This account no longer exists. Ask the seller to create the plan again.",
+            "serviceUnreachable": "The account service is unreachable. Try again in a moment.",
             "failed": "Could not save your password."
         }
     }

@@ -150,6 +150,7 @@
             "invalidInput": "Một số thông tin còn thiếu hoặc không hợp lệ. Vui lòng kiểm tra biểu mẫu.",
             "serviceDown": "Chúng tôi không thể kết nối dịch vụ tài khoản. Vui lòng thử lại sau ít phút.",
             "encryptFailed": "Mật khẩu không thể được mã hóa khi gửi. Vui lòng thử lại.",
+            "keyUnavailable": "Khóa mã hóa của máy chủ hiện không dùng được nên không thể gửi mật khẩu an toàn. Vui lòng liên hệ quản trị viên (khóa công khai RSA của gateway).",
             "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
             "failed": "Đăng ký thất bại. Vui lòng thử lại."
         }
@@ -249,7 +250,34 @@
         "resetPasswordTitle": "Đặt lại mật khẩu cho {{username}}",
         "resetPasswordConfirm": "Thao tác này vô hiệu hóa mật khẩu hiện tại của {{username}} và tạo một liên kết đặt mật khẩu dùng một lần. Liên kết sẽ được gửi qua email nếu có địa chỉ, và bạn có thể sao chép bên dưới để gửi thủ công.",
         "resetPasswordSuccess": "Đã vô hiệu hóa mật khẩu. Liên kết đặt mật khẩu mới đã được tạo.",
-        "setupLink": "Liên kết đặt mật khẩu"
+        "setupLink": "Liên kết đặt mật khẩu",
+        "createUser": {
+            "button": "Tạo người dùng",
+            "title": "Tạo tài khoản người dùng",
+            "resultTitle": "Đã tạo tài khoản",
+            "subtitle": "Tạo tài khoản người bán hoặc người mua. Bạn không đặt mật khẩu: người dùng nhận một liên kết dùng một lần và tự chọn mật khẩu.",
+            "usernameHint": "3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới. Đây là tên đăng nhập của họ.",
+            "emailHint": "Không bắt buộc. Nếu có email, liên kết đặt mật khẩu cũng được gửi tới email đó.",
+            "roleSeller": "Người bán",
+            "roleBuyer": "Người mua",
+            "roleSellerHint": "Người bán có thể mua gói thanh toán và tạo liên kết sản phẩm.",
+            "roleBuyerHint": "Người mua đăng nhập để theo dõi các gói và lịch đặt mà người bán đã tạo cho họ.",
+            "submit": "Tạo tài khoản",
+            "submitting": "Đang tạo…",
+            "success": "Đã tạo tài khoản {{role}} {{username}}.",
+            "linkHint": "Hãy gửi liên kết này cho người dùng. Liên kết chỉ dùng một lần và có hạn; tại đó họ tự đặt mật khẩu rồi đăng nhập được.",
+            "noEmailNote": "Không có email nên liên kết chưa được gửi thư. Hãy sao chép và tự gửi cho người dùng.",
+            "errors": {
+                "usernamePattern": "Dùng 3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới.",
+                "nameRequired": "Vui lòng nhập tên người dùng.",
+                "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ, hoặc để trống.",
+                "usernameTaken": "Tên đăng nhập này đã tồn tại.",
+                "invalidInput": "Một số thông tin còn thiếu hoặc không hợp lệ. Vui lòng kiểm tra biểu mẫu.",
+                "accountServiceDown": "Không thể kết nối dịch vụ tài khoản. Vui lòng thử lại sau ít phút.",
+                "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
+                "failed": "Không tạo được tài khoản. Vui lòng thử lại."
+            }
+        }
     },
     "sellerForm": {
         "generateProductLink": "Tạo liên kết sản phẩm",
@@ -725,6 +753,8 @@
         },
         "errors": {
             "loadCatalog": "Không tải được danh mục gói thanh toán.",
+            "invalidCatalog": "Phản hồi danh mục gói không hợp lệ. Vui lòng thử lại.",
+            "invalidCreateResponse": "Máy chủ không trả về gói hợp lệ nên chưa xác nhận được việc tạo. Hãy kiểm tra tab Gói có sẵn trước khi thử lại.",
             "missingUser": "Vui lòng chọn người bán.",
             "missingPlan": "Vui lòng chọn gói thanh toán.",
             "invalidNewPlan": "Số ngày và số link phải lớn hơn 0, phí không được âm.",
@@ -732,6 +762,8 @@
             "invalidUser": "Vui lòng chọn người bán trong danh sách.",
             "sellerRequiredForExisting": "Hãy chọn người bán để gán gói này, hoặc chuyển sang Gói mới để tạo gói."
         },
+        "catalogLoading": "Đang tải danh sách gói...",
+        "retry": "Thử lại",
         "searchUserPlaceholder": "Nhập để tìm người bán theo tài khoản, tên hoặc email",
         "noMatchingUsers": "Không có người bán nào khớp với từ khóa này",
         "sellerOptionalHint": "Để trống để chỉ tạo gói; bạn có thể gán nó cho người bán sau."
@@ -743,6 +775,7 @@
         "unknownError": "Đã xảy ra lỗi. Vui lòng thử lại.",
         "planCreatedTitle": "Đã tạo gói thanh toán",
         "planCreatedHint": "Gói đã có trong danh mục. Chọn người bán rồi tạo lại, hoặc chọn gói ở tab Gói có sẵn, để gán và lấy link thanh toán.",
+        "catalogRefreshWarning": "Gói đã được tạo, nhưng danh mục chưa tải lại được. Gói sẽ hiển thị khi bạn mở lại hộp thoại này.",
         "unit": {
             "day": "ngày",
             "link": "link"

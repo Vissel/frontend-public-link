@@ -97,6 +97,9 @@ const PaymentLinkResultDialog = ({ open, onClose, result, errorMessage }) => {
           </Stack>
         ) : createdPlan ? (
           <Stack spacing={1.5}>
+            {result?.catalogRefreshFailed && (
+              <Alert severity="warning">{t("paymentResult.catalogRefreshWarning")}</Alert>
+            )}
             <Typography variant="body2" color="text.secondary">
               {t("paymentResult.planCreatedHint")}
             </Typography>

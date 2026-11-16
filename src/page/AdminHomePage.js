@@ -26,6 +26,7 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CreatePlanForm from "../form/CreatePlanForm";
 import CreateSellerPlanDialog from "../form/CreateSellerPlanDialog";
+import CreateUserDialog from "../form/CreateUserDialog";
 import PaymentLinkResultDialog from "../form/PaymentLinkResultDialog";
 import { CountdownBadge } from "../components/CountdownTimer";
 import { useTranslation } from "react-i18next";
@@ -162,6 +163,10 @@ const AdminHomePage = () => {
   const [resetResult, setResetResult] = useState(null);
   const [resetError, setResetError] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [openCreateUser, setOpenCreateUser] = useState(false);
+  // Bumped after an account is created so both the table and the seller-form
+  // options reload without the admin having to refresh the page.
+  const [userRefreshKey, setUserRefreshKey] = useState(0);
   const contextPath = "/publiclink";
   const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
@@ -331,7 +336,7 @@ const AdminHomePage = () => {
 
     previousUserSearchRef.current = userAppliedSearchText;
     loadUsers();
-  }, [contextPath, userAppliedSearchText, userPage, userRowsPerPage, appliedFilterUsername, appliedFilterName, appliedFilterEmail, appliedFilterRole]);
+  }, [contextPath, userAppliedSearchText, userPage, userRowsPerPage, appliedFilterUsername, appliedFilterName, appliedFilterEmail, appliedFilterRole, userRefreshKey]);
 
   useEffect(() => {
     const loadUserOptions = async () => {
@@ -344,7 +349,7 @@ const AdminHomePage = () => {
     };
 
     loadUserOptions();
-  }, [contextPath]);
+  }, [contextPath, userRefreshKey]);
 
   const handleSellerFormSuccess = async ({ message }) => {
     setSuccessMessage(message || t("adminHome.success.generated"));
@@ -670,6 +675,17 @@ const AdminHomePage = () => {
         <SectionBlock
           title={t("adminHome.userList")}
           description={`${t("adminHome.userListDesc")} ${t("adminHome.total")} ${userTotal}.`}
+          action={
+            <Button
+              variant="contained"
+              onClick={() => {
+                setUserError("");
+                setOpenCreateUser(true);
+              }}
+            >
+              {t("adminHome.createUser.button")}
+            </Button>
+          }
         >
           {userError && <Alert severity="error">{userError}</Alert>}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
@@ -786,6 +802,14 @@ const AdminHomePage = () => {
           />
         </SectionBlock>
       </Stack>
+
+      {/* Admin-created account: the dialog returns a single-use setup link so
+          the new seller/buyer sets their own password. */}
+      <CreateUserDialog
+        open={openCreateUser}
+        onClose={() => setOpenCreateUser(false)}
+        onSuccess={() => setUserRefreshKey((prev) => prev + 1)}
+      />
 
       {/* Admin-triggered password reset: invalidates the account's password
           and returns a single-use setup link to forward to the user. */}

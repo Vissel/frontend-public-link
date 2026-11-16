@@ -91,13 +91,26 @@ const SelfRegisterPage = () => {
 
         setSubmitting(true);
         try {
+            // The gateway serves this key itself (/api/v1/auth/**), so it goes
+            // through the plain instance rather than the /publiclink one. When
+            // its key file is unreadable it answers 503 AUTH_008: without a key
+            // no password can be encrypted, which is a different failure from
+            // the account service being down.
             let publicKey = sessionStorage.getItem("publicKey");
-            if (publicKey === null) {
-                // The key is served by the gateway itself (/api/v1/auth/**), so it goes
-                // through the plain instance rather than the /publiclink one.
-                const keyResponse = await api.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
+            if (!publicKey) {
+                let keyResponse;
+                try {
+                    keyResponse = await api.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
+                } catch (keyErr) {
+                    throw Object.assign(new Error("public key unavailable"), { keyUnavailable: true });
+                }
                 publicKey = new TextDecoder().decode(keyResponse.data);
-                sessionStorage.setItem("publicKey", publicKey);
+                if (publicKey) {
+                    sessionStorage.setItem("publicKey", publicKey);
+                }
+            }
+            if (!publicKey) {
+                throw Object.assign(new Error("public key empty"), { keyUnavailable: true });
             }
             const encryptor = new JSEncrypt();
             encryptor.setPublicKey(publicKey);
@@ -130,6 +143,8 @@ const SelfRegisterPage = () => {
      * one, the status when the body came back empty.
      */
     const mapError = (err) => {
+        if (err?.keyUnavailable) return t("selfRegister.errors.keyUnavailable");
+
         const body = err?.response?.data;
         if (body?.message) return body.message;
         if (body?.errorMessage) return body.errorMessage;

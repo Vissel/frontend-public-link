@@ -150,6 +150,7 @@
             "invalidInput": "Some details are missing or invalid. Please check the form.",
             "serviceDown": "We could not reach the account service. Please try again in a moment.",
             "encryptFailed": "The password could not be secured for transport. Please try again.",
+            "keyUnavailable": "The server's encryption key is unavailable, so the password cannot be sent safely. Please contact admin (gateway RSA public key).",
             "noResponse": "No response from server. Please check your network connection.",
             "failed": "Registration failed. Please try again."
         }
@@ -249,7 +250,34 @@
         "resetPasswordTitle": "Reset password for {{username}}",
         "resetPasswordConfirm": "This invalidates {{username}}'s current password and issues a single-use setup link. The link is emailed when an address is on file, and you can copy it below to forward manually.",
         "resetPasswordSuccess": "Password invalidated. A new setup link was issued.",
-        "setupLink": "Setup link"
+        "setupLink": "Setup link",
+        "createUser": {
+            "button": "Create user",
+            "title": "Create a user account",
+            "resultTitle": "Account created",
+            "subtitle": "Create a seller or buyer account. You do not set a password: the user receives a single-use link and chooses their own.",
+            "usernameHint": "3-30 characters: letters, numbers, dot, dash or underscore. This is their login.",
+            "emailHint": "Optional. With an email the setup link is also mailed to them.",
+            "roleSeller": "Seller",
+            "roleBuyer": "Buyer",
+            "roleSellerHint": "A seller can buy a payment plan and create product links.",
+            "roleBuyerHint": "A buyer signs in to follow the plans and bookings a seller created for them.",
+            "submit": "Create account",
+            "submitting": "Creating…",
+            "success": "{{role}} account {{username}} was created.",
+            "linkHint": "Send this link to the user. It is single-use and expires; on it they set their own password and can then sign in.",
+            "noEmailNote": "No email was given, so the link was not mailed. Copy it and send it to the user yourself.",
+            "errors": {
+                "usernamePattern": "Use 3-30 characters: letters, numbers, dot, dash or underscore.",
+                "nameRequired": "Please enter the user's name.",
+                "emailInvalid": "Please enter a valid email address, or leave it empty.",
+                "usernameTaken": "This username already exists.",
+                "invalidInput": "Some details are missing or invalid. Please check the form.",
+                "accountServiceDown": "The account service could not be reached. Please try again in a moment.",
+                "noResponse": "No response from server. Please check your network connection.",
+                "failed": "The account could not be created. Please try again."
+            }
+        }
     },
     "sellerForm": {
         "generateProductLink": "Generate Product Link",
@@ -725,6 +753,8 @@
         },
         "errors": {
             "loadCatalog": "Failed to load the payment plan catalog.",
+            "invalidCatalog": "The plan catalog response was invalid. Please retry.",
+            "invalidCreateResponse": "The server did not return a usable plan, so the creation could not be confirmed. Check the Existing plan list before trying again.",
             "missingUser": "Please select a seller.",
             "missingPlan": "Please select a plan.",
             "invalidNewPlan": "Days and links must be greater than zero, and the fee cannot be negative.",
@@ -732,6 +762,8 @@
             "invalidUser": "Please pick a seller from the dropdown list.",
             "sellerRequiredForExisting": "Select a seller to link this plan to, or switch to New plan to create one."
         },
+        "catalogLoading": "Loading plans...",
+        "retry": "Retry",
         "searchUserPlaceholder": "Type to search seller by username, name or email",
         "noMatchingUsers": "No seller matches this search",
         "sellerOptionalHint": "Leave empty to only create the plan; it can be linked to a seller later."
@@ -743,6 +775,7 @@
         "unknownError": "An unexpected error happened. Please try again.",
         "planCreatedTitle": "Payment plan created",
         "planCreatedHint": "The plan is now in the catalog. Select a seller and create again, or pick it from the Existing plan tab, to link it and get a payment link.",
+        "catalogRefreshWarning": "The plan was created, but the catalog list could not be refreshed. It will appear when this dialog is opened again.",
         "unit": {
             "day": "day(s)",
             "link": "link(s)"

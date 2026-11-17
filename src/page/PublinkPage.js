@@ -32,6 +32,9 @@ import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
+import YogaSection from "../components/YogaSection";
+import EnvironmentTransferCard from "../components/EnvironmentTransferCard";
+import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import { useTranslation } from "react-i18next";
 import { getExportLocale } from "../i18n/exportLocale";
 
@@ -84,6 +87,13 @@ const PublinkPage = () => {
     const [editingNoteOrderId, setEditingNoteOrderId] = useState(null);
     const [draftNote, setDraftNote] = useState("");
     const noteInputRef = useRef(null);
+
+    // Sale window editing. One link is one environment, so every displayed
+    // time - the header chip, the planned end caption, the badge on a product
+    // image - opens this single dialog.
+    const [windowOpen, setWindowOpen] = useState(false);
+    const [windowNotice, setWindowNotice] = useState("");
+    const [linkCopied, setLinkCopied] = useState(false);
 
     const theme = useTheme();
     const fullScreenDialog = useMediaQuery(theme.breakpoints.down("sm"));
@@ -158,6 +168,71 @@ const PublinkPage = () => {
             params: { token },
         });
         setSaleSpace(refreshResponse.data);
+    };
+
+    const fallbackCopy = (text, onDone) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand("copy");
+            onDone();
+        } catch (e) {
+            console.error("Copy failed", e);
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    };
+
+    /**
+     * The buyer-facing address of this link. The stored publicLink is the token
+     * the server re-mints whenever the sale is extended, so it is preferred
+     * over the browser address, which still carries the old token.
+     */
+    const buildShareUrl = () => {
+        const currentToken = saleSpace?.publicLink || token;
+        if (!currentToken) {
+            return window.location.href;
+        }
+        return `${window.location.origin}${window.location.pathname}?token=${encodeURIComponent(currentToken)}`;
+    };
+
+    const handleShareLink = () => {
+        const text = buildShareUrl();
+        const markCopied = () => {
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+                .writeText(text)
+                .then(markCopied)
+                .catch(() => fallbackCopy(text, markCopied));
+        } else {
+            fallbackCopy(text, markCopied);
+        }
+    };
+
+    /** Shaped like a seller list row so the shared dialog needs no variants. */
+    const buildWindowEnvironment = () => ({
+        requestUUID: saleSpace?.reqUuid,
+        plannedStartedAt: saleSpace?.plannedStartedAt,
+        plannedEndedAt: saleSpace?.plannedEndedAt,
+        productName: saleSpace?.listProduct?.[0]?.productName,
+    });
+
+    // The refreshed payload carries both the new closing time and, after an
+    // extension, the re-minted token the share button then hands out.
+    const handleWindowSaved = async () => {
+        setWindowNotice(t("saleWindow.updated"));
+        try {
+            await refreshSaleSpace();
+        } catch (err) {
+            console.error("Failed to refresh after sale window update", err);
+        }
     };
 
     const handleOpenEdit = (product) => {
@@ -401,6 +476,19 @@ const PublinkPage = () => {
     const isAdmin = String(userRole || "").toLowerCase() === "admin";
     const canManageOrders = isSeller || isAdmin;
     const isEnvStateActive = saleSpace.envState === "ACTIVE";
+    // A window that has not opened yet still reports ACTIVE - the row is only
+    // flipped closed by the hourly job - so the order form is gated on the
+    // server-computed flag as well, matching what the backend refuses at order
+    // time. The server decides it against DB time, not the browser clock.
+    const isScheduled = Boolean(saleSpace.notStartedYet);
+    const isYoga = saleSpace.productType === "YOGA_BOOKING";
+    // Only the seller edits the window, and only while it runs: the server
+    // refuses a sale that is already closed, and an admin has no role for the
+    // seller-only endpoint anyway.
+    const canEditWindow = isSeller && isEnvStateActive && Boolean(saleSpace.reqUuid);
+    // The seller attaches one of their own accounts, an admin one of the
+    // admin's own; the backend checks ownership either way.
+    const canManageTransfer = (isSeller || isAdmin) && Boolean(saleSpace.reqUuid);
 
     const exportToExcel = async () => {
         const requestUUID = saleSpace.reqUuid;
@@ -441,9 +529,14 @@ const PublinkPage = () => {
                     }
                     action={
                         isSeller ? (
-                            <Button variant="contained" color="success" onClick={exportToExcel}>
-                                {t("publink.exportExcel")}
-                            </Button>
+                            <Stack direction="row" spacing={1}>
+                                <Button variant="outlined" onClick={handleShareLink}>
+                                    {linkCopied ? t("common.copied") : t("publink.shareLink")}
+                                </Button>
+                                <Button variant="contained" color="success" onClick={exportToExcel}>
+                                    {t("publink.exportExcel")}
+                                </Button>
+                            </Stack>
                         ) : null
                     }
                 >
@@ -466,7 +559,15 @@ const PublinkPage = () => {
                             />
                         )}
                         {saleSpace.plannedEndedAt && (
-                            <CountdownChip targetDate={saleSpace.plannedEndedAt} />
+                            <CountdownChip
+                                targetDate={saleSpace.plannedEndedAt}
+                                {...(canEditWindow
+                                    ? {
+                                        onClick: () => setWindowOpen(true),
+                                        title: t("publink.editTimeHint"),
+                                    }
+                                    : {})}
+                            />
                         )}
                     </Stack>
                     <Stack spacing={0.5} sx={{ mt: 1 }}>
@@ -480,16 +581,60 @@ const PublinkPage = () => {
                                 {t("publink.willEnded")} {saleSpace.endedAt}
                             </Typography>
                         )}
-                        {saleSpace.plannedEndedAt && (
+                        {saleSpace.plannedStartedAt && (
                             <Typography variant="caption" color="text.secondary">
+                                {t("publink.plannedStartedAt")} {saleSpace.plannedStartedAt}
+                            </Typography>
+                        )}
+                        {saleSpace.plannedEndedAt && (
+                            <Typography
+                                variant="caption"
+                                color={canEditWindow ? "text.primary" : "text.secondary"}
+                                title={canEditWindow ? t("publink.editTimeHint") : undefined}
+                                onClick={canEditWindow ? () => setWindowOpen(true) : undefined}
+                                sx={canEditWindow
+                                    ? {
+                                        cursor: "pointer",
+                                        textDecoration: "underline dotted",
+                                        textUnderlineOffset: 3,
+                                    }
+                                    : undefined}
+                            >
                                 {t("publink.plannedEndedAt")} {saleSpace.plannedEndedAt}
                             </Typography>
                         )}
                     </Stack>
+                    {isScheduled && (
+                        <Alert severity="warning" sx={{ mt: 1 }}>
+                            {t("publink.notStartedYet", { start: saleSpace.plannedStartedAt })}
+                        </Alert>
+                    )}
+                    {windowNotice && (
+                        <Alert
+                            severity="success"
+                            sx={{ mt: 1 }}
+                            onClose={() => setWindowNotice("")}
+                        >
+                            {windowNotice}
+                        </Alert>
+                    )}
+                    {/* Payment band spans the header width: big scannable QR on
+                        the left, account details filling the rest. */}
+                    <EnvironmentTransferCard
+                        transferInfo={saleSpace.transferInfo}
+                        canManage={canManageTransfer}
+                        mode={isSeller ? "seller" : "admin"}
+                        requestUuid={saleSpace.reqUuid}
+                        onChanged={refreshSaleSpace}
+                    />
                 </SectionBlock>
 
+                {/* Yoga booking: the single weekly calendar screen replaces the
+                    product cards and the order form for this link type. */}
+                {isYoga && <YogaSection token={token} />}
+
                 {/* Products */}
-                {saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
+                {!isYoga && saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
                     <SectionBlock
                         title={t("publink.products")}
                         description={
@@ -528,6 +673,17 @@ const PublinkPage = () => {
                                                             }}
                                                         />
                                                     ))}
+                                                </Stack>
+                                            )}
+                                            {/* The closing time sits with the images and is
+                                                the entry point of the window editor. */}
+                                            {canEditWindow && saleSpace.plannedEndedAt && (
+                                                <Stack direction="row" sx={{ mb: 1 }}>
+                                                    <CountdownChip
+                                                        targetDate={saleSpace.plannedEndedAt}
+                                                        onClick={() => setWindowOpen(true)}
+                                                        title={t("publink.editTimeHint")}
+                                                    />
                                                 </Stack>
                                             )}
                                             <Typography variant="subtitle1" fontWeight="bold">
@@ -573,7 +729,7 @@ const PublinkPage = () => {
                 )}
 
                 {/* Seller/Admin: Orders Table */}
-                {canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
+                {!isYoga && canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
                     <SectionBlock
                         title={t("publink.orders")}
                         description={t("publink.ordersDesc")}
@@ -704,7 +860,7 @@ const PublinkPage = () => {
                 )}
 
                 {/* Seller/Admin: No orders yet */}
-                {canManageOrders && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
+                {!isYoga && canManageOrders && (!saleSpace.listOrder || saleSpace.listOrder.length === 0) && (
                     <CardWrapper>
                         <Typography
                             variant="body2"
@@ -718,7 +874,7 @@ const PublinkPage = () => {
 
                 {/* Buyer: Order Form */}
 
-              {isEnvStateActive && <SectionBlock
+                {!isYoga && isEnvStateActive && !isScheduled && <SectionBlock
                     title={t("publink.placeOrder")}
                     description={t("publink.placeOrderDesc")}
                 >
@@ -762,7 +918,7 @@ const PublinkPage = () => {
                         </Stack>
                     </Box>
                 </SectionBlock>
-                } 
+                }
             </Stack>
 
             {/* Product Edit Dialog */}
@@ -956,6 +1112,14 @@ const PublinkPage = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Sale window edit: opened by clicking any displayed closing time. */}
+            <SaleWindowEditDialog
+                open={windowOpen}
+                environment={buildWindowEnvironment()}
+                onClose={() => setWindowOpen(false)}
+                onSaved={handleWindowSaved}
+            />
         </PageContainer>
     );
 };

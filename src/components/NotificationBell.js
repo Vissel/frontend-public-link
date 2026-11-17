@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
+    Alert,
     Badge,
     Box,
+    Button,
+    Chip,
+    CircularProgress,
     Dialog,
+    DialogActions,
     DialogContent,
     DialogTitle,
     Divider,
@@ -11,6 +16,7 @@ import {
     List,
     ListItemButton,
     ListItemText,
+    Paper,
     Popover,
     Stack,
     SvgIcon,
@@ -51,6 +57,23 @@ const formatTime = (dateStr, t) => {
     }
 };
 
+const statusChipColor = (status) => {
+    if (status === "PAID" || status === "CONFIRMED") return "success";
+    if (status === "WAITING_CONFIRM") return "warning";
+    if (status === "REJECTED") return "error";
+    return "default";
+};
+
+// Label / value pair of the structured payment card.
+const InfoRow = ({ label, children }) => (
+    <Stack direction="row" spacing={1.5} alignItems="flex-start">
+        <Typography variant="caption" color="text.secondary" sx={{ minWidth: 104, pt: 0.25 }}>
+            {label}
+        </Typography>
+        <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
+    </Stack>
+);
+
 const NotificationBell = () => {
     const { username } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
@@ -58,6 +81,7 @@ const NotificationBell = () => {
     const [previewItems, setPreviewItems] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedNotification, setSelectedNotification] = useState(null);
+    const [actionState, setActionState] = useState({ busy: false, error: "", success: "" });
     const { t } = useTranslation();
 
     const fetchUnreadCount = useCallback(async () => {
@@ -104,6 +128,7 @@ const NotificationBell = () => {
     const handleNotificationClick = async (notification) => {
         setAnchorEl(null);
         setSelectedNotification(notification);
+        setActionState({ busy: false, error: "", success: "" });
         setDialogOpen(true);
         try {
             const res = await pubApi.get(`/api/v1/seller/notifications/${notification.id}`, {
@@ -131,7 +156,63 @@ const NotificationBell = () => {
     const handleDialogClose = () => {
         setDialogOpen(false);
         setSelectedNotification(null);
+        setActionState({ busy: false, error: "", success: "" });
     };
+
+    /**
+     * Admin received the money: the payment behind the notification goes to PAID
+     * and its plan is activated, without leaving the notification. The detail is
+     * reloaded afterwards so the card shows the new status.
+     */
+    const handleMarkPaid = async () => {
+        const planUserCode = selectedNotification?.payment?.planUserCode;
+        if (!planUserCode) return;
+
+        setActionState({ busy: true, error: "", success: "" });
+        try {
+            await pubApi.post(
+                "/admin/v1/paymentPlan/payment/markPaid",
+                {
+                    planUserCodes: [planUserCode],
+                    note: t("notificationBell.payment.billNote"),
+                    activeDate: null,
+                },
+                { headers: { "X-User-ID": username } }
+            );
+        } catch (err) {
+            setActionState({
+                busy: false,
+                success: "",
+                error: err?.response?.data?.errorMessage || t("notificationBell.payment.markPaidFailed"),
+            });
+            return;
+        }
+
+        // The payment went to PAID server-side; reload the detail so the card
+        // shows the stored status, and keep the local one if the reload fails.
+        setSelectedNotification((prev) =>
+            prev && prev.payment
+                ? { ...prev, payment: { ...prev.payment, status: "PAID" } }
+                : prev
+        );
+        setActionState({ busy: false, error: "", success: t("notificationBell.payment.markPaidSuccess") });
+        fetchUnreadCount();
+        try {
+            const res = await pubApi.get(`/api/v1/seller/notifications/${selectedNotification.id}`, {
+                headers: { "X-User-ID": username },
+            });
+            setSelectedNotification(res.data);
+        } catch (err) {
+            console.error("Failed to reload notification detail", err);
+        }
+    };
+
+    // A payment notification carries the record it is about, so the dialog
+    // renders that record instead of only the message text.
+    const payment = selectedNotification?.payment;
+    const paymentContact = [payment?.sellerEmail, payment?.sellerPhone]
+        .filter(Boolean)
+        .join(" / ");
 
     return (
         <>
@@ -294,11 +375,88 @@ const NotificationBell = () => {
                                     </Typography>
                                 )}
                                 <Divider />
-                                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-                                    {selectedNotification.message}
-                                </Typography>
+                                {actionState.success && <Alert severity="success">{actionState.success}</Alert>}
+                                {actionState.error && <Alert severity="error">{actionState.error}</Alert>}
+                                {payment ? (
+                                    <Paper variant="outlined" sx={{ p: 2 }}>
+                                        <Stack spacing={1.25}>
+                                            <Stack
+                                                direction="row"
+                                                justifyContent="space-between"
+                                                alignItems="center"
+                                                spacing={1}
+                                            >
+                                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                                    {[payment.amount, payment.currency].filter(Boolean).join(" ")}
+                                                </Typography>
+                                                <Chip
+                                                    size="small"
+                                                    color={statusChipColor(payment.status)}
+                                                    label={t(`notificationBell.paymentStatus.${payment.status}`, {
+                                                        defaultValue: payment.status,
+                                                    })}
+                                                />
+                                            </Stack>
+                                            <Divider />
+                                            <InfoRow label={t("notificationBell.payment.seller")}>
+                                                <Typography variant="body2">
+                                                    {payment.sellerUsername || "\u2014"}
+                                                </Typography>
+                                            </InfoRow>
+                                            <InfoRow label={t("notificationBell.payment.plan")}>
+                                                <Typography variant="body2">
+                                                    {payment.planDescription || "\u2014"}
+                                                </Typography>
+                                            </InfoRow>
+                                            {payment.extendDays != null && (
+                                                <InfoRow label={t("notificationBell.payment.extension")}>
+                                                    <Typography variant="body2">
+                                                        {t("notificationBell.payment.days", { count: payment.extendDays })}
+                                                    </Typography>
+                                                </InfoRow>
+                                            )}
+                                            <InfoRow label={t("notificationBell.payment.contact")}>
+                                                <Typography variant="body2">
+                                                    {paymentContact || t("notificationBell.payment.noContact")}
+                                                </Typography>
+                                            </InfoRow>
+                                            <InfoRow label={t("notificationBell.payment.code")}>
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{ fontFamily: "monospace", wordBreak: "break-all" }}
+                                                >
+                                                    {payment.paymentCode}
+                                                </Typography>
+                                            </InfoRow>
+                                        </Stack>
+                                    </Paper>
+                                ) : (
+                                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                                        {selectedNotification.message}
+                                    </Typography>
+                                )}
                             </Stack>
                         </DialogContent>
+                        <DialogActions sx={{ px: 3, pb: 2 }}>
+                            <Button onClick={handleDialogClose}>{t("notificationBell.payment.close")}</Button>
+                            {payment && (
+                                <Button
+                                    variant="contained"
+                                    color="success"
+                                    disabled={
+                                        actionState.busy ||
+                                        payment.status === "PAID" ||
+                                        payment.status === "REJECTED"
+                                    }
+                                    onClick={handleMarkPaid}
+                                    startIcon={actionState.busy ? <CircularProgress size={16} color="inherit" /> : null}
+                                >
+                                    {actionState.busy
+                                        ? t("notificationBell.payment.markingPaid")
+                                        : t("notificationBell.payment.markPaid")}
+                                </Button>
+                            )}
+                        </DialogActions>
                     </>
                 )}
             </Dialog>

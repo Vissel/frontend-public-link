@@ -20,6 +20,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
+import SellerGenerateForm from "../form/SellerGenerateForm";
+import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
@@ -39,6 +41,14 @@ const SellerHome = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_ROWS_PER_PAGE);
   const [total, setTotal] = useState(0);
+  const [openGenerate, setOpenGenerate] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  // Environment whose sale window the seller is editing; null keeps the dialog shut.
+  const [windowEnv, setWindowEnv] = useState(null);
+  // Payment plan verdict of the signed-in seller: a seller without a usable
+  // plan has to buy one before a link can be generated.
+  const [planGate, setPlanGate] = useState(null);
   const frontendOrigin = window.location.origin;
   const { t } = useTranslation();
 
@@ -217,7 +227,26 @@ const SellerHome = () => {
     };
 
     fetchSellerData();
-  }, [state, username, page, rowsPerPage]);
+  }, [state, username, page, rowsPerPage, refreshKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    pubApi
+      .post("/api/v1/sellerPlan/check")
+      .then((res) => {
+        if (!cancelled) {
+          setPlanGate(res.data || null);
+        }
+      })
+      .catch((err) => {
+        // The banner is guidance, not a gate: when the check fails the seller
+        // simply does not see it, and the generate flow still explains itself.
+        console.error("Failed to check the payment plan", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
 
   if (loading) {
     return (
@@ -251,9 +280,35 @@ const SellerHome = () => {
   return (
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
+        {planGate && !planGate.allowed && (
+          <Alert
+            severity={planGate.reason === "QUOTA_EXHAUSTED" ? "warning" : "info"}
+            sx={{ alignItems: "center" }}
+            action={
+              <Button color="inherit" size="small" onClick={() => navigate("/plans")}>
+                {t("sellerHome.planBanner.action")}
+              </Button>
+            }
+          >
+            {t(`sellerHome.planBanner.${planGate.reason}`, {
+              defaultValue: planGate.message || t("sellerHome.planBanner.fallback"),
+            })}
+          </Alert>
+        )}
         <SectionBlock
           title={t("sellerHome.title")}
           description={t("sellerHome.subtitle")}
+          action={
+            <Button
+              variant="contained"
+              onClick={() => {
+                setSuccessMessage("");
+                setOpenGenerate(true);
+              }}
+            >
+              {t("sellerHome.generateProductLink")}
+            </Button>
+          }
         >
           <Stack spacing={2}>
             {sellerInfo && (
@@ -292,8 +347,29 @@ const SellerHome = () => {
             <Typography variant="body1" color="text.secondary">
               {t("sellerHome.usePublicLink")}
             </Typography>
+            {successMessage && <Alert severity="success">{successMessage}</Alert>}
           </Stack>
         </SectionBlock>
+
+        <SellerGenerateForm
+          open={openGenerate}
+          onClose={() => setOpenGenerate(false)}
+          onSuccess={async ({ message }) => {
+            setOpenGenerate(false);
+            setSuccessMessage(message || t("sellerHome.generateSuccess"));
+            setRefreshKey((prev) => prev + 1);
+          }}
+        />
+
+        <SaleWindowEditDialog
+          open={Boolean(windowEnv)}
+          environment={windowEnv}
+          onClose={() => setWindowEnv(null)}
+          onSaved={() => {
+            setSuccessMessage(t("saleWindow.updated"));
+            setRefreshKey((prev) => prev + 1);
+          }}
+        />
 
         {(saleEnvs.length > 0 || total > 0) && (
           <SectionBlock
@@ -323,7 +399,7 @@ const SellerHome = () => {
               </Typography>
             </Stack>
             <TableContainer sx={{ overflowX: "auto" }}>
-              <Table size="small" sx={{ minWidth: 1100 }}>
+              <Table size="small" sx={{ minWidth: 1200 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>{t("sellerHome.requestUuid")}</TableCell>
@@ -332,9 +408,10 @@ const SellerHome = () => {
                     <TableCell>{t("sellerHome.status")}</TableCell>
                     <TableCell>{t("sellerHome.createdAt")}</TableCell>
                     <TableCell>{t("sellerHome.endedAt")}</TableCell>
+                    <TableCell>{t("sellerHome.plannedStartedAt")}</TableCell>
                     <TableCell>{t("sellerHome.plannedEndedAt")}</TableCell>
                     <TableCell>{t("sellerHome.orderNumTotal")}</TableCell>
-                    <TableCell>{t("sellerHome.export")}</TableCell>
+                    <TableCell>{t("sellerHome.actions")}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -436,25 +513,33 @@ const SellerHome = () => {
                           </TableCell>
                           <TableCell>{env.createdAt || "\u2014"}</TableCell>
                           <TableCell>{env.endedAt || "\u2014"}</TableCell>
+                          <TableCell>{env.plannedStartedAt || "\u2014"}</TableCell>
                           <TableCell>{env.plannedEndedAt || "\u2014"}</TableCell>
                           <TableCell>
                             {env.orderTotal != null || env.totalProductQuantity != null
                               ? `${env.orderTotal ?? 0}/${env.totalProductQuantity ?? 0}`
                               : "\u2014"}
                           </TableCell>
-                          <TableCell
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleExport(env.requestUUID);
-                            }}
-                          >
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              sx={{ minWidth: 60, fontSize: "0.7rem" }}
-                            >
-                              {t("sellerHome.excel")}
-                            </Button>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={!env.envStatus}
+                                onClick={() => setWindowEnv(env)}
+                                sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                              >
+                                {t("common.edit")}
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() => handleExport(env.requestUUID)}
+                                sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                              >
+                                {t("sellerHome.excel")}
+                              </Button>
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );

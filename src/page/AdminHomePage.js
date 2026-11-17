@@ -3,6 +3,10 @@ import {
   Alert,
   Button,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Link,
   Stack,
   Table,
@@ -21,6 +25,9 @@ import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CreatePlanForm from "../form/CreatePlanForm";
+import CreateSellerPlanDialog from "../form/CreateSellerPlanDialog";
+import CreateUserDialog from "../form/CreateUserDialog";
+import PaymentLinkResultDialog from "../form/PaymentLinkResultDialog";
 import { CountdownBadge } from "../components/CountdownTimer";
 import { useTranslation } from "react-i18next";
 
@@ -148,6 +155,18 @@ const AdminHomePage = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [userError, setUserError] = useState("");
   const [copiedKey, setCopiedKey] = useState("");
+  const [openPlanDialog, setOpenPlanDialog] = useState(false);
+  const [openPlanResult, setOpenPlanResult] = useState(false);
+  const [planResult, setPlanResult] = useState(null);
+  const [planError, setPlanError] = useState("");
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetResult, setResetResult] = useState(null);
+  const [resetError, setResetError] = useState("");
+  const [resetting, setResetting] = useState(false);
+  const [openCreateUser, setOpenCreateUser] = useState(false);
+  // Bumped after an account is created so both the table and the seller-form
+  // options reload without the admin having to refresh the page.
+  const [userRefreshKey, setUserRefreshKey] = useState(0);
   const contextPath = "/publiclink";
   const frontendOrigin = window.location.origin;
   const previousEntrySearchRef = useRef(entryAppliedSearchText);
@@ -317,7 +336,7 @@ const AdminHomePage = () => {
 
     previousUserSearchRef.current = userAppliedSearchText;
     loadUsers();
-  }, [contextPath, userAppliedSearchText, userPage, userRowsPerPage, appliedFilterUsername, appliedFilterName, appliedFilterEmail, appliedFilterRole]);
+  }, [contextPath, userAppliedSearchText, userPage, userRowsPerPage, appliedFilterUsername, appliedFilterName, appliedFilterEmail, appliedFilterRole, userRefreshKey]);
 
   useEffect(() => {
     const loadUserOptions = async () => {
@@ -330,7 +349,7 @@ const AdminHomePage = () => {
     };
 
     loadUserOptions();
-  }, [contextPath]);
+  }, [contextPath, userRefreshKey]);
 
   const handleSellerFormSuccess = async ({ message }) => {
     setSuccessMessage(message || t("adminHome.success.generated"));
@@ -373,6 +392,28 @@ const AdminHomePage = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!resetTarget) return;
+    setResetting(true);
+    setResetError("");
+    setResetResult(null);
+    try {
+      const res = await api.post(`${contextPath}/admin/v1/user/resetPassword`, {
+        username: resetTarget.username,
+      });
+      setResetResult(res.data);
+    } catch (err) {
+      console.error("Reset password failed", err);
+      setResetError(
+        err?.response?.data?.errorMessage ||
+        err?.response?.data?.message ||
+        t("adminHome.errors.resetPassword")
+      );
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
@@ -386,6 +427,17 @@ const AdminHomePage = () => {
                 onClick={() => navigate("/notification")}
               >
                 {t("adminHome.sendNotification")}
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setSuccessMessage("");
+                  setPlanError("");
+                  setPlanResult(null);
+                  setOpenPlanDialog(true);
+                }}
+              >
+                {t("adminHome.createPaymentPlan")}
               </Button>
               <Button
                 variant="contained"
@@ -413,6 +465,31 @@ const AdminHomePage = () => {
           onClose={() => setOpenDialog(false)}
           onSuccess={handleSellerFormSuccess}
           users={userOptions}
+        />
+
+        {/* Create payment plan for a seller, then show the payment URL to send */}
+        <CreateSellerPlanDialog
+          open={openPlanDialog}
+          onClose={() => setOpenPlanDialog(false)}
+          users={userOptions}
+          onSuccess={(result) => {
+            setOpenPlanDialog(false);
+            setPlanResult(result);
+            setPlanError("");
+            setOpenPlanResult(true);
+          }}
+          onError={(message) => {
+            setOpenPlanDialog(false);
+            setPlanResult(null);
+            setPlanError(message);
+            setOpenPlanResult(true);
+          }}
+        />
+        <PaymentLinkResultDialog
+          open={openPlanResult}
+          onClose={() => setOpenPlanResult(false)}
+          result={planResult}
+          errorMessage={planError}
         />
 
         <SectionBlock
@@ -598,6 +675,17 @@ const AdminHomePage = () => {
         <SectionBlock
           title={t("adminHome.userList")}
           description={`${t("adminHome.userListDesc")} ${t("adminHome.total")} ${userTotal}.`}
+          action={
+            <Button
+              variant="contained"
+              onClick={() => {
+                setUserError("");
+                setOpenCreateUser(true);
+              }}
+            >
+              {t("adminHome.createUser.button")}
+            </Button>
+          }
         >
           {userError && <Alert severity="error">{userError}</Alert>}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
@@ -656,12 +744,13 @@ const AdminHomePage = () => {
                   <TableCell>{t("adminHome.name")}</TableCell>
                   <TableCell>{t("adminHome.email")}</TableCell>
                   <TableCell>{t("adminHome.role")}</TableCell>
+                  <TableCell align="right">{t("adminHome.action")}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
+                    <TableCell colSpan={5} align="center">
                       {t("adminHome.noUsers")}
                     </TableCell>
                   </TableRow>
@@ -679,6 +768,19 @@ const AdminHomePage = () => {
                           onClick={() => { }}
                           clickable={false}
                         />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            setResetTarget(user);
+                            setResetResult(null);
+                            setResetError("");
+                          }}
+                        >
+                          {t("adminHome.resetPassword")}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -700,6 +802,62 @@ const AdminHomePage = () => {
           />
         </SectionBlock>
       </Stack>
+
+      {/* Admin-created account: the dialog returns a single-use setup link so
+          the new seller/buyer sets their own password. */}
+      <CreateUserDialog
+        open={openCreateUser}
+        onClose={() => setOpenCreateUser(false)}
+        onSuccess={() => setUserRefreshKey((prev) => prev + 1)}
+      />
+
+      {/* Admin-triggered password reset: invalidates the account's password
+          and returns a single-use setup link to forward to the user. */}
+      <Dialog open={Boolean(resetTarget)} onClose={resetting ? undefined : () => setResetTarget(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {t("adminHome.resetPasswordTitle", { username: resetTarget?.username || "" })}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ pt: 1 }}>
+            {resetError && <Alert severity="error">{resetError}</Alert>}
+            {resetResult ? (
+              <>
+                <Alert severity="success">{t("adminHome.resetPasswordSuccess")}</Alert>
+                <TextField
+                  label={t("adminHome.setupLink")}
+                  value={resetResult.setupLink || ""}
+                  fullWidth
+                  multiline
+                  rows={2}
+                  InputProps={{ readOnly: true }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => handleCopyText(`reset-${resetResult.username}`, resetResult.setupLink)}
+                  sx={{ alignSelf: "flex-start" }}
+                >
+                  {copiedKey === `reset-${resetResult.username}` ? t("common.copied") : t("common.copy")}
+                </Button>
+              </>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {t("adminHome.resetPasswordConfirm", { username: resetTarget?.username || "" })}
+              </Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetTarget(null)} disabled={resetting}>{t("common.close")}</Button>
+          {!resetResult && (
+            <Button onClick={handleResetPassword} variant="contained" disabled={resetting}>
+              {resetting ? t("common.loading") : t("adminHome.resetPassword")}
+            </Button>
+          )}
+          {resetResult && (
+            <Button onClick={() => setResetTarget(null)} variant="contained">{t("common.done")}</Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

@@ -31,11 +31,18 @@ const resolveBaseUrl = () => {
   // break because the frontend tunnel only exposes the dev-server port.
   if (window.location.protocol === "https:") return envUrl;
 
-  // In development (http://localhost:8080), replace the hostname with the
-  // current browser hostname so LAN/mobile devices reach the correct host.
+  // In development, swap the hostname with the current browser hostname ONLY
+  // when the env URL points at the dev machine itself (localhost/loopback), so
+  // LAN/mobile devices reach the gateway on that same machine. An explicit
+  // remote host (e.g. the QA gateway on another LAN machine, 192.168.1.9) must
+  // be kept as-is — swapping it to the browser host would wrongly target the
+  // dev machine's loopback, where no gateway listens.
   try {
     const parsed = new URL(envUrl);
-    parsed.hostname = window.location.hostname;
+    const loopbackHosts = ["localhost", "127.0.0.1", "::1"];
+    if (loopbackHosts.includes(parsed.hostname)) {
+      parsed.hostname = window.location.hostname;
+    }
     return parsed.toString().replace(/\/$/, "");
   } catch {
     return envUrl;

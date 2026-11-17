@@ -13,6 +13,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api";
 import { useAuth } from "../AuthContext";
+import { getStoredAuth } from "../authStorage";
 import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
@@ -72,7 +73,7 @@ const GenerationPage = () => {
 
     try {
       const payload = {
-        accessToken: localStorage.getItem("token"),
+        accessToken: getStoredAuth().token,
         seller: {
           username: seller.name,
           link: seller.link,
@@ -112,7 +113,7 @@ const GenerationPage = () => {
       console.error(err);
       setError(
         err?.response?.data?.message ||
-          "Unable to save the generated product link."
+        "Unable to save the generated product link."
       );
     } finally {
       setSaving(false);

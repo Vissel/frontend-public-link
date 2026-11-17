@@ -3,15 +3,16 @@ import {
   Alert,
   Box,
   Button,
+  Link,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import CardWrapper from "../components/CardWrapper";
 import PageContainer from "../components/PageContainer";
-import api from "../api";
+import api, { pubApi } from "../api";
 import JSEncrypt from "jsencrypt";
 import { useTranslation } from "react-i18next";
 
@@ -21,12 +22,28 @@ const normalizeRole = (role) =>
     .replace(/^ROLE_/i, "")
     .toLowerCase();
 
+/**
+ * Only in-app paths are honoured as a post-login target, so a "?next=" can
+ * never be turned into an open redirect.
+ */
+const isInternalPath = (path) =>
+  typeof path === "string" && path.startsWith("/") && !path.startsWith("//");
+
 const LoginPage = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const urlUsername = queryParams.get("username");
+  // Set by ProtectedRoute when a valid session is rejected by a role guard:
+  // the seller paid and set a password, but the account is not a seller yet.
+  const deniedRole = location.state?.deniedRole || "";
+  // Set by the self-register screen: the account is brand new, so say so and
+  // carry the typed username instead of putting it in the address bar.
+  const justRegistered = Boolean(location.state?.accountCreated);
+  const nextParam = queryParams.get("next") || location.state?.next || "";
   const requestUuid = queryParams.get("requestUuid") || queryParams.get("reqUuid");
-  const [inputUsername, setInputUsername] = useState(urlUsername || "");
+  const [inputUsername, setInputUsername] = useState(
+    urlUsername || location.state?.username || ""
+  );
   const [inputPassword, setInputPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +56,21 @@ const LoginPage = () => {
       setInputUsername(urlUsername);
     }
   }, [urlUsername]);
+
+  /**
+   * A seller with no usable plan cannot create a product link, so the
+   * workspace would look empty. The plan screen is the honest destination.
+   * A failed check must not lock anyone out of their own workspace.
+   */
+  const hasUsablePlan = async () => {
+    try {
+      const response = await pubApi.post("/api/v1/sellerPlan/check");
+      return Boolean(response.data?.allowed);
+    } catch (err) {
+      console.error("Failed to check the payment plan", err);
+      return true;
+    }
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -84,13 +116,17 @@ const LoginPage = () => {
 
         if (primaryRole === "admin") {
           navigate("/adminHome");
-        } else {
-          if (authData?.reqUuid) {
-            navigate(`/api/v1/publish/saleUrl?requestUuid=${encodeURIComponent(authData.reqUuid)}`);
-          } else {
-            navigate("/sellerHome");
-          }
+          return;
         }
+        if (authData?.reqUuid) {
+          navigate(`/api/v1/publish/saleUrl?requestUuid=${encodeURIComponent(authData.reqUuid)}`);
+          return;
+        }
+        if (isInternalPath(nextParam)) {
+          navigate(nextParam);
+          return;
+        }
+        navigate((await hasUsablePlan()) ? "/sellerHome" : "/plans");
       } else {
         logout();
         setError(t("login.errors.noPermission"));
@@ -133,6 +169,14 @@ const LoginPage = () => {
             </Typography>
           </Stack>
 
+          {deniedRole && (
+            <Alert severity="warning">
+              {t("login.errors.noWorkspace", { role: deniedRole })}
+            </Alert>
+          )}
+          {justRegistered && (
+            <Alert severity="success">{t("login.registeredNote")}</Alert>
+          )}
           {error && <Alert severity="error">{error}</Alert>}
 
           <Box component="form" onSubmit={handleLogin}>
@@ -169,6 +213,12 @@ const LoginPage = () => {
               >
                 {t("login.loginButton")}
               </Button>
+              <Typography variant="body2" align="center" color="text.secondary">
+                {t("login.noAccount")}{" "}
+                <Link component={RouterLink} to="/register">
+                  {t("login.registerLink")}
+                </Link>
+              </Typography>
             </Stack>
           </Box>
         </Stack>

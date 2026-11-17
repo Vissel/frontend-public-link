@@ -17,14 +17,41 @@
         "active": "Hoạt động",
         "inactive": "Không hoạt động",
         "yes": "Có",
-        "no": "Không"
+        "no": "Không",
+        "create": "Tạo",
+        "saving": "Đang lưu...",
+        "delete": "Xóa",
+        "done": "Xong",
+        "edit": "Sửa",
+        "submitting": "Đang gửi…"
     },
     "header": {
         "publicLink": "Liên kết công khai",
         "tagline": "Quản lý thống nhất đăng ký người bán và đơn hàng",
         "workspace": "Không gian làm việc",
         "logout": "Đăng xuất",
-        "login": "Đăng nhập"
+        "login": "Đăng nhập",
+        "register": "Đăng ký",
+        "setup": "Cài đặt",
+        "chat": "Chat",
+        "account": "Tài khoản",
+        "changeAvatar": "Đổi ảnh đại diện"
+    },
+    "avatarDialog": {
+        "title": "Ảnh đại diện",
+        "choose": "Chọn ảnh",
+        "save": "Lưu",
+        "remove": "Xóa ảnh",
+        "hint": "Ảnh sẽ tự động cắt vuông và thu nhỏ về {{size}}×{{size}}.",
+        "errors": {
+            "notAnImage": "Vui lòng chọn tệp ảnh (png, jpeg hoặc webp).",
+            "saveFailed": "Không lưu được ảnh."
+        }
+    },
+    "chatNotify": {
+        "title": "Tin nhắn chat mới",
+        "open": "Mở",
+        "guestBody": "Khách #{{tag}}"
     },
     "footer": {
         "licensed": "Được cấp phép theo"
@@ -36,6 +63,9 @@
         "password": "Mật khẩu",
         "requestId": "ID yêu cầu",
         "loginButton": "Đăng nhập",
+        "noAccount": "Bạn mới đến?",
+        "registerLink": "Tạo tài khoản",
+        "registeredNote": "Tạo tài khoản thành công. Hãy đăng nhập để chọn gói thanh toán.",
         "errors": {
             "preLogin": "Lỗi trước khi đăng nhập!",
             "missingAuth": "Phản hồi đăng nhập thiếu dữ liệu xác thực cần thiết.",
@@ -43,7 +73,8 @@
             "wrongCredentials": "Sai tên đăng nhập/mật khẩu.",
             "unexpected": "Đã xảy ra lỗi không mong muốn trong quá trình đăng nhập.",
             "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
-            "setupError": "Lỗi khi thiết lập yêu cầu đăng nhập."
+            "setupError": "Lỗi khi thiết lập yêu cầu đăng nhập.",
+            "noWorkspace": "Bạn đã đăng nhập, nhưng tài khoản này không phải tài khoản làm việc của người bán (vai trò: {{role}}). Vui lòng liên hệ chúng tôi để kích hoạt gói thanh toán."
         }
     },
     "changePassword": {
@@ -79,6 +110,72 @@
             "unexpected": "Đã xảy ra lỗi không mong muốn trong quá trình đăng ký.",
             "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
             "setupError": "Lỗi khi thiết lập yêu cầu đăng ký."
+        }
+    },
+    "onboarding": {
+        "steps": {
+            "account": "Tạo tài khoản",
+            "plan": "Chọn gói & chuyển khoản",
+            "activate": "Bắt đầu bán hàng"
+        },
+        "hints": {
+            "account": "Hãy chọn tên đăng nhập, cho chúng tôi biết bạn là ai và để lại email để liên hệ khi cần.",
+            "plan": "Chọn gói phù hợp, sau đó chuyển khoản theo số tiền bằng ứng dụng ngân hàng của bạn.",
+            "activate": "Chúng tôi xác nhận giao dịch, kích hoạt gói và bạn có thể tạo liên kết sản phẩm."
+        }
+    },
+    "selfRegister": {
+        "title": "Tạo tài khoản người bán",
+        "subtitle": "Tự đăng ký, chọn gói và bắt đầu bán hàng - không cần lời mời.",
+        "username": "Tên đăng nhập",
+        "usernameHint": "3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới. Đây là tên đăng nhập của bạn.",
+        "name": "Họ và tên",
+        "nameHint": "Tên hiển thị với người mua và trên nội dung chuyển khoản.",
+        "email": "Email",
+        "emailHint": "Chúng tôi dùng email này để liên hệ về gói thanh toán và khoản chuyển khoản của bạn.",
+        "password": "Mật khẩu",
+        "passwordHint": "Ít nhất 8 ký tự.",
+        "repeatPassword": "Nhập lại mật khẩu",
+        "submit": "Tạo tài khoản",
+        "submitting": "Đang tạo tài khoản…",
+        "afterNote": "Tiếp theo bạn chọn gói thanh toán và chuyển khoản phí bằng chuyển khoản ngân hàng.",
+        "loginLink": "Tôi đã có tài khoản",
+        "errors": {
+            "usernamePattern": "Dùng 3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới.",
+            "nameRequired": "Vui lòng cho biết họ tên của bạn.",
+            "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
+            "tooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+            "mismatch": "Mật khẩu không khớp.",
+            "usernameTaken": "Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.",
+            "invalidInput": "Một số thông tin còn thiếu hoặc không hợp lệ. Vui lòng kiểm tra biểu mẫu.",
+            "serviceDown": "Chúng tôi không thể kết nối dịch vụ tài khoản. Vui lòng thử lại sau ít phút.",
+            "encryptFailed": "Mật khẩu không thể được mã hóa khi gửi. Vui lòng thử lại.",
+            "keyUnavailable": "Khóa mã hóa của máy chủ hiện không dùng được nên không thể gửi mật khẩu an toàn. Vui lòng liên hệ quản trị viên (khóa công khai RSA của gateway).",
+            "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
+            "failed": "Đăng ký thất bại. Vui lòng thử lại."
+        }
+    },
+    "plans": {
+        "title": "Chọn gói thanh toán",
+        "subtitle": "Tự mua gói, chuyển khoản ngân hàng và bắt đầu bán hàng sau khi gói được kích hoạt.",
+        "catalogTitle": "Các gói đang mở bán",
+        "catalogHint": "Chọn một gói. Phí bao gồm số ngày và số liên kết sản phẩm tương ứng.",
+        "catalogEmpty": "Hiện chưa có gói nào mở bán. Vui lòng liên hệ qua chat.",
+        "selected": "Đã chọn",
+        "continueToPayment": "Tiếp tục đến thanh toán",
+        "buying": "Đang mở đơn hàng…",
+        "transferGuide": "Bạn sẽ nhận được mã VietQR và tài khoản nhận tiền ở bước tiếp theo.",
+        "activeMessage": "Gói của bạn đang hoạt động từ {{from}} đến {{to}} với {{links}} liên kết sản phẩm.",
+        "goWorkspace": "Đến trang làm việc",
+        "waitingMessage": "Chúng tôi đã nhận xác nhận của bạn. Quản trị viên sẽ kiểm tra giao dịch và kích hoạt gói, thường trong vài phút.",
+        "pollingNote": "Trang này sẽ tự cập nhật khi gói được kích hoạt.",
+        "orderWithoutInstructions": "Đơn hàng của bạn đang mở nhưng không tải được thông tin chuyển khoản. Vui lòng thử lại, hoặc liên hệ qua chat.",
+        "retry": "Thử lại",
+        "errors": {
+            "load": "Không tải được trạng thái gói của bạn. Vui lòng tải lại trang.",
+            "catalog": "Không tải được danh sách gói. Vui lòng thử lại.",
+            "pickFirst": "Vui lòng chọn một gói trước.",
+            "buy": "Không tạo được đơn hàng. Vui lòng thử lại."
         }
     },
     "saleUrl": {
@@ -139,12 +236,47 @@
         "searchUsers": "Tìm kiếm người dùng",
         "noUsers": "Không tìm thấy người dùng nào.",
         "errors": {
-            "fetchRecords": "Không thể tải bản ghi liên kết sản phẩm.",
-            "fetchUsers": "Không thể tải bản ghi người dùng.",
-            "refreshRecords": "Tạo thành công, nhưng không thể làm mới bản ghi liên kết sản phẩm."
+            "fetchRecords": "Không tải được bản ghi liên kết sản phẩm.",
+            "fetchUsers": "Không tải được bản ghi người dùng.",
+            "refreshRecords": "Tạo thành công nhưng không làm mới được danh sách liên kết.",
+            "resetPassword": "Không thể đặt lại mật khẩu."
         },
         "success": {
             "generated": "Tạo môi trường người bán thành công."
+        },
+        "createPaymentPlan": "Tạo gói thanh toán",
+        "action": "Hành động",
+        "resetPassword": "Đặt lại mật khẩu",
+        "resetPasswordTitle": "Đặt lại mật khẩu cho {{username}}",
+        "resetPasswordConfirm": "Thao tác này vô hiệu hóa mật khẩu hiện tại của {{username}} và tạo một liên kết đặt mật khẩu dùng một lần. Liên kết sẽ được gửi qua email nếu có địa chỉ, và bạn có thể sao chép bên dưới để gửi thủ công.",
+        "resetPasswordSuccess": "Đã vô hiệu hóa mật khẩu. Liên kết đặt mật khẩu mới đã được tạo.",
+        "setupLink": "Liên kết đặt mật khẩu",
+        "createUser": {
+            "button": "Tạo người dùng",
+            "title": "Tạo tài khoản người dùng",
+            "resultTitle": "Đã tạo tài khoản",
+            "subtitle": "Tạo tài khoản người bán hoặc người mua. Bạn không đặt mật khẩu: người dùng nhận một liên kết dùng một lần và tự chọn mật khẩu.",
+            "usernameHint": "3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới. Đây là tên đăng nhập của họ.",
+            "emailHint": "Không bắt buộc. Nếu có email, liên kết đặt mật khẩu cũng được gửi tới email đó.",
+            "roleSeller": "Người bán",
+            "roleBuyer": "Người mua",
+            "roleSellerHint": "Người bán có thể mua gói thanh toán và tạo liên kết sản phẩm.",
+            "roleBuyerHint": "Người mua đăng nhập để theo dõi các gói và lịch đặt mà người bán đã tạo cho họ.",
+            "submit": "Tạo tài khoản",
+            "submitting": "Đang tạo…",
+            "success": "Đã tạo tài khoản {{role}} {{username}}.",
+            "linkHint": "Hãy gửi liên kết này cho người dùng. Liên kết chỉ dùng một lần và có hạn; tại đó họ tự đặt mật khẩu rồi đăng nhập được.",
+            "noEmailNote": "Không có email nên liên kết chưa được gửi thư. Hãy sao chép và tự gửi cho người dùng.",
+            "errors": {
+                "usernamePattern": "Dùng 3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới.",
+                "nameRequired": "Vui lòng nhập tên người dùng.",
+                "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ, hoặc để trống.",
+                "usernameTaken": "Tên đăng nhập này đã tồn tại.",
+                "invalidInput": "Một số thông tin còn thiếu hoặc không hợp lệ. Vui lòng kiểm tra biểu mẫu.",
+                "accountServiceDown": "Không thể kết nối dịch vụ tài khoản. Vui lòng thử lại sau ít phút.",
+                "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
+                "failed": "Không tạo được tài khoản. Vui lòng thử lại."
+            }
         }
     },
     "sellerForm": {
@@ -184,7 +316,13 @@
             "maxImages": "Bạn có thể tải lên tối đa 6 hình ảnh.",
             "fileType": "Chỉ cho phép hình ảnh JPEG, PNG và WebP.",
             "fileSize": "Mỗi hình ảnh phải dưới 1 MB (vận chuyển base64)."
-        }
+        },
+        "typeLabel": "Loại liên kết sản phẩm",
+        "typeStandard": "Đặt hàng thường",
+        "typeYoga": "Đặt lớp Yoga",
+        "typeStandardHint": "Người mua đặt hàng theo số lượng/giá trên trang công khai.",
+        "typeYogaHint": "Bạn xếp lịch lớp hàng tuần trên lịch; người mua đặt chỗ.",
+        "dropInPrice": "Giá mỗi lớp (VND)"
     },
     "generation": {
         "title": "Trang tạo",
@@ -267,6 +405,14 @@
         "username": "Tên đăng nhập:",
         "email": "Email:",
         "usePublicLink": "Sử dụng liên kết công khai được cung cấp để quản lý đơn hàng từ thiết bị di động hoặc máy tính.",
+        "planBanner": {
+            "action": "Chọn gói",
+            "NO_PLAN": "Bạn chưa có gói thanh toán. Hãy chọn một gói và bắt đầu bán hàng sau khi gói được kích hoạt.",
+            "NOT_STARTED": "Gói của bạn chưa đến ngày bắt đầu. Gói sẽ hoạt động theo ngày bắt đầu đã định.",
+            "EXPIRED": "Gói của bạn đã hết hạn. Hãy mua gói mới để tiếp tục tạo liên kết sản phẩm.",
+            "QUOTA_EXHAUSTED": "Bạn đã dùng hết liên kết sản phẩm của gói. Hãy mua gói mới để tạo thêm.",
+            "fallback": "Bạn chưa có gói thanh toán nào đang dùng được. Hãy chọn một gói để tiếp tục."
+        },
         "saleEnvironments": "Môi trường bán hàng",
         "saleEnvironmentsDesc": "Môi trường bán hàng hiện tại và trước đây của bạn.",
         "searchByProduct": "Tìm kiếm theo tên sản phẩm",
@@ -279,26 +425,56 @@
         "status": "Trạng thái",
         "createdAt": "Ngày tạo",
         "endedAt": "Ngày kết thúc",
+        "plannedStartedAt": "Bắt đầu dự kiến",
         "plannedEndedAt": "Kết thúc dự kiến",
         "orderNumTotal": "Số đơn/Tổng",
+        "actions": "Thao tác",
         "export": "Xuất",
         "excel": "Excel",
         "noEnvironments": "Không tìm thấy môi trường bán hàng nào. Liên hệ quản trị viên để thiết lập liên kết công khai của bạn.",
         "errors": {
             "unableToLoad": "Không thể tải thông tin người bán.",
             "loadFailed": "Không thể tải dữ liệu người bán."
-        }
+        },
+        "generateProductLink": "Tạo link sản phẩm",
+        "generateSuccess": "Đã tạo link sản phẩm thành công."
     },
     "publink": {
         "saleSpace": "Không gian bán hàng",
         "sellerView": "Chế độ người bán — quản lý đơn hàng và sản phẩm.",
         "buyerView": "Xem sản phẩm và đặt hàng.",
         "exportExcel": "Xuất Excel",
+        "shareLink": "Chia sẻ liên kết",
+        "editTimeHint": "Nhấn để đổi thời điểm kết thúc phiên bán",
         "sellerViewLabel": "Chế độ người bán",
         "buyerViewLabel": "Chế độ người mua",
         "created": "Đã tạo:",
         "willEnded": "Sẽ kết thúc:",
+        "plannedStartedAt": "Bắt đầu dự kiến:",
         "plannedEndedAt": "Kết thúc dự kiến:",
+        "notStartedYet": "Phiên bán này bắt đầu lúc {{start}}. Chưa thể đặt hàng cho đến thời điểm đó.",
+        "transfer": {
+            "title": "Tài khoản chuyển khoản",
+            "add": "Thêm tài khoản chuyển khoản",
+            "change": "Đổi",
+            "remove": "Gỡ",
+            "zoomHint": "Nhấn để phóng to mã QR",
+            "copyNumber": "Sao chép số tài khoản",
+            "noQr": "Tài khoản này chưa có mã QR.",
+            "scanHint": "Mở ứng dụng ngân hàng và quét mã để chuyển khoản.",
+            "contentLabel": "Nội dung chuyển khoản",
+            "emptyTitle": "Chưa hiển thị tài khoản chuyển khoản",
+            "emptyDesc": "Thêm tài khoản để người mua quét mã QR và chuyển khoản ngay trên trang này.",
+            "qrDialogTitle": "Quét mã để chuyển khoản",
+            "pickTitle": "Chọn tài khoản chuyển khoản",
+            "pickDesc": "Tài khoản được chọn sẽ hiển thị cho người mua trên trang này.",
+            "noAccounts": "Bạn chưa có tài khoản chuyển khoản nào.",
+            "goSetup": "Thêm tại trang cài đặt",
+            "errors": {
+                "load": "Không tải được danh sách tài khoản chuyển khoản.",
+                "save": "Không cập nhật được tài khoản chuyển khoản."
+            }
+        },
         "products": "Sản phẩm",
         "productsSellerDesc": "Nhấn chỉnh sửa để thay đổi chi tiết sản phẩm.",
         "productsBuyerDesc": "Các mặt hàng có sẵn để mua.",
@@ -400,7 +576,29 @@
         "hoursAgo": "{{count}} giờ trước",
         "from": "Từ:",
         "admin": "Quản trị",
-        "environment": "Môi trường:"
+        "environment": "Môi trường:",
+        "payment": {
+            "seller": "Người bán",
+            "plan": "Gói",
+            "extension": "Gia hạn",
+            "days": "{{count}} ngày",
+            "contact": "Liên hệ",
+            "code": "Mã thanh toán",
+            "noContact": "Chưa cung cấp",
+            "close": "Đóng",
+            "markPaid": "Đã thu tiền",
+            "markingPaid": "Đang xử lý...",
+            "markPaidSuccess": "Đã nhận tiền. Gói đã được kích hoạt.",
+            "markPaidFailed": "Không thể xác nhận thanh toán.",
+            "billNote": "Đã xác nhận thanh toán"
+        },
+        "paymentStatus": {
+            "CREATE": "Chờ chuyển khoản",
+            "WAITING_CONFIRM": "Chờ xác nhận",
+            "CONFIRMED": "Đã xác nhận",
+            "PAID": "Đã thanh toán",
+            "REJECTED": "Từ chối"
+        }
     },
     "countdown": {
         "expired": "Đã hết hạn"
@@ -466,6 +664,7 @@
         "placeholder": "Nhập tin nhắn…",
         "adminTyping": "Quản trị viên đang soạn tin…",
         "returningVisitor": "Chào mừng trở lại, lượt thứ {{count}}",
+        "signedInAs": "đang chat với tên {{name}}",
         "status": {
             "pending": "Đang gửi",
             "sent": "Đã gửi",
@@ -481,7 +680,8 @@
         },
         "errors": {
             "startFailed": "Không thể mở chat. Vui lòng thử lại.",
-            "sendFailed": "Tin nhắn của bạn không thể gửi được."
+            "sendFailed": "Tin nhắn của bạn không thể gửi được.",
+            "sessionChanged": "Phiên đăng nhập đã thay đổi. Hãy mở lại khung chat để tiếp tục trong cuộc trò chuyện của riêng bạn."
         }
     },
     "adminChat": {
@@ -502,6 +702,22 @@
         "adminNotBoundHint": "Chưa liên kết Zalo quản trị viên — hãy nhắn cho OA một lần với nội dung LINK-ADMIN.",
         "connectZalo": "Kết nối Zalo",
         "consentOpened": "Hoàn tất cấp quyền Zalo ở tab mới.",
+        "searchPlaceholder": "Tìm cuộc trò chuyện",
+        "you": "Bạn: ",
+        "guestLabel": "Khách",
+        "typing": "đang nhập…",
+        "online": "Trực tuyến",
+        "offline": "Không trực tuyến",
+        "back": "Quay lại",
+        "today": "Hôm nay",
+        "yesterday": "Hôm qua",
+        "jumpToLatest": "{{count}} tin nhắn mới",
+        "unreadCount": "{{count}} chưa đọc",
+        "notifyEnable": "Bật thông báo nền",
+        "notifyDisable": "Tắt thông báo nền",
+        "notifyDenied": "Thông báo đang bị chặn trong cài đặt trình duyệt cho trang này.",
+        "notifyUnsupported": "Trình duyệt này không hỗ trợ thông báo nền.",
+        "notifyNotConfigured": "Máy chủ chưa cấu hình push.",
         "status": {
             "ACTIVE": "Đang hoạt động",
             "IDLE": "Khách đã offline",
@@ -510,7 +726,425 @@
         "errors": {
             "loadFailed": "Không tải được hộp thư chat.",
             "replyFailed": "Không gửi được nội dung trả lời.",
-            "consentFailed": "Không thể bắt đầu cấp quyền Zalo."
+            "consentFailed": "Không thể bắt đầu cấp quyền Zalo.",
+            "streamFailed": "Không có cập nhật trực tiếp; danh sách sẽ tự làm mới sau vài giây."
+        }
+    },
+    "createPlan": {
+        "title": "Tạo gói thanh toán",
+        "subtitle": "Tạo một gói thanh toán độc lập, hoặc gán nó cho một người bán. Người bán là tùy chọn.",
+        "field": {
+            "user": "Người bán",
+            "fee": "Phí (VND)",
+            "planDay": "Số ngày",
+            "envCount": "Số link",
+            "userOptional": "Người bán (tùy chọn)"
+        },
+        "mode": {
+            "existing": "Gói có sẵn",
+            "new": "Gói mới"
+        },
+        "pickPlan": "Chọn gói",
+        "noUsers": "Chưa có người bán nào",
+        "noPlans": "Chưa có gói nào trong danh mục.",
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        },
+        "errors": {
+            "loadCatalog": "Không tải được danh mục gói thanh toán.",
+            "invalidCatalog": "Phản hồi danh mục gói không hợp lệ. Vui lòng thử lại.",
+            "invalidCreateResponse": "Máy chủ không trả về gói hợp lệ nên chưa xác nhận được việc tạo. Hãy kiểm tra tab Gói có sẵn trước khi thử lại.",
+            "missingUser": "Vui lòng chọn người bán.",
+            "missingPlan": "Vui lòng chọn gói thanh toán.",
+            "invalidNewPlan": "Số ngày và số link phải lớn hơn 0, phí không được âm.",
+            "submit": "Không thể tạo gói thanh toán.",
+            "invalidUser": "Vui lòng chọn người bán trong danh sách.",
+            "sellerRequiredForExisting": "Hãy chọn người bán để gán gói này, hoặc chuyển sang Gói mới để tạo gói."
+        },
+        "catalogLoading": "Đang tải danh sách gói...",
+        "retry": "Thử lại",
+        "searchUserPlaceholder": "Nhập để tìm người bán theo tài khoản, tên hoặc email",
+        "noMatchingUsers": "Không có người bán nào khớp với từ khóa này",
+        "sellerOptionalHint": "Để trống để chỉ tạo gói; bạn có thể gán nó cho người bán sau."
+    },
+    "paymentResult": {
+        "successTitle": "Đã có link thanh toán",
+        "errorTitle": "Không thể tạo gói thanh toán",
+        "hint": "Gửi link này cho người bán để họ thanh toán. Link còn hiệu lực trong vài ngày.",
+        "unknownError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+        "planCreatedTitle": "Đã tạo gói thanh toán",
+        "planCreatedHint": "Gói đã có trong danh mục. Chọn người bán rồi tạo lại, hoặc chọn gói ở tab Gói có sẵn, để gán và lấy link thanh toán.",
+        "catalogRefreshWarning": "Gói đã được tạo, nhưng danh mục chưa tải lại được. Gói sẽ hiển thị khi bạn mở lại hộp thoại này.",
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        }
+    },
+    "generatePlan": {
+        "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
+        "titleStep2": "Tạo link sản phẩm - bước 2: thông tin sản phẩm",
+        "subtitleStep1": "Chọn người bán và một gói thanh toán đang hoạt động của họ.",
+        "field": {
+            "user": "Người bán"
+        },
+        "noUsers": "Chưa có người bán nào",
+        "pickPlan": "Chọn gói hoạt động",
+        "noPlan": "Người bán này chưa có gói thanh toán hoạt động. Hãy tạo gói trước bằng nút Tạo gói thanh toán.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đã hết hạn hoặc đã hết chỗ. Vui lòng liên hệ quản trị qua chat hoặc mua thêm.",
+        "remaining": "Còn lại",
+        "unit": {
+            "day": "ngày"
+        },
+        "success": "Đã tạo môi trường bán hàng cho {{sellerName}}.",
+        "errors": {
+            "missingUser": "Vui lòng chọn người bán.",
+            "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
+            "generateRequestId": "Không tạo được mã yêu cầu.",
+            "submit": "Không thể tạo môi trường bán hàng ngay lúc này."
+        },
+        "validUntil": "Hiệu lực đến",
+        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
+    },
+    "saleWindow": {
+        "title": "Thời gian bán",
+        "start": "Bắt đầu lúc",
+        "end": "Kết thúc lúc",
+        "limitHint": "Liên kết ngừng hoạt động vào thời điểm kết thúc và không bao giờ vượt quá ngày hết hạn gói: {{planEnd}}.",
+        "noPlanEnd": "Liên kết ngừng hoạt động vào thời điểm kết thúc bạn chọn.",
+        "scheduledHint": "Thời điểm bắt đầu ở tương lai: người mua vẫn mở được trang nhưng đơn hàng sẽ bị từ chối cho đến khi bắt đầu.",
+        "editTitle": "Chỉnh thời gian bán",
+        "newEnd": "Thời điểm kết thúc mới",
+        "currentStart": "Bắt đầu",
+        "currentEnd": "Kết thúc",
+        "startedOnCreate": "bắt đầu ngay khi tạo",
+        "editHint": "Kéo thời điểm kết thúc sớm hơn để ngừng nhận đơn, đóng ngay, hoặc gia hạn đến ngày hết hạn gói.",
+        "planCoverage": "Gói hỗ trợ đến",
+        "extendWarning": "Gia hạn sẽ tạo địa chỉ liên kết mới cho phiên bán. Hãy chia sẻ liên kết mới với người mua; liên kết cũ vẫn hoạt động đến thời điểm kết thúc cũ.",
+        "closeNow": "Đóng ngay",
+        "save": "Lưu",
+        "updated": "Đã cập nhật thời gian bán",
+        "errors": {
+            "required": "Hãy chọn cả thời điểm bắt đầu và kết thúc.",
+            "endBeforeStart": "Thời điểm kết thúc phải sau thời điểm bắt đầu.",
+            "endAfterPlan": "Thời điểm kết thúc không được vượt quá ngày hết hạn gói ({{planEnd}}).",
+            "startAfterPlan": "Thời điểm bắt đầu không được vượt quá ngày hết hạn gói ({{planEnd}}).",
+            "endInPast": "Thời điểm kết thúc phải ở tương lai.",
+            "update": "Không thể cập nhật thời gian bán. Vui lòng thử lại."
+        }
+    },
+    "sellerGenerate": {
+        "titleStep1": "Tạo link sản phẩm - bước 1: gói thanh toán",
+        "titleStep2": "Tạo link sản phẩm - bước 2: thông tin sản phẩm",
+        "subtitleStep1": "Chọn một gói thanh toán đang hoạt động của bạn. Mỗi gói cung cấp số link nhất định.",
+        "noPlan": "Bạn chưa có gói thanh toán hoạt động. Vui lòng liên hệ quản trị để được hỗ trợ.",
+        "quotaExhausted": "Không thể tạo. Gói thanh toán đã hết hạn hoặc đã hết chỗ. Vui lòng liên hệ quản trị qua chat hoặc mua thêm.",
+        "remaining": "Còn lại",
+        "unit": {
+            "day": "ngày"
+        },
+        "success": "Đã tạo link sản phẩm thành công.",
+        "errors": {
+            "checkQuota": "Không kiểm được số link còn lại của gói thanh toán.",
+            "generateRequestId": "Không tạo được mã yêu cầu.",
+            "submit": "Không thể tạo link sản phẩm ngay lúc này."
+        },
+        "validUntil": "Hiệu lực đến",
+        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán của bạn. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
+    },
+    "transferInfo": {
+        "empty": "Chưa có tài khoản chuyển khoản nào.",
+        "chip": {
+            "default": "Mặc định"
+        },
+        "types": {
+            "bank": "Ngân hàng",
+            "ewallet": "Ví điện tử",
+            "other": "Khác"
+        },
+        "field": {
+            "type": "Loại",
+            "bank": "Ngân hàng",
+            "issuer": "Đơn vị phát hành",
+            "number": "Số tài khoản / ví",
+            "accountName": "Tên chủ tài khoản",
+            "defaultMessage": "Nội dung chuyển tiịn mặc định",
+            "defaultMessageHint": "Nội dung này sẽ hiện ra sau khi quét mã QR."
+        },
+        "action": {
+            "add": "Thêm tài khoản",
+            "hideForm": "Đóng form",
+            "expand": "Xem chi tiết",
+            "collapse": "Ẩn chi tiết",
+            "setDefault": "Đặt làm mặc định",
+            "markDefault": "Dùng làm tài khoản mặc định",
+            "remove": "Xóa",
+            "uploadQr": "Tải ảnh QR",
+            "changeQr": "Đổi ảnh QR"
+        },
+        "success": {
+            "created": "Đã lưu tài khoản chuyển khoản."
+        },
+        "errors": {
+            "load": "Không tải được danh sách tài khoản.",
+            "create": "Không lưu được tài khoản chuyển khoản.",
+            "setDefault": "Không đổi được tài khoản mặc định.",
+            "remove": "Không xóa được tài khoản.",
+            "requiredFields": "Đơn vị phát hành và số tài khoản là bắt buộc.",
+            "qrRead": "Không đọc được tệp ảnh QR."
+        }
+    },
+    "setup": {
+        "title": "Cài đặt",
+        "subtitle": "Thu tiền các gói đang chờ thanh toán, kích hoạt gói, xem toàn bộ gói và quản lý tài khoản nhận tiền của bạn.",
+        "search": "Tìm người bán",
+        "total": "Tổng:",
+        "selected": "Đã chọn",
+        "activeDate": "Ngày kích hoạt",
+        "activeDateHint": "Áp dụng khi bạn duyệt hoặc đánh dấu đã thu tiền cho các gói đã chọn. Mặc định hôm nay; ngày hết hạn tính theo độ dài gói.",
+        "pendingTitle": "Chờ thanh toán",
+        "pendingDesc": "Gói đã gán cho người bán nhưng chưa nhận được tiền.",
+        "pendingEmpty": "Không có người bán nào đang chờ thanh toán.",
+        "allTitle": "Gói thanh toán",
+        "allDesc": "Mặc định hiển thị gói ACTIVE; bấm nút để hiển thị toàn bộ trạng thái.",
+        "toggleState": "Hiển thị tất cả",
+        "showAll": "Hiển thị tất cả",
+        "showActive": "Chỉ hiển thị ACTIVE",
+        "billNote": "Đã xác nhận thanh toán",
+        "column": {
+            "user": "Người bán",
+            "name": "Tên",
+            "fee": "Phí",
+            "days": "Ngày",
+            "quota": "Đã dùng / hạn mức",
+            "state": "Trạng thái",
+            "activeDate": "Ngày kích hoạt",
+            "endedDate": "Ngày hết hạn",
+            "payment": "Thanh toán",
+            "action": "Thao tác",
+            "paymentLink": "Liên kết"
+        },
+        "action": {
+            "approve": "Duyệt",
+            "reject": "Từ chối",
+            "activate": "Kích hoạt",
+            "deactivate": "Hủy kích hoạt",
+            "markPaid": "Đã thu tiền",
+            "regenerateLink": "Tạo lại liên kết thanh toán",
+            "extend": "Gia hạn gói"
+        },
+        "transferTitle": "Tài khoản nhận tiền của tôi",
+        "transferDesc": "Các tài khoản này hiển thị trên trang thanh toán của người bán. Chỉ có một tài khoản mặc định.",
+        "success": {
+            "approved": "Đã kích hoạt các gói đã chọn.",
+            "rejected": "Đã ngủng kích hoạt các gói đã chọn.",
+            "activated": "Đã kích hoạt các gói đã chọn.",
+            "deactivated": "Đã ngủng kích hoạt các gói đã chọn.",
+            "paid": "Đã nhận tiền. Các gói đã chọn được kích hoạt và chuyển sang danh sách gói thanh toán."
+        },
+        "errors": {
+            "load": "Không tải được danh sách gói thanh toán.",
+            "bulkAction": "Thao tác thất bại. Vui lòng thử lại.",
+            "noSelection": "Vui lòng chọn ít nhất một gói thanh toán.",
+            "activeDateRequired": "Hãy chọn ngày kích hoạt ở trên để bật thao tác này.",
+            "actionFailed": "Hành động thất bại. Vui lòng thử lại."
+        },
+        "links": {
+            "title": "Liên kết thanh toán mới",
+            "hint": "Gửi từng liên kết cho đúng người bán. Liên kết mới có hiệu lực trong vài ngày.",
+            "open": "Mở",
+            "copyAll": "Sao chép tất cả"
+        },
+        "extensionTag": "Gia hạn",
+        "extend": {
+            "title": "Gia hạn gói",
+            "hint": "Số ngày sẽ được cộng vào ngày kết thúc của gói sau khi đơn này được thanh toán.",
+            "days": "Số ngày gia hạn",
+            "submit": "Tạo liên kết thanh toán",
+            "currentEnd": "Ngày kết thúc hiện tại",
+            "newEnd": "Ngày kết thúc mới",
+            "amount": "Thành tiền",
+            "amountNote": "Tính theo giá mỗi ngày của gói. Gửi liên kết cho người bán; gói chỉ được gia hạn sau khi bạn đánh dấu đã nhận tiền.",
+            "daysInvalid": "Nhập ít nhất 1 ngày",
+            "onlyActive": "Chỉ gói đang hoạt động mới được gia hạn"
+        }
+    },
+    "sellerSetup": {
+        "title": "Cài đặt của tôi",
+        "subtitle": "Xem gói thanh toán của bạn và quản lý tài khoản chuyển khoản.",
+        "plansTitle": "Gói thanh toán của tôi",
+        "plansDesc": "Gói đang hoạt động và số link sản phẩm còn lại.",
+        "empty": "Chưa có gói thanh toán hoạt động nào.",
+        "remaining": "Còn lại",
+        "transferTitle": "Tài khoản chuyển khoản của tôi",
+        "transferDesc": "Người mua có thể chuyển vào các tài khoản này.",
+        "errors": {
+            "load": "Không tải được gói thanh toán của bạn."
+        },
+        "yogaPlansTitle": "Gói thanh toán Yoga",
+        "yogaPlansDesc": "Khai báo mỗi người mua đã trả bao nhiêu (số ngày ánh xạ tới số tiền VND) trên trang Yoga của bạn. Tạo gói sẽ lập tài khoản và liên kết mật khẩu cho người mua."
+    },
+    "payment": {
+        "title": "Thanh toán",
+        "subtitle": "Xem thông tin gói và chuyển khoản để kích hoạn.",
+        "planTitle": "Chi tiết gói thanh toán",
+        "field": {
+            "fee": "Phí gói",
+            "duration": "Hiệu lực",
+            "estimatedActive": "Dự kiến ngày kích hoạt",
+            "estimatedEnd": "Dự kiến ngày hết hạn",
+            "accountNumber": "Số tài khoản",
+            "accountName": "Chủ tài khoản",
+            "email": "Email của bạn",
+            "phone": "Số điện thoại",
+            "extendFrom": "Gia hạn từ",
+            "extendTo": "Gia hạn đến"
+        },
+        "unit": {
+            "day": "ngày",
+            "link": "link"
+        },
+        "status": {
+            "create": "Đang chờ thanh toán",
+            "waiting": "Đã nhận xác nhận, đang chờ quản trị",
+            "paid": "Đã thanh toán",
+            "rejected": "Đã từ chối"
+        },
+        "dateNote": "Ngày chính thức do quản trị thiết lập sau khi duyệt thanh toán.",
+        "transferTitle": "Thông tin chuyển khoản",
+        "transferNote": "Nội dung trên sẽ được điền tự động khi quét mã QR.",
+        "scanMessagePrefix": "Nội dung chuyển:",
+        "noTransfer": "Chưa có tài khoản nhận tiịn. Vui lòng liên hệ quản trị.",
+        "guide": "Sau khi chuyển tiịn xong, hãy bấm nút dưới đây để chúng tôi kiểm tra và kích hoạn gói cho bạn.",
+        "confirmButton": "Xác nhận thanh toán",
+        "processed": "Thanh toán này đã được xử lý",
+        "notFound": "Link thanh toán này không còn hiệu lực.",
+        "waitingGuidance": "Bạn sẽ nhận được kết quả trong ít phút qua chat ứng dụng, hoặc email / số điện thoại bạn đã cấp.",
+        "confirmTitle": "Xác nhận thanh toán của bạn",
+        "confirmSubtitle": "Cho chúng tôi biết cách liên hệ bạn với kết quả.",
+        "errors": {
+            "missingToken": "Link thanh toán không hoàn chỉnh. Vui lòng yêu cầu quản trị gửi link mới.",
+            "load": "Link thanh toán này không hợp lệ hoặc đã hết hạn. Vui lòng liên hệ quản trị.",
+            "confirm": "Không thể xác nhận thanh toán ngay lúc này. Vui lòng thử lại."
+        },
+        "qrTitle": "Quét mã để thanh toán",
+        "qrContent": "Nội dung chuyển khoản",
+        "qrHint": "Mở ứng dụng ngân hàng và quét mã này. Số tiền và nội dung chuyển khoản được điền tự động.",
+        "extendNotice": "Liên kết này gia hạn gói hiện tại của bạn thêm {{days}} ngày.",
+        "extendDateNote": "Số ngày gia hạn được cộng sau khi quản trị xác nhận giao dịch của bạn."
+    },
+    "yoga": {
+        "prevWeek": "Tuần trước",
+        "thisWeek": "Tuần này",
+        "nextWeek": "Tuần sau",
+        "time": "Giờ",
+        "date": "Ngày",
+        "class": "Lớp",
+        "coach": "HLV",
+        "day": "Thứ",
+        "start": "Bắt đầu",
+        "end": "Kết thúc",
+        "title": "Tên lớp",
+        "capacity": "Chỗ",
+        "remaining": "Còn lại",
+        "action": "Hành động",
+        "full": "Hết chỗ",
+        "book": "Đặt",
+        "booked": "Đã đặt",
+        "cancel": "Hủy",
+        "classListTitle": "Lớp trong khoảng ngày",
+        "dateFrom": "Từ",
+        "dateTo": "Đến",
+        "filter": "Lọc",
+        "noClasses": "Không có lớp trong khoảng này.",
+        "newClass": "Lớp mới",
+        "editClass": "Sửa lớp",
+        "bookTitle": "Đặt lớp này",
+        "bookFor": "Đặt cho",
+        "walkIn": "Vãng lai (trả từng lần)",
+        "daysLeft": "ngày còn",
+        "buyerName": "Tên của bạn",
+        "paymentMode": "Thanh toán",
+        "payWithPlan": "Dùng gói thanh toán",
+        "payAsYouGo": "Trả từng buổi",
+        "booking": "Đang đặt...",
+        "planBanner": "Gói của bạn: đã dùng {{used}}/{{total}} ngày, còn {{remaining}}.",
+        "anonymousHint": "Đăng nhập để đặt bằng gói thanh toán, hoặc nhập tên để trả từng buổi.",
+        "buyer": "Học viên",
+        "paid": "Đã trả",
+        "attended": "Đã tham gia",
+        "note": "Ghi chú",
+        "bookedAt": "Đặt lúc",
+        "attendees": "Học viên",
+        "attendeesTitle": "Học viên đã đăng ký",
+        "attendeesEmpty": "Chưa có học viên đăng ký lớp này.",
+        "errors": {
+            "load": "Không tải được lịch.",
+            "titleRequired": "Tên lớp là bắt buộc.",
+            "saveClass": "Không lưu được lớp.",
+            "deleteClass": "Không xóa được lớp.",
+            "book": "Đặt lớp thất bại.",
+            "cancel": "Hủy thất bại.",
+            "loadAttendees": "Không tải được danh sách học viên.",
+            "toggle": "Không cập nhật được đặt chỗ."
+        },
+        "success": {
+            "classSaved": "Đã lưu lớp.",
+            "classDeleted": "Đã xóa lớp.",
+            "booked": "Đã giữ chỗ.",
+            "cancelled": "Đã hủy đặt chỗ."
+        }
+    },
+    "yogaPlans": {
+        "environment": "Trang Yoga",
+        "newPlan": "Gói mới",
+        "buyer": "Người mua",
+        "username": "Tên đăng nhập",
+        "email": "Email",
+        "days": "Số ngày",
+        "amount": "Số tiền (VND)",
+        "password": "Mật khẩu",
+        "setPassword": "Đã đặt",
+        "notSetPassword": "Chưa đặt",
+        "edit": "Sửa",
+        "resend": "Gửi lại liên kết",
+        "empty": "Chưa có gói nào.",
+        "noEnvironments": "Hãy tạo liên kết sản phẩm Yoga trước để quản lý gói người mua.",
+        "createTitle": "Gói người mua mới",
+        "editTitle": "Sửa gói người mua",
+        "errors": {
+            "loadEnvs": "Không tải được trang Yoga của bạn.",
+            "load": "Không tải được gói.",
+            "save": "Không lưu được gói.",
+            "resend": "Không gửi lại được liên kết.",
+            "buyerRequired": "Tên người mua là bắt buộc."
+        },
+        "success": {
+            "created": "Đã tạo gói và lập tài khoản người mua.",
+            "createdWithLink": "Đã tạo gói. Liên kết đặt mật khẩu đã được gửi / sẵn sàng để sao chép.",
+            "updated": "Đã cập nhật gói.",
+            "linkSent": "Liên kết đặt mật khẩu mới đã được tạo."
+        }
+    },
+    "buyerSetup": {
+        "title": "Đặt mật khẩu của bạn",
+        "resetTitle": "Đặt lại mật khẩu của bạn",
+        "subtitle": "Chọn mật khẩu cho tài khoản đặt lớp.",
+        "newPassword": "Mật khẩu mới",
+        "repeatPassword": "Nhập lại mật khẩu",
+        "submit": "Lưu mật khẩu",
+        "saving": "Đang lưu...",
+        "expiresAt": "Liên kết hết hạn",
+        "passwordHint": "Ít nhất 8 ký tự.",
+        "errors": {
+            "invalidLink": "Liên kết đặt mật khẩu không hợp lệ.",
+            "invalidOrExpired": "Liên kết này đã được dùng hoặc hết hạn. Hãy yêu cầu liên kết mới.",
+            "mismatch": "Mật khẩu không khớp.",
+            "tooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+            "encryptFailed": "Không bảo mật được mật khẩu của bạn.",
+            "accountMissing": "Tài khoản này không còn tồn tại. Hãy yêu cầu người bán tạo lại gói.",
+            "serviceUnreachable": "Không kết nối được dịch vụ tài khoản. Vui lòng thử lại sau.",
+            "failed": "Không lưu được mật khẩu."
         }
     }
 }

@@ -3,23 +3,22 @@ import {
   AppBar,
   Box,
   Button,
-  Chip,
   Container,
   Stack,
   Toolbar,
   Typography,
 } from "@mui/material";
-import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import NotificationBell from "./components/NotificationBell";
+import AccountMenu from "./components/AccountMenu";
 import { useTranslation } from "react-i18next";
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
 
 function Header() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { auth, logout, username: userName, userRole } = useAuth();
+  const { auth, userRole } = useAuth();
   const { t, i18n } = useTranslation();
 
   const normalizedRole = normalizeRole(userRole);
@@ -30,11 +29,6 @@ function Header() {
       : normalizedRole === "seller"
         ? "/sellerHome"
         : "/login";
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   const handleLanguageChange = (lang) => {
     i18n.changeLanguage(lang);
@@ -123,28 +117,35 @@ function Header() {
                 {t("header.workspace")}
               </Button>
             )}
-            {isAuthenticated && (
-              <>
-                {normalizedRole === "seller" && <NotificationBell />}
-                <Chip
-                  color="primary"
-                  variant="outlined"
-                  label={`${userName || "User"} \u2022 ${userRole || "Member"}`}
-                  onClick={() => { }}
-                  clickable={false}
-                />
-              </>
-            )}
-
-            {isAuthenticated ? (
-              <Button variant="contained" color="primary" onClick={handleLogout}>
-                {t("header.logout")}
+            {isAuthenticated && (normalizedRole === "admin" || normalizedRole === "seller") && (
+              <Button
+                component={RouterLink}
+                to={normalizedRole === "admin" ? "/setup" : "/sellerSetup"}
+                variant="text"
+              >
+                {t("header.setup")}
               </Button>
-            ) : (
+            )}
+            {/* Chat moved into the account menu, unread badge on the avatar. */}
+            {isAuthenticated && (normalizedRole === "seller" || normalizedRole === "admin") && (
+              <NotificationBell />
+            )}
+            {isAuthenticated && <AccountMenu />}
+
+            {!isAuthenticated && (
+              <Button
+                component={RouterLink}
+                to="/register"
+                variant={location.pathname === "/register" ? "contained" : "outlined"}
+              >
+                {t("header.register")}
+              </Button>
+            )}
+            {!isAuthenticated && (
               <Button
                 component={RouterLink}
                 to="/login"
-                variant={location.pathname === "/login" ? "contained" : "outlined"}
+                variant={location.pathname === "/login" ? "contained" : "text"}
               >
                 {t("header.login")}
               </Button>

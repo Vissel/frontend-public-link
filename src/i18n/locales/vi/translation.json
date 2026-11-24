@@ -28,11 +28,12 @@
     "header": {
         "publicLink": "Liên kết công khai",
         "tagline": "Quản lý thống nhất đăng ký người bán và đơn hàng",
-        "workspace": "Không gian làm việc",
+        "workspace": "Home",
         "logout": "Đăng xuất",
         "login": "Đăng nhập",
         "register": "Đăng ký",
         "setup": "Cài đặt",
+        "morePlan": "Mua thêm gói",
         "chat": "Chat",
         "account": "Tài khoản",
         "changeAvatar": "Đổi ảnh đại diện"
@@ -176,6 +177,52 @@
             "catalog": "Không tải được danh sách gói. Vui lòng thử lại.",
             "pickFirst": "Vui lòng chọn một gói trước.",
             "buy": "Không tạo được đơn hàng. Vui lòng thử lại."
+        }
+    },
+    "morePlan": {
+        "title": "Mua thêm gói",
+        "subtitle": "Thêm liên kết sản phẩm hoặc thêm ngày trên nền gói bạn đang trả phí. Quản trị viên sẽ kiểm tra giao dịch và kích hoạt đơn hàng.",
+        "summaryTitle": "Bạn đang trả phí cho những gì",
+        "remaining": "Liên kết còn lại",
+        "coverage": "Được tính đến",
+        "noPlans": "Hiện không có gói nào đang chạy. Hãy mua một gói bên dưới để bắt đầu bán hàng.",
+        "tabs": {
+            "buy": "Mua thêm gói",
+            "extend": "Mua thêm ngày"
+        },
+        "catalogHint": "Mỗi gói cộng thêm liên kết và số ngày riêng lên gói bạn đang chạy.",
+        "catalogEmpty": "Hiện chưa có gói nào mở bán. Vui lòng liên hệ qua chat.",
+        "selected": "Đã chọn",
+        "continueToPayment": "Tiếp tục đến thanh toán",
+        "buying": "Đang mở đơn hàng…",
+        "transferGuide": "Bạn sẽ nhận được mã VietQR và tài khoản nhận tiền ngay trên màn hình này.",
+        "waitingMessage": "Chúng tôi đã nhận xác nhận của bạn. Quản trị viên sẽ kiểm tra giao dịch và kích hoạt đơn hàng, thường trong vài phút.",
+        "pollingNote": "Trang này sẽ tự cập nhật khi đơn hàng được xác nhận.",
+        "orderWithoutInstructions": "Đơn hàng của bạn đang mở nhưng không tải được thông tin chuyển khoản. Vui lòng thử lại, hoặc liên hệ qua chat.",
+        "activated": "Đã nhận thanh toán. Gói mới của bạn đang hoạt động.",
+        "retry": "Thử lại",
+        "extend": {
+            "hint": "Số ngày thêm được cộng vào gói bạn đang chạy, tính theo giá mỗi ngày của gói đó. Số ngày có hiệu lực sau khi đơn hàng được đánh dấu đã thanh toán.",
+            "target": "Gói cần gia hạn",
+            "until": "đến",
+            "days": "Số ngày thêm",
+            "currentEnd": "Ngày kết thúc hiện tại",
+            "newEnd": "Ngày kết thúc mới",
+            "amount": "Số tiền",
+            "amountNote": "Tính theo giá mỗi ngày của gói. Số ngày thêm bắt đầu sau khi quản trị viên xác nhận giao dịch của bạn.",
+            "submit": "Tạo đơn hàng của tôi",
+            "submitting": "Đang mở đơn hàng…",
+            "noActivePlan": "Bạn không có gói đang chạy để gia hạn. Hãy mua một gói mới.",
+            "daysInvalid": "Hãy nhập ít nhất 1 ngày"
+        },
+        "errors": {
+            "load": "Không tải được các gói của bạn. Vui lòng tải lại trang.",
+            "catalog": "Không tải được danh sách gói. Vui lòng thử lại.",
+            "buy": "Không tạo được đơn hàng. Vui lòng thử lại.",
+            "extend": "Không tạo được đơn gia hạn. Vui lòng thử lại.",
+            "pickFirst": "Vui lòng chọn một gói trước.",
+            "pickTarget": "Vui lòng chọn gói cần gia hạn.",
+            "daysInvalid": "Hãy nhập số ngày hợp lệ."
         }
     },
     "saleUrl": {

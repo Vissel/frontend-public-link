@@ -28,11 +28,12 @@
     "header": {
         "publicLink": "Public Link",
         "tagline": "Unified seller registration and order management",
-        "workspace": "Workspace",
+        "workspace": "Home",
         "logout": "Logout",
         "login": "Login",
         "register": "Register",
         "setup": "Setup",
+        "morePlan": "More plan",
         "chat": "Chat",
         "account": "Account",
         "changeAvatar": "Change avatar"
@@ -176,6 +177,52 @@
             "catalog": "The plan list could not be loaded. Please try again.",
             "pickFirst": "Please select a plan first.",
             "buy": "Your order could not be created. Please try again."
+        }
+    },
+    "morePlan": {
+        "title": "Buy more plans",
+        "subtitle": "Add product links or extra days on top of what you already pay for. An admin verifies the transfer and activates the order.",
+        "summaryTitle": "What you pay for now",
+        "remaining": "Links left",
+        "coverage": "Covered until",
+        "noPlans": "No running plan right now. Buy one below to start selling.",
+        "tabs": {
+            "buy": "Buy another plan",
+            "extend": "Add days"
+        },
+        "catalogHint": "Every plan adds its own links and days on top of the plan you already run.",
+        "catalogEmpty": "No plan is on sale right now. Please contact us via chat.",
+        "selected": "Selected",
+        "continueToPayment": "Continue to payment",
+        "buying": "Opening your order…",
+        "transferGuide": "You will get a VietQR code and the account to transfer to on this same screen.",
+        "waitingMessage": "We received your confirmation. An admin verifies the bank transfer and activates the order, usually within a few minutes.",
+        "pollingNote": "This screen updates by itself once the order is confirmed.",
+        "orderWithoutInstructions": "Your order is open but the transfer details could not be loaded. Please retry, or contact us via chat.",
+        "activated": "Payment received. Your new plan is running.",
+        "retry": "Try again",
+        "extend": {
+            "hint": "Extra days are added to a plan you already run, charged at that plan's daily price. They apply once the order is marked paid.",
+            "target": "Plan to extend",
+            "until": "until",
+            "days": "Extra days",
+            "currentEnd": "Current end date",
+            "newEnd": "New end date",
+            "amount": "Amount",
+            "amountNote": "Charged at the plan's daily price. The extra days start after the admin confirms your transfer.",
+            "submit": "Create my order",
+            "submitting": "Opening your order…",
+            "noActivePlan": "You have no running plan to extend. Buy a plan instead.",
+            "daysInvalid": "Enter at least 1 day"
+        },
+        "errors": {
+            "load": "We could not load your plans. Please reload this page.",
+            "catalog": "The plan list could not be loaded. Please try again.",
+            "buy": "Your order could not be created. Please try again.",
+            "extend": "The extension order could not be created. Please try again.",
+            "pickFirst": "Please select a plan first.",
+            "pickTarget": "Please choose the plan to extend.",
+            "daysInvalid": "Enter a valid number of days."
         }
     },
     "saleUrl": {

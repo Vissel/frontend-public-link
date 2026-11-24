@@ -168,6 +168,7 @@ const PublinkPage = () => {
             params: { token },
         });
         setSaleSpace(refreshResponse.data);
+        return refreshResponse.data;
     };
 
     const fallbackCopy = (text, onDone) => {
@@ -325,9 +326,9 @@ const PublinkPage = () => {
 
             await pubApi.post("/api/v1/seller/product/update", payload);
             setSaveSuccess(t("publink.success.productUpdated"));
-            await refreshSaleSpace();
-            // Update the editProduct with refreshed data
-            const refreshed = saleSpace.listProduct?.find(
+            const refreshedSaleSpace = await refreshSaleSpace();
+            // Use the refresh response rather than the pre-save render state.
+            const refreshed = refreshedSaleSpace.listProduct?.find(
                 (p) => p.productId === editForm.productId
             );
             if (refreshed) {
@@ -338,6 +339,8 @@ const PublinkPage = () => {
             newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
             setNewImageFiles([]);
             setNewImagePreviews([]);
+            // Let the success message render briefly, then close the dialog.
+            setTimeout(() => handleCloseEdit(), 800);
         } catch (err) {
             console.error("Update product failed:", err);
             const errData = err?.response?.data;

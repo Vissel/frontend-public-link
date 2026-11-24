@@ -634,15 +634,15 @@ const SetupPage = () => {
           onCompleted={refreshTables}
           bulkActions={[
             ...paymentActions,
-            {
-              key: "approve",
-              label: t("setup.action.approve"),
-              handler: approve,
-              needsDate: true,
-              dateValue,
-              variant: "contained",
-              successMessage: t("setup.success.approved"),
-            },
+            // {
+            //   key: "approve",
+            //   label: t("setup.action.approve"),
+            //   handler: approve,
+            //   needsDate: true,
+            //   dateValue,
+            //   variant: "contained",
+            //   successMessage: t("setup.success.approved"),
+            // },
             {
               key: "reject",
               label: t("setup.action.reject"),

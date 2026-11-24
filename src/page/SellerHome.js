@@ -280,9 +280,13 @@ const SellerHome = () => {
   return (
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
-        {planGate && !planGate.allowed && (
+        {/* Quota exhaustion is reported inside the generate flow, right when
+            the seller picks a plan with no links left and clicks Next. Keeping
+            it out of the home banner avoids greeting every visit with a
+            warning the seller only needs once they try to create a link. */}
+        {planGate && !planGate.allowed && planGate.reason !== "QUOTA_EXHAUSTED" && (
           <Alert
-            severity={planGate.reason === "QUOTA_EXHAUSTED" ? "warning" : "info"}
+            severity="info"
             sx={{ alignItems: "center" }}
             action={
               <Button color="inherit" size="small" onClick={() => navigate("/plans")}>

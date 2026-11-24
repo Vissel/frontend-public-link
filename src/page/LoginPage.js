@@ -126,6 +126,14 @@ const LoginPage = () => {
           navigate(nextParam);
           return;
         }
+        // Only sellers have a workspace. Any other role - a buyer created for a
+        // yoga plan, for instance - would be bounced back to this form by the
+        // seller route guard, so land them on the plan screen instead, which
+        // every non-admin account may open and which is where they can buy.
+        if (primaryRole !== "seller") {
+          navigate("/morePlan");
+          return;
+        }
         navigate((await hasUsablePlan()) ? "/sellerHome" : "/plans");
       } else {
         logout();

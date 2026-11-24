@@ -123,7 +123,16 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
       const res = await pubApi.post("/api/v1/sellerPlan/check");
       const data = res.data || {};
       if (!data.allowed) {
-        setPlanNotice(data.message || t("sellerGenerate.quotaExhausted"));
+        // The server explains the block in English; prefer the localized text
+        // for the reason this dialog knows, and keep the server text for
+        // everything else.
+        const localizedNotice =
+          data.reason === "QUOTA_EXHAUSTED"
+            ? t("sellerGenerate.quotaExhausted")
+            : "";
+        setPlanNotice(
+          localizedNotice || data.message || t("sellerGenerate.quotaExhausted")
+        );
         return;
       }
       setPlanGate(data);

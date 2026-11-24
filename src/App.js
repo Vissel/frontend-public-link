@@ -8,6 +8,7 @@ import SaleEnvPage from "./page/SaleUrlPage";
 import RegisterPage from "./page/RegisterPage";
 import SelfRegisterPage from "./page/SelfRegisterPage";
 import PlanSelectPage from "./page/PlanSelectPage";
+import MorePlanPage from "./page/MorePlanPage";
 import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 import NotificationPage from "./page/NotificationPage";
 import AdminChatPage from "./page/AdminChatPage";
@@ -193,6 +194,20 @@ function App() {
               element={
                 <Layout>
                   <SellerSetupPage />
+                </Layout>
+              }
+            />
+          </Route>
+
+          {/* Buy more capacity on top of a plan that is already running. Open
+              to every role that can own a plan - admins cannot, they have no
+              plan account to buy with. */}
+          <Route element={<ProtectedRoute allowedRoles={["SELLER", "BUYER"]} />}>
+            <Route
+              path="/morePlan"
+              element={
+                <Layout>
+                  <MorePlanPage />
                 </Layout>
               }
             />

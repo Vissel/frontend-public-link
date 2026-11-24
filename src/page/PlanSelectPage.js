@@ -46,6 +46,10 @@ const PlanSelectPage = () => {
     const [catalogLoading, setCatalogLoading] = useState(false);
     const [catalogLoaded, setCatalogLoaded] = useState(false);
     const [catalogError, setCatalogError] = useState("");
+    // Bumped by the catalog retry: the fetch below is guarded by state flags, so
+    // asking for a retry while the catalog is still empty - and catalogLoaded is
+    // already false - would otherwise not retrigger it.
+    const [catalogAttempt, setCatalogAttempt] = useState(0);
     const [selectedPlan, setSelectedPlan] = useState("");
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState(false);
@@ -80,7 +84,11 @@ const PlanSelectPage = () => {
     useEffect(() => {
         // null: never fetched. Once the catalog is in hand the screen keeps it, so
         // polling an open order does not refetch a list that barely changes.
-        if (!needsCatalog || plans.length > 0 || catalogLoading || catalogLoaded) {
+        // catalogLoading is deliberately NOT a dependency: it is set to true in
+        // this very effect, and React would then run the cleanup below and mark
+        // the in-flight request cancelled - the spinner would never stop even
+        // though the catalog arrived.
+        if (!needsCatalog || plans.length > 0 || catalogLoaded) {
             return undefined;
         }
         let cancelled = false;
@@ -108,7 +116,7 @@ const PlanSelectPage = () => {
         return () => {
             cancelled = true;
         };
-    }, [needsCatalog, plans.length, catalogLoading, catalogLoaded, t]);
+    }, [needsCatalog, plans.length, catalogLoaded, catalogAttempt, t]);
 
     // The admin activation is invisible until someone asks, so while an order is
     // open the screen keeps asking. A rejected order falls back to the catalog by
@@ -284,7 +292,15 @@ const PlanSelectPage = () => {
                                 <Alert severity="error" sx={{ alignItems: "center" }}>
                                     <Stack spacing={1}>
                                         <Typography variant="body2">{catalogError}</Typography>
-                                        <Button size="small" variant="outlined" onClick={() => setCatalogLoaded(false)}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => {
+                                                setCatalogError("");
+                                                setCatalogLoaded(false);
+                                                setCatalogAttempt((attempt) => attempt + 1);
+                                            }}
+                                        >
                                             {t("plans.retry")}
                                         </Button>
                                     </Stack>

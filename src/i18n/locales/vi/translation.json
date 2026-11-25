@@ -42,6 +42,7 @@
         "title": "Ảnh đại diện",
         "choose": "Chọn ảnh",
         "save": "Lưu",
+        "saved": "Đã cập nhật ảnh đại diện.",
         "remove": "Xóa ảnh",
         "hint": "Ảnh sẽ tự động cắt vuông và thu nhỏ về {{size}}×{{size}}.",
         "errors": {

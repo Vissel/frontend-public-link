@@ -35,6 +35,7 @@ import { CountdownChip } from "../components/CountdownTimer";
 import YogaSection from "../components/YogaSection";
 import EnvironmentTransferCard from "../components/EnvironmentTransferCard";
 import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
+import useDelayedClose from "../hooks/useDelayedClose";
 import { useTranslation } from "react-i18next";
 import { getExportLocale } from "../i18n/exportLocale";
 
@@ -256,6 +257,9 @@ const PublinkPage = () => {
     };
 
     const handleCloseEdit = () => {
+        // A pending success close must not fire into a dialog the seller
+        // already dismissed or reopened by hand.
+        cancelEditClose();
         setEditProduct(null);
         setEditForm({});
         setExistingPics([]);
@@ -267,6 +271,12 @@ const PublinkPage = () => {
         setSaveError("");
         setSaveSuccess("");
     };
+
+    // The success alert lives inside this dialog, so dismissing it is the one
+    // last step the seller should not have to take separately: keep the alert
+    // on screen briefly, then close (see hooks/useDelayedClose).
+    const { schedule: scheduleEditClose, cancel: cancelEditClose } =
+        useDelayedClose(handleCloseEdit);
 
     const handleEditField = (field) => (e) => {
         const val = e.target.value;
@@ -339,8 +349,7 @@ const PublinkPage = () => {
             newImagePreviews.forEach((url) => URL.revokeObjectURL(url));
             setNewImageFiles([]);
             setNewImagePreviews([]);
-            // Let the success message render briefly, then close the dialog.
-            setTimeout(() => handleCloseEdit(), 800);
+            scheduleEditClose();
         } catch (err) {
             console.error("Update product failed:", err);
             const errData = err?.response?.data;

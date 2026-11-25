@@ -42,6 +42,7 @@
         "title": "Profile picture",
         "choose": "Choose image",
         "save": "Save",
+        "saved": "Profile picture updated.",
         "remove": "Remove picture",
         "hint": "The image is cropped to a square and resized to {{size}}×{{size}} automatically.",
         "errors": {

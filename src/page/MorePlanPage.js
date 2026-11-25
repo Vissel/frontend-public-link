@@ -350,14 +350,14 @@ const MorePlanPage = () => {
                             <Chip
                                 size="small"
                                 color={(state?.remainingQuota || 0) > 0 ? "success" : "default"}
-                                onClick={() => {}}
+                                onClick={() => { }}
                                 clickable={false}
                                 label={`${t("morePlan.remaining")}: ${state?.remainingQuota ?? 0}`}
                             />
                             <Chip
                                 size="small"
                                 variant="outlined"
-                                onClick={() => {}}
+                                onClick={() => { }}
                                 clickable={false}
                                 label={`${t("morePlan.coverage")}: ${formatDate(toTime(state?.coverageEndDate))}`}
                             />
@@ -418,7 +418,7 @@ const MorePlanPage = () => {
                         {state.state === STATE_WAITING_CONFIRM && (
                             <Alert severity="info">
                                 <Stack spacing={0.5}>
-                                    <Chip size="small" color="info" onClick={() => {}} clickable={false} label={t("payment.status.waiting")} />
+                                    <Chip size="small" color="info" onClick={() => { }} clickable={false} label={t("payment.status.waiting")} />
                                     <Typography variant="body2">{t("morePlan.waitingMessage")}</Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         {t("morePlan.pollingNote")}
@@ -510,7 +510,7 @@ const MorePlanPage = () => {
                                                                             <Chip
                                                                                 size="small"
                                                                                 color="primary"
-                                                                                onClick={() => {}}
+                                                                                onClick={() => { }}
                                                                                 clickable={false}
                                                                                 label={t("morePlan.selected")}
                                                                             />

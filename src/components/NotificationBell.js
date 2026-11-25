@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import { pubApi } from "../api";
 import { useAuth } from "../AuthContext";
+import useDelayedClose from "../hooks/useDelayedClose";
 import { useTranslation } from "react-i18next";
 
 const BellSvgIcon = (props) => (
@@ -154,10 +155,18 @@ const NotificationBell = () => {
     };
 
     const handleDialogClose = () => {
+        // Dismissing by hand must not leave a success timer that would close
+        // the next notification the admin opens.
+        cancelClose();
         setDialogOpen(false);
         setSelectedNotification(null);
         setActionState({ busy: false, error: "", success: "" });
     };
+
+    // Marking the payment paid is the whole job of this dialog: let the
+    // confirmation land, then dismiss it instead of waiting for a second click
+    // (see hooks/useDelayedClose).
+    const { schedule: scheduleClose, cancel: cancelClose } = useDelayedClose(handleDialogClose);
 
     /**
      * Admin received the money: the payment behind the notification goes to PAID
@@ -205,6 +214,9 @@ const NotificationBell = () => {
         } catch (err) {
             console.error("Failed to reload notification detail", err);
         }
+        // The reload is best-effort: a slow or failed refresh must not keep the
+        // finished action on screen.
+        scheduleClose();
     };
 
     // A payment notification carries the record it is about, so the dialog

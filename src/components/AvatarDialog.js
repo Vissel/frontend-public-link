@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import api from "../api";
+import useDelayedClose from "../hooks/useDelayedClose";
 import { AVATAR_PIXELS, initialsOf, resizeToDataUrl } from "../util/avatar";
 
 /**
@@ -28,14 +29,25 @@ const AvatarDialog = ({ open, onClose, username, dataUrl, onChanged }) => {
   const [preview, setPreview] = useState(dataUrl || "");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Saving is the whole job of this dialog: show the confirmation, then let
+  // the hook dismiss it instead of asking for one more click.
+  const { schedule: scheduleClose, cancel: cancelClose } = useDelayedClose(onClose);
 
   useEffect(() => {
     if (open) {
       setPreview(dataUrl || "");
       setError("");
       setBusy(false);
+      setSaved(false);
     }
   }, [open, dataUrl]);
+
+  const closeDialog = () => {
+    cancelClose();
+    onClose?.();
+  };
 
   const handlePick = async (event) => {
     const file = event.target.files?.[0];
@@ -56,7 +68,8 @@ const AvatarDialog = ({ open, onClose, username, dataUrl, onChanged }) => {
     try {
       const response = await api.put("/api/v1/user/avatar", { dataUrl: payloadDataUrl });
       onChanged?.(response.data?.data?.dataUrl || null);
-      onClose?.();
+      setSaved(true);
+      scheduleClose();
     } catch (err) {
       setError(
         err?.response?.data?.errorMessage ||
@@ -69,10 +82,15 @@ const AvatarDialog = ({ open, onClose, username, dataUrl, onChanged }) => {
   };
 
   return (
-    <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={busy ? undefined : closeDialog} maxWidth="xs" fullWidth>
       <DialogTitle>{t("avatarDialog.title")}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} alignItems="center" sx={{ pt: 1 }}>
+          {saved && (
+            <Alert severity="success" sx={{ width: "100%" }}>
+              {t("avatarDialog.saved")}
+            </Alert>
+          )}
           <Avatar
             src={preview || undefined}
             alt={username}
@@ -104,16 +122,16 @@ const AvatarDialog = ({ open, onClose, username, dataUrl, onChanged }) => {
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
         <Stack direction="row" spacing={1}>
-          <Button onClick={onClose} disabled={busy}>
+          <Button onClick={closeDialog} disabled={busy}>
             {t("common.cancel")}
           </Button>
           {preview ? (
-            <Button color="error" onClick={() => submit("")} disabled={busy}>
+            <Button color="error" onClick={() => submit("")} disabled={busy || saved}>
               {t("avatarDialog.remove")}
             </Button>
           ) : null}
         </Stack>
-        <Button variant="contained" onClick={() => submit(preview)} disabled={busy || !preview}>
+        <Button variant="contained" onClick={() => submit(preview)} disabled={busy || saved || !preview}>
           {t("avatarDialog.save")}
         </Button>
       </DialogActions>

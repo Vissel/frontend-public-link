@@ -16,6 +16,11 @@ import { useTranslation } from "react-i18next";
 
 const normalizeRole = (role) => String(role || "").toLowerCase();
 
+// Everything the plan-purchase side of the app refuses to sell to. Both admin
+// authorities are listed because the gateway treats Badminton_Admin as an
+// admin too (/publiclink/admin/v1/** allows either).
+const ADMIN_ROLES = ["admin", "badminton_admin"];
+
 function Header() {
   const location = useLocation();
   const { auth, userRole } = useAuth();
@@ -23,12 +28,25 @@ function Header() {
 
   const normalizedRole = normalizeRole(userRole);
   const isAuthenticated = Boolean(auth);
+  const isAdmin = ADMIN_ROLES.includes(normalizedRole);
+  // Anonymous visitors on a public product link (court booking) must come
+  // back to it after signing up or signing in.
+  const isSaleUrl = location.pathname === "/api/v1/publish/saleUrl";
+  const returnTo = `${location.pathname}${location.search}`;
+  const registerTarget = isSaleUrl ? `/register?next=${encodeURIComponent(returnTo)}` : "/register";
+  const loginTarget = isSaleUrl ? `/login?next=${encodeURIComponent(returnTo)}` : "/login";
+  // Admins and sellers keep their workspaces. Any other signed-in role (a
+  // buyer, for instance) has no workspace to land in: the seller home would
+  // bounce it straight back to the login form, so the plan screen - which
+  // every non-admin account may open - is the honest destination.
   const homeTarget =
     normalizedRole === "admin"
       ? "/adminHome"
       : normalizedRole === "seller"
         ? "/sellerHome"
-        : "/login";
+        : isAuthenticated
+          ? "/morePlan"
+          : "/login";
 
   const handleLanguageChange = (lang) => {
     i18n.changeLanguage(lang);
@@ -117,6 +135,18 @@ function Header() {
                 {t("header.workspace")}
               </Button>
             )}
+            {/* Buying more capacity is open to every account that can own a
+                plan, so it sits next to the workspace rather than inside the
+                setup page, which sellers only reach as a read-only view. */}
+            {isAuthenticated && !isAdmin && (
+              <Button
+                component={RouterLink}
+                to="/morePlan"
+                variant={location.pathname === "/morePlan" ? "contained" : "text"}
+              >
+                {t("header.morePlan")}
+              </Button>
+            )}
             {isAuthenticated && (normalizedRole === "admin" || normalizedRole === "seller") && (
               <Button
                 component={RouterLink}
@@ -127,15 +157,17 @@ function Header() {
               </Button>
             )}
             {/* Chat moved into the account menu, unread badge on the avatar. */}
-            {isAuthenticated && (normalizedRole === "seller" || normalizedRole === "admin") && (
-              <NotificationBell />
-            )}
+            {/* Every signed-in role gets the bell: the endpoints are
+                identity-scoped, not role-scoped, so a buyer now sees the
+                "plan activated" news their purchase ends with, and the admin
+                keeps the payment confirmations they act on. */}
+            {isAuthenticated && <NotificationBell />}
             {isAuthenticated && <AccountMenu />}
 
             {!isAuthenticated && (
               <Button
                 component={RouterLink}
-                to="/register"
+                to={registerTarget}
                 variant={location.pathname === "/register" ? "contained" : "outlined"}
               >
                 {t("header.register")}
@@ -144,7 +176,7 @@ function Header() {
             {!isAuthenticated && (
               <Button
                 component={RouterLink}
-                to="/login"
+                to={loginTarget}
                 variant={location.pathname === "/login" ? "contained" : "text"}
               >
                 {t("header.login")}

@@ -16,6 +16,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { pubApi } from "../api";
@@ -47,6 +48,10 @@ const YogaPlansManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState(null);
   const [saving, setSaving] = useState(false);
+  // Fresh setup link handed back by plan/create. Email and in-app delivery
+  // are best-effort (buyer email, broker and SMTP must all be up), so the
+  // link is always shown copyable as the reliable hand-off.
+  const [linkDialog, setLinkDialog] = useState(null);
 
   useEffect(() => {
     pubApi
@@ -120,6 +125,9 @@ const YogaPlansManager = () => {
       if (isCreate) {
         const res = await pubApi.post(`${SELLER}/plan/create`, payload);
         const link = res.data?.data?.setupLink;
+        if (link) {
+          setLinkDialog({ link, buyer: draft.buyerName.trim() });
+        }
         setNotice(link ? t("yogaPlans.success.createdWithLink") : t("yogaPlans.success.created"));
       } else {
         await pubApi.post(`${SELLER}/plan/update`, {
@@ -136,20 +144,6 @@ const YogaPlansManager = () => {
       setError(err?.response?.data?.errorMessage || t("yogaPlans.errors.save"));
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleResend = async (plan) => {
-    setError("");
-    try {
-      await pubApi.post(`${SELLER}/plan/resend`, null, {
-        params: { token, sellerPlanCode: plan.sellerPlanCode },
-      });
-      setNotice(t("yogaPlans.success.linkSent"));
-      await loadPlans();
-    } catch (err) {
-      console.error("Resend failed", err);
-      setError(err?.response?.data?.errorMessage || t("yogaPlans.errors.resend"));
     }
   };
 
@@ -225,18 +219,7 @@ const YogaPlansManager = () => {
             {plans.map((plan) => (
               <TableRow key={plan.sellerPlanCode} hover>
                 <TableCell>{plan.buyerName}</TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="body2">{plan.buyerUsername}</Typography>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => copyText(`u-${plan.sellerPlanCode}`, plan.buyerUsername)}
-                    >
-                      {copiedKey === `u-${plan.sellerPlanCode}` ? t("common.copied") : t("common.copy")}
-                    </Button>
-                  </Stack>
-                </TableCell>
+                <TableCell>{plan.buyerUsername}</TableCell>
                 <TableCell>{plan.buyerEmail || "—"}</TableCell>
                 <TableCell align="center">{plan.usedDays}/{plan.totalDays}</TableCell>
                 <TableCell align="right">{formatVND(plan.amountVnd)} VND</TableCell>
@@ -248,12 +231,23 @@ const YogaPlansManager = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <Chip size="small" color={plan.state === "ACTIVE" ? "success" : "default"} label={plan.state} />
+                  <Chip
+                    size="small"
+                    color={plan.state === "ACTIVE" ? "success" : "default"}
+                    label={plan.state === "ACTIVE" ? t("common.active") : t("common.inactive")}
+                  />
                 </TableCell>
                 <TableCell align="right">
                   <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                     <Button size="small" onClick={() => openEdit(plan)}>{t("yogaPlans.edit")}</Button>
-                    <Button size="small" onClick={() => handleResend(plan)}>{t("yogaPlans.resend")}</Button>
+                    {/* Resend is intentionally unavailable. The disabled Button
+                        sits inside a span because disabled elements do not emit
+                        the pointer events the Tooltip listens to. */}
+                    <Tooltip title={t("yogaPlans.resendUnavailable")}>
+                      <span>
+                        <Button size="small" disabled>{t("yogaPlans.resend")}</Button>
+                      </span>
+                    </Tooltip>
                   </Stack>
                 </TableCell>
               </TableRow>
@@ -306,8 +300,8 @@ const YogaPlansManager = () => {
                 onChange={(e) => setDraft((p) => ({ ...p, state: e.target.value }))}
                 fullWidth
               >
-                <MenuItem value="ACTIVE">ACTIVE</MenuItem>
-                <MenuItem value="INACTIVE">INACTIVE</MenuItem>
+                <MenuItem value="ACTIVE">{t("common.active")}</MenuItem>
+                <MenuItem value="INACTIVE">{t("common.inactive")}</MenuItem>
               </TextField>
             )}
           </Stack>
@@ -317,6 +311,37 @@ const YogaPlansManager = () => {
           <Button onClick={handleSave} variant="contained" disabled={saving}>
             {saving ? t("common.saving") : t("common.save")}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Fresh setup link for the seller to forward. The dialog intentionally
+          stays open after copying: the link is a one-time secret. */}
+      <Dialog open={Boolean(linkDialog)} onClose={() => setLinkDialog(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>{t("yogaPlans.linkTitle")}</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              {t("yogaPlans.linkHint", { buyer: linkDialog?.buyer || "" })}
+            </Typography>
+            <Stack direction="row" spacing={1}>
+              <TextField
+                size="small"
+                fullWidth
+                value={linkDialog?.link || ""}
+                InputProps={{ readOnly: true }}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => copyText("setup-link", linkDialog?.link)}
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                {copiedKey === "setup-link" ? t("common.copied") : t("common.copy")}
+              </Button>
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setLinkDialog(null)}>{t("common.close")}</Button>
         </DialogActions>
       </Dialog>
     </Stack>

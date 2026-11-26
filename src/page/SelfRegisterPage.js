@@ -9,7 +9,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import JSEncrypt from "jsencrypt";
 import api, { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
@@ -33,6 +33,11 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const SelfRegisterPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const nextPath = searchParams.get("next") || "/plans";
+    // The badminton booking page hands its own URL as next, so the account is
+    // created as a player and the copy drops the seller onboarding steps.
+    const isPlayerReturn = nextPath.startsWith("/api/v1/publish/saleUrl");
 
     const [form, setForm] = useState({ username: "", name: "", email: "", password: "", repeatPassword: "" });
     const [fieldErrors, setFieldErrors] = useState({});
@@ -124,10 +129,13 @@ const SelfRegisterPage = () => {
                 name: form.name.trim(),
                 email: form.email.trim(),
                 password: encryptedPassword,
+                // Court booking visitors become BUYER; the standalone
+                // seller onboarding keeps the SELLER default.
+                role: isPlayerReturn ? "BUYER" : "SELLER",
             });
 
             navigate("/login", {
-                state: { accountCreated: true, username: form.username.trim(), next: "/plans" },
+                state: { accountCreated: true, username: form.username.trim(), next: nextPath },
             });
         } catch (err) {
             console.error("Self-registration failed", err);
@@ -161,11 +169,11 @@ const SelfRegisterPage = () => {
     return (
         <PageContainer maxWidth="sm">
             <Stack spacing={3}>
-                <OnboardingSteps activeStep={0} />
+                {!isPlayerReturn && <OnboardingSteps activeStep={0} />}
 
                 <SectionBlock
-                    title={t("selfRegister.title")}
-                    description={t("selfRegister.subtitle")}
+                    title={isPlayerReturn ? t("selfRegister.playerTitle") : t("selfRegister.title")}
+                    description={isPlayerReturn ? t("selfRegister.playerSubtitle") : t("selfRegister.subtitle")}
                 >
                     <Stack spacing={3}>
                         {error && <Alert severity="error">{error}</Alert>}
@@ -256,10 +264,10 @@ const SelfRegisterPage = () => {
 
                         <Stack spacing={1}>
                             <Typography variant="body2" color="text.secondary">
-                                {t("selfRegister.afterNote")}
+                                {isPlayerReturn ? t("selfRegister.playerAfterNote") : t("selfRegister.afterNote")}
                             </Typography>
                             <Typography variant="body2">
-                                <Link component={RouterLink} to="/login">
+                                <Link component={RouterLink} to={`/login?next=${encodeURIComponent(nextPath)}`}>
                                     {t("selfRegister.loginLink")}
                                 </Link>
                             </Typography>

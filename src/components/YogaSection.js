@@ -23,7 +23,6 @@ import { useTranslation } from "react-i18next";
 import { pubApi } from "../api";
 import { useAuth } from "../AuthContext";
 import {
-    ISO_WEEKDAYS,
     addDays,
     currentHour,
     hourLabel,
@@ -31,7 +30,6 @@ import {
     shortDate,
     todayIso,
     weekDates,
-    weekdayLabel,
 } from "../util/yoga";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -179,6 +177,7 @@ const YogaSection = ({ token }) => {
             setEditorOpen(false);
             setNotice(t("yoga.success.classSaved"));
             await loadCalendar();
+            await loadRange();
         } catch (err) {
             console.error("Save class failed", err);
             setError(err?.response?.data?.errorMessage || t("yoga.errors.saveClass"));
@@ -194,6 +193,7 @@ const YogaSection = ({ token }) => {
             });
             setNotice(t("yoga.success.classDeleted"));
             await loadCalendar();
+            await loadRange();
         } catch (err) {
             console.error("Delete class failed", err);
             setError(err?.response?.data?.errorMessage || t("yoga.errors.deleteClass"));
@@ -241,6 +241,7 @@ const YogaSection = ({ token }) => {
             setBookOpen(false);
             setNotice(t("yoga.success.booked"));
             await loadCalendar();
+            await loadRange();
         } catch (err) {
             console.error("Booking failed", err);
             setError(err?.response?.data?.errorMessage || t("yoga.errors.book"));
@@ -254,6 +255,7 @@ const YogaSection = ({ token }) => {
             await pubApi.post(`${YOGA}/cancel`, { token, bookingCode });
             setNotice(t("yoga.success.cancelled"));
             await loadCalendar();
+            await loadRange();
         } catch (err) {
             console.error("Cancel failed", err);
             setError(err?.response?.data?.errorMessage || t("yoga.errors.cancel"));
@@ -386,7 +388,7 @@ const YogaSection = ({ token }) => {
                                         }}
                                     >
                                         <Typography variant="subtitle2" sx={{ color: "white", fontWeight: 700 }}>
-                                            {weekdayLabel(iso)}
+                                            {t(`yoga.days.${isoWeekday(iso)}`)}
                                         </Typography>
                                         <Typography variant="caption" sx={{ color: "white" }}>
                                             {shortDate(iso)}
@@ -626,8 +628,8 @@ const YogaSection = ({ token }) => {
                             onChange={(e) => setEditorDraft((p) => ({ ...p, dayOfWeek: e.target.value }))}
                             fullWidth
                         >
-                            {ISO_WEEKDAYS.map((label, idx) => (
-                                <MenuItem key={label} value={idx + 1}>{label}</MenuItem>
+                            {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                                <MenuItem key={day} value={day}>{t(`yoga.days.${day}`)}</MenuItem>
                             ))}
                         </TextField>
                         <Stack direction="row" spacing={1}>
@@ -677,7 +679,10 @@ const YogaSection = ({ token }) => {
                 <DialogContent>
                     <Stack spacing={2} sx={{ pt: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                            {bookOccurrence?.title} · {bookOccurrence?.date} {bookOccurrence?.startTime}-{bookOccurrence?.endTime}
+                            {bookOccurrence?.title}
+                            {" · "}
+                            {bookOccurrence?.date} {bookOccurrence?.startTime}-{bookOccurrence?.endTime}
+                            {bookOccurrence?.coach ? ` · ${bookOccurrence.coach}` : ""}
                         </Typography>
                         {sellerView ? (
                             <TextField

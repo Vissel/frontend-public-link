@@ -30,6 +30,7 @@ import {
 import api from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
+import { useTranslation } from "react-i18next";
 
 const ArrowUpIcon = (props) => (
   <SvgIcon {...props} viewBox="0 0 24 24">
@@ -84,6 +85,7 @@ function SellerRow({
   const [open, setOpen] = useState(false);
   const [envs, setEnvs] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleExpand = async () => {
     const next = !open;
@@ -167,7 +169,7 @@ function SellerRow({
               <Stack direction="row" spacing={1} alignItems="center" sx={{ py: 1 }}>
                 <CircularProgress size={18} />
                 <Typography variant="body2" color="text.secondary">
-                  Loading environments...
+                  {t("notificationPage.loadingEnvironments")}
                 </Typography>
               </Stack>
             ) : envs && envs.length > 0 ? (
@@ -184,9 +186,9 @@ function SellerRow({
                           onClick={(e) => e.stopPropagation()}
                         />
                       </TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell sx={{ width: 160 }}>Created At</TableCell>
-                      <TableCell align="center" sx={{ width: 80 }}>Status</TableCell>
+                      <TableCell>{t("notificationPage.envName")}</TableCell>
+                      <TableCell sx={{ width: 160 }}>{t("notificationPage.envCreatedAt")}</TableCell>
+                      <TableCell align="center" sx={{ width: 80 }}>{t("notificationPage.envStatus")}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -224,18 +226,18 @@ function SellerRow({
                             {env.active ? (
                               <Chip
                                 size="small"
-                                label="Active"
+                                label={t("common.active")}
                                 color="success"
                                 sx={{ height: 22, fontSize: "0.7rem" }}
                               />
                             ) : (
                               <Tooltip
-                                title={env.endedAt ? `Ended: ${env.endedAt}` : "Ended"}
+                                title={env.endedAt ? t("notificationPage.endedAt", { date: env.endedAt }) : t("notificationPage.ended")}
                                 arrow
                               >
                                 <Chip
                                   size="small"
-                                  label="Inactive"
+                                  label={t("common.inactive")}
                                   color="default"
                                   sx={{ height: 22, fontSize: "0.7rem" }}
                                 />
@@ -250,7 +252,7 @@ function SellerRow({
               </TableContainer>
             ) : (
               <Typography variant="body2" color="text.secondary">
-                No environments found for this seller.
+                {t("notificationPage.noEnvironments")}
               </Typography>
             )}
           </TableCell>
@@ -280,6 +282,7 @@ const NotificationPage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const { t } = useTranslation();
 
   const searchTimerRef = useRef(null);
 
@@ -296,11 +299,11 @@ const NotificationPage = () => {
       setTotal(t);
     } catch (err) {
       console.error("Failed to load sellers", err);
-      setError("Failed to load seller list.");
+      setError(t("notificationPage.errors.loadSellers"));
     } finally {
       setLoadingSellers(false);
     }
-  }, [appliedSearch, page]);
+  }, [appliedSearch, page, t]);
 
   useEffect(() => {
     loadSellers();
@@ -358,10 +361,10 @@ const NotificationPage = () => {
     setError("");
     setSuccess("");
 
-    if (!title.trim()) { setError("Title is required."); return; }
-    if (!message.trim()) { setError("Message is required."); return; }
+    if (!title.trim()) { setError(t("notificationPage.errors.titleRequired")); return; }
+    if (!message.trim()) { setError(t("notificationPage.errors.messageRequired")); return; }
     if (!selectAll && selectedCount === 0) {
-      setError("Select at least one seller or use 'Select All'.");
+      setError(t("notificationPage.errors.selectSeller"));
       return;
     }
 
@@ -384,7 +387,9 @@ const NotificationPage = () => {
       });
 
       setSuccess(
-        `Notification sent to ${selectAll ? "all sellers" : `${selectedCount} seller(s)`} successfully.`
+        selectAll
+          ? t("notificationPage.success.sentAll")
+          : t("notificationPage.success.sentCount", { count: selectedCount })
       );
       setTitle("");
       setMessage("");
@@ -393,7 +398,7 @@ const NotificationPage = () => {
       setSelectAll(false);
     } catch (err) {
       console.error("Failed to send notification", err);
-      setError(err?.response?.data?.errorMessage || "Failed to send notification.");
+      setError(err?.response?.data?.errorMessage || t("notificationPage.errors.sendFailed"));
     } finally {
       setLoading(false);
     }
@@ -417,8 +422,8 @@ const NotificationPage = () => {
     <PageContainer maxWidth="xl">
       <Stack spacing={3}>
         <SectionBlock
-          title="Send Notification"
-          description="Compose and deliver notifications to sellers. Search, select recipients, and optionally scope to specific environments."
+          title={t("notificationPage.title")}
+          description={t("notificationPage.description")}
         >
           {success && <Alert severity="success">{success}</Alert>}
           {error && <Alert severity="error">{error}</Alert>}
@@ -428,13 +433,13 @@ const NotificationPage = () => {
             <Box sx={{ flex: { lg: "0 0 45%" }, minWidth: 0 }}>
               <Stack spacing={2}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Recipients
+                  {t("notificationPage.recipients")}
                 </Typography>
 
                 {/* Search */}
                 <TextField
-                  label="Search sellers"
-                  placeholder="Search by username or name..."
+                  label={t("notificationPage.searchLabel")}
+                  placeholder={t("notificationPage.searchPlaceholder")}
                   size="small"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
@@ -449,10 +454,10 @@ const NotificationPage = () => {
                     onChange={handleSelectAll}
                   />
                   <Typography variant="body2">
-                    {selectAll ? "All sellers selected" : "Select all on this page"}
+                    {selectAll ? t("notificationPage.allSelected") : t("notificationPage.selectAllPage")}
                   </Typography>
                   {selectedCount > 0 && !selectAll && (
-                    <Chip size="small" color="primary" label={`${selectedCount} selected`} />
+                    <Chip size="small" color="primary" label={t("notificationPage.selectedCount", { count: selectedCount })} />
                   )}
                 </Stack>
 
@@ -477,9 +482,9 @@ const NotificationPage = () => {
                       <TableRow>
                         <TableCell padding="checkbox" sx={{ width: 48 }} />
                         <TableCell sx={{ width: 40 }} />
-                        <TableCell>Seller</TableCell>
+                        <TableCell>{t("notificationPage.sellerColumn")}</TableCell>
                         <TableCell align="center" sx={{ width: 80 }}>
-                          Env
+                          {t("notificationPage.envColumn")}
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -494,7 +499,7 @@ const NotificationPage = () => {
                         <TableRow>
                           <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                             <Typography variant="body2" color="text.secondary">
-                              No sellers found.
+                              {t("notificationPage.noSellers")}
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -523,7 +528,7 @@ const NotificationPage = () => {
                   rowsPerPage={PAGE_SIZE}
                   onRowsPerPageChange={() => { }}
                   rowsPerPageOptions={[PAGE_SIZE]}
-                  labelRowsPerPage="Per page"
+                  labelRowsPerPage={t("notificationPage.perPage")}
                 />
               </Stack>
             </Box>
@@ -534,11 +539,11 @@ const NotificationPage = () => {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Stack spacing={2}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  Compose Message
+                  {t("notificationPage.compose")}
                 </Typography>
 
                 <TextField
-                  label="Title"
+                  label={t("notificationPage.fieldTitle")}
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   fullWidth
@@ -548,7 +553,7 @@ const NotificationPage = () => {
                 />
 
                 <TextField
-                  label="Message"
+                  label={t("notificationPage.fieldMessage")}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   fullWidth
@@ -556,19 +561,19 @@ const NotificationPage = () => {
                   multiline
                   minRows={8}
                   maxRows={16}
-                  placeholder="Type your notification message here..."
+                  placeholder={t("notificationPage.messagePlaceholder")}
                 />
 
                 <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 1 }}>
                   <Button variant="outlined" onClick={handleClear}>
-                    Clear
+                    {t("notificationPage.clear")}
                   </Button>
                   <Button
                     variant="contained"
                     disabled={loading}
                     onClick={() => setConfirmOpen(true)}
                   >
-                    {loading ? "Sending..." : "Send Notification"}
+                    {loading ? t("common.submitting") : t("notificationPage.send")}
                   </Button>
                 </Stack>
               </Stack>
@@ -578,18 +583,18 @@ const NotificationPage = () => {
 
         {/* Confirmation Dialog */}
         <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth>
-          <DialogTitle>Confirm Send</DialogTitle>
+          <DialogTitle>{t("notificationPage.confirmTitle")}</DialogTitle>
           <DialogContent>
             <DialogContentText>
               {selectAll
-                ? "This will send the notification to ALL sellers. Continue?"
-                : `This will send the notification to ${selectedCount} seller(s). Continue?`}
+                ? t("notificationPage.confirmAll")
+                : t("notificationPage.confirmSelected", { count: selectedCount })}
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
+            <Button onClick={() => setConfirmOpen(false)}>{t("common.cancel")}</Button>
             <Button onClick={handleSend} variant="contained" autoFocus>
-              Confirm & Send
+              {t("notificationPage.confirmSend")}
             </Button>
           </DialogActions>
         </Dialog>

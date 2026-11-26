@@ -6,6 +6,11 @@ import {
     CardActionArea,
     Chip,
     CircularProgress,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     Divider,
     Grid,
     Stack,
@@ -18,6 +23,12 @@ import CardWrapper from "../components/CardWrapper";
 import OnboardingSteps from "../components/OnboardingSteps";
 import PaymentInfoPanel from "../components/PaymentInfoPanel";
 import { formatVND } from "../util/clipboard";
+import {
+    PLAN_GROUP_BOOKING,
+    PLAN_GROUP_PRODUCT,
+    groupColor,
+    normalizeGroup,
+} from "../util/planGroup";
 import { useTranslation } from "react-i18next";
 
 /** How often the screen asks whether the admin has verified the transfer. */
@@ -55,6 +66,8 @@ const PlanSelectPage = () => {
     const [buying, setBuying] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState("");
+    const [switchOpen, setSwitchOpen] = useState(false);
+    const [switching, setSwitching] = useState(false);
 
     const loadState = useCallback(async ({ quiet = false } = {}) => {
         if (!quiet) {
@@ -81,6 +94,12 @@ const PlanSelectPage = () => {
 
     const needsCatalog = state === null || state?.state === STATE_PICK_PLAN;
 
+    // The backend owns the answer; a legacy account with no stored purpose reads
+    // as PRODUCT, which is exactly the catalog it has always been shown.
+    const purpose = normalizeGroup(state?.planPurpose);
+    const otherPurpose = purpose === PLAN_GROUP_BOOKING ? PLAN_GROUP_PRODUCT : PLAN_GROUP_BOOKING;
+    const purposeColor = groupColor(purpose);
+
     useEffect(() => {
         // null: never fetched. Once the catalog is in hand the screen keeps it, so
         // polling an open order does not refetch a list that barely changes.
@@ -95,7 +114,7 @@ const PlanSelectPage = () => {
         setCatalogLoading(true);
         setCatalogError("");
         pubApi
-            .get("/api/v1/publish/plans")
+            .get("/api/v1/publish/plans", { params: { group: purpose } })
             .then((res) => {
                 if (!cancelled) {
                     setPlans(res.data?.items || []);
@@ -116,7 +135,8 @@ const PlanSelectPage = () => {
         return () => {
             cancelled = true;
         };
-    }, [needsCatalog, plans.length, catalogLoaded, catalogAttempt, t]);
+        // purpose is a dependency: switching must drop the group just fetched.
+    }, [needsCatalog, plans.length, catalogLoaded, catalogAttempt, purpose, t]);
 
     // The admin activation is invisible until someone asks, so while an order is
     // open the screen keeps asking. A rejected order falls back to the catalog by
@@ -172,6 +192,32 @@ const PlanSelectPage = () => {
         (err) => setError(err?.response?.data?.message || t("payment.errors.confirm")),
         [t]
     );
+
+    /**
+     * Move the account onto the other plan group. Deliberately a confirmed, named
+     * action rather than a filter: buying the wrong kind of plan is the mistake
+     * the split exists to prevent, so undoing it has to feel like a decision.
+     */
+    const handleSwitchPurpose = async () => {
+        setSwitching(true);
+        setError("");
+        try {
+            const res = await pubApi.post("/api/v1/sellerPlan/purpose", { planPurpose: otherPurpose });
+            // Drop the group just shown, or the effect below would keep it cached.
+            setPlans([]);
+            setCatalogLoaded(false);
+            setCatalogAttempt((attempt) => attempt + 1);
+            setSelectedPlan("");
+            setState(res.data || null);
+            setSwitchOpen(false);
+        } catch (err) {
+            console.error("Failed to switch the plan purpose", err);
+            setError(err?.response?.data?.message || t("plans.switchPurpose.failed"));
+            setSwitchOpen(false);
+        } finally {
+            setSwitching(false);
+        }
+    };
 
     const activeStep = useMemo(() => {
         if (state?.state === STATE_WAITING_CONFIRM || state?.state === STATE_ACTIVE) {
@@ -240,6 +286,14 @@ const PlanSelectPage = () => {
                 {state?.state === STATE_ACTIVE && (
                     <Alert severity="success">
                         <Stack spacing={1.5}>
+                            <Chip
+                                size="small"
+                                color={groupColor(state.activePlan?.planGroup || purpose)}
+                                onClick={() => { }}
+                                clickable={false}
+                                sx={{ alignSelf: "flex-start" }}
+                                label={t(`plans.group.${normalizeGroup(state.activePlan?.planGroup || purpose)}.label`)}
+                            />
                             <Typography variant="body2">
                                 {t("plans.activeMessage", {
                                     from: state.activePlan?.activeDate || "-",
@@ -272,11 +326,22 @@ const PlanSelectPage = () => {
                 {state?.state === STATE_PICK_PLAN && (
                     <CardWrapper>
                         <Stack spacing={2}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                                {t("plans.catalogTitle")}
-                            </Typography>
+                            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                    {t("plans.catalogTitle")}
+                                </Typography>
+                                {/* The group is named in words, not only by colour,
+                                    so a buyer can tell what they are about to pay for. */}
+                                <Chip
+                                    size="small"
+                                    color={purposeColor}
+                                    onClick={() => { }}
+                                    clickable={false}
+                                    label={t(`plans.group.${purpose}.label`)}
+                                />
+                            </Stack>
                             <Typography variant="body2" color="text.secondary">
-                                {t("plans.catalogHint")}
+                                {t(`plans.group.${purpose}.hint`)}
                             </Typography>
 
                             {catalogLoading && (
@@ -311,6 +376,12 @@ const PlanSelectPage = () => {
                                 <Alert severity="info">{t("plans.catalogEmpty")}</Alert>
                             )}
 
+                            {!catalogLoading && !catalogError && plans.length === 0 && (
+                                <Typography variant="caption" color="text.secondary">
+                                    {t(`plans.group.${purpose}.emptyNote`)}
+                                </Typography>
+                            )}
+
                             <Grid container spacing={2}>
                                 {plans.map((plan) => {
                                     const isSelected = selectedPlan === plan.planCode;
@@ -337,6 +408,11 @@ const PlanSelectPage = () => {
                                                         <Typography variant="body2" color="text.secondary">
                                                             {plan.planDay} {t("payment.unit.day")} · {plan.envCount} {t("payment.unit.link")}
                                                         </Typography>
+                                                        {plan.planGroup && (
+                                                            <Typography variant="caption" sx={{ color: `${groupColor(plan.planGroup)}.main`, fontWeight: 600 }}>
+                                                                {t(`plans.group.${normalizeGroup(plan.planGroup)}.label`)}
+                                                            </Typography>
+                                                        )}
                                                         {plan.description && (
                                                             <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                                                                 {plan.description}
@@ -355,6 +431,7 @@ const PlanSelectPage = () => {
                                 <Button
                                     variant="contained"
                                     size="large"
+                                    color={purposeColor}
                                     onClick={handleBuy}
                                     disabled={buying || !selectedPlan || plans.length === 0}
                                 >
@@ -364,6 +441,21 @@ const PlanSelectPage = () => {
                                     {t("plans.transferGuide")}
                                 </Typography>
                             </Stack>
+                            {/* Only offered while nothing is unpaid: switching groups
+                                with an open order would strand a transfer the seller
+                                no longer wants, and the backend refuses it too. */}
+                            {!state?.pendingPayment && (
+                                <Button
+                                    size="small"
+                                    color={groupColor(otherPurpose)}
+                                    onClick={() => setSwitchOpen(true)}
+                                    sx={{ alignSelf: "flex-start" }}
+                                >
+                                    {t("plans.switchPurpose.link", {
+                                        group: t(`plans.group.${otherPurpose}.label`),
+                                    })}
+                                </Button>
+                            )}
                         </Stack>
                     </CardWrapper>
                 )}
@@ -397,6 +489,31 @@ const PlanSelectPage = () => {
                     </>
                 )}
             </Stack>
+
+            <Dialog open={switchOpen} onClose={() => setSwitchOpen(false)}>
+                <DialogTitle>{t("plans.switchPurpose.dialogTitle")}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        {t("plans.switchPurpose.dialogBody", {
+                            current: t(`plans.group.${purpose}.label`),
+                            target: t(`plans.group.${otherPurpose}.label`),
+                        })}
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSwitchOpen(false)} disabled={switching}>
+                        {t("common.cancel")}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color={groupColor(otherPurpose)}
+                        onClick={handleSwitchPurpose}
+                        disabled={switching}
+                    >
+                        {switching ? t("plans.switchPurpose.switching") : t("plans.switchPurpose.confirm")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </PageContainer>
     );
 };

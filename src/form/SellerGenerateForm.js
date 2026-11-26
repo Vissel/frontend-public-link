@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,6 +17,7 @@ import { useAuth } from "../AuthContext";
 import ProductForm from "./ProductForm";
 import SaleWindowFields from "./SaleWindowFields";
 import { useTranslation } from "react-i18next";
+import { groupColor, normalizeGroup } from "../util/planGroup";
 import {
   clampedDurationHours,
   effectiveLinkExpiry,
@@ -108,6 +110,9 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
 
   const handleProductDataChange = (data) => {
     productDataRef.current = data;
+    // Choosing a product type can clear a group notice left over from an
+    // earlier attempt, so the seller is not told to fix something already fixed.
+    setPlanNotice("");
   };
 
   const handleNext = async () => {
@@ -156,6 +161,27 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
 
   const handleSubmit = async () => {
     setError("");
+
+    const productType = productDataRef.current?.productType || "STANDARD";
+    // Asked before anything is written, so a seller who picked a product plan
+    // and is about to create a booking calendar is stopped with an explanation
+    // instead of a bare 403 from the environment call.
+    try {
+      const gate = await pubApi.post("/api/v1/sellerPlan/check", null, { params: { productType } });
+      if (gate.data && gate.data.allowed === false) {
+        setPlanNotice(
+          gate.data.reason === "WRONG_GROUP"
+            // The group this product type needs, which is the one the seller has
+            // to buy. STANDARD maps to PRODUCT, a booking type to BOOKING.
+            ? t("sellerGenerate.wrongGroup", { group: t(`plans.group.${normalizeGroup(productType)}.label`) })
+            : gate.data.message || t("sellerGenerate.quotaExhausted")
+        );
+        return;
+      }
+    } catch (err) {
+      // A failed pre-check must not block a generation the server still gates.
+      console.error("Failed to re-check the plan for this product type", err);
+    }
 
     const windowError = validateSaleWindow(
       windowStart,
@@ -330,6 +356,17 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
                       <Typography variant="caption" color="text.secondary">
                         {t("sellerGenerate.validUntil")}: {plan.endedDate || "-"}
                       </Typography>
+                      <Divider orientation="vertical" flexItem />
+                      {/* Named per plan: a seller holding both kinds can then see
+                          which one will actually pay for this link. */}
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        color={groupColor(plan.planGroup)}
+                        onClick={() => { }}
+                        clickable={false}
+                        label={t(`plans.group.${normalizeGroup(plan.planGroup)}.label`)}
+                      />
                     </Box>
                   );
                 })}

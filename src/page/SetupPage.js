@@ -24,6 +24,7 @@ import PaymentLinksDialog from "../components/PaymentLinksDialog";
 import SectionBlock from "../components/SectionBlock";
 import TransferInfoManager from "../components/TransferInfoManager";
 import { useTranslation } from "react-i18next";
+import { groupColor, normalizeGroup } from "../util/planGroup";
 
 const contextPath = "/publiclink";
 const DEFAULT_ROWS = 10;
@@ -424,6 +425,27 @@ const PlanAssignmentTable = ({
                           clickable={false}
                         />
                       ) : null}
+                      {row.convertsPlanUserCode ? (
+                        // Same trap as an extension: this row moves another plan
+                        // onto a better catalog entry, and its fee is the
+                        // difference rather than a full price.
+                        <Chip
+                          size="small"
+                          variant="outlined"
+                          color="secondary"
+                          label={t("setup.conversionTag")}
+                          onClick={() => { }}
+                          clickable={false}
+                        />
+                      ) : null}
+                      <Chip
+                        size="small"
+                        variant="outlined"
+                        color={groupColor(row.planGroup)}
+                        label={t(`plans.group.${normalizeGroup(row.planGroup)}.label`)}
+                        onClick={() => { }}
+                        clickable={false}
+                      />
                     </Stack>
                   </TableCell>
                   <TableCell>{row.activeDate || "-"}</TableCell>

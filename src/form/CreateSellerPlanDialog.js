@@ -4,12 +4,14 @@ import {
   Autocomplete,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  MenuItem,
   Stack,
   TextField,
   ToggleButton,
@@ -18,6 +20,12 @@ import {
 } from "@mui/material";
 import api from "../api";
 import { useTranslation } from "react-i18next";
+import {
+  PLAN_GROUP_BOOKING,
+  PLAN_GROUP_PRODUCT,
+  groupColor,
+  normalizeGroup,
+} from "../util/planGroup";
 
 const contextPath = "/publiclink";
 const MODE_EXISTING = "existing";
@@ -85,7 +93,11 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
   // "the list could not be loaded, retry" instead of the misleading "no plans".
   const [catalogError, setCatalogError] = useState("");
   const [planCode, setPlanCode] = useState("");
-  const [newPlan, setNewPlan] = useState({ fee: 10000, planDay: 3, envCount: 1, description: "" });
+  // The admin sees both groups, because they assign plans to sellers of either
+  // kind. Without the filter an admin could hand a booking plan to a product
+  // seller from the same dropdown, which is the mistake the split exists to stop.
+  const [groupFilter, setGroupFilter] = useState("ALL");
+  const [newPlan, setNewPlan] = useState({ fee: 10000, planDay: 3, envCount: 1, description: "", planGroup: "PRODUCT" });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -109,6 +121,14 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
   const selectedSeller = useMemo(
     () => sellerOptions.find((seller) => seller.username === username) || null,
     [sellerOptions, username]
+  );
+
+  const visibleCatalog = useMemo(
+    () =>
+      groupFilter === "ALL"
+        ? catalog
+        : catalog.filter((plan) => normalizeGroup(plan.planGroup) === groupFilter),
+    [catalog, groupFilter]
   );
 
   // Client-side search: one term matches username, seller name or email/link
@@ -170,7 +190,8 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
       setCatalog([]);
       setCatalogLoading(false);
       setCatalogError("");
-      setNewPlan({ fee: 10000, planDay: 3, envCount: 1, description: "" });
+      setNewPlan({ fee: 10000, planDay: 3, envCount: 1, description: "", planGroup: "PRODUCT" });
+      setGroupFilter("ALL");
       setError("");
       setSubmitting(false);
       return;
@@ -180,10 +201,14 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
   }, [open, loadCatalog]);
 
   const handleNewPlanChange = (field, value) => {
-    const parsed = field === "description" ? value : Number(String(value).replace(/,/g, ""));
+    if (field === "description" || field === "planGroup") {
+      setNewPlan((prev) => ({ ...prev, [field]: value }));
+      return;
+    }
+    const parsed = Number(String(value).replace(/,/g, ""));
     setNewPlan((prev) => ({
       ...prev,
-      [field]: field === "description" ? value : Number.isNaN(parsed) ? "" : parsed,
+      [field]: Number.isNaN(parsed) ? "" : parsed,
     }));
   };
 
@@ -239,6 +264,7 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
           planDay: Number(newPlan.planDay),
           envCount: Number(newPlan.envCount),
           description: newPlan.description?.trim() || "",
+          planGroup: newPlan.planGroup,
         });
         // An empty or malformed body means the creation is NOT confirmed;
         // reporting success here would hide exactly the gateway failure the
@@ -363,8 +389,37 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
                   {t("createPlan.noPlans")}
                 </Typography>
               )}
-              {catalog.map((plan) => {
+              {!catalogLoading && !catalogError && catalog.length > 0 && (
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {t("createPlan.filter.group")}
+                  </Typography>
+                  <ToggleButtonGroup
+                    size="small"
+                    exclusive
+                    value={groupFilter}
+                    onChange={(event, next) => next && setGroupFilter(next)}
+                  >
+                    <ToggleButton value="ALL">{t("createPlan.filter.all")}</ToggleButton>
+                    <ToggleButton value={PLAN_GROUP_PRODUCT}>
+                      {t("plans.group.PRODUCT.short")}
+                    </ToggleButton>
+                    <ToggleButton value={PLAN_GROUP_BOOKING}>
+                      {t("plans.group.BOOKING.short")}
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Stack>
+              )}
+              {!catalogLoading && !catalogError && catalog.length > 0 && visibleCatalog.length === 0 && (
+                <Typography variant="body2" color="text.secondary">
+                  {t("createPlan.filter.empty", {
+                    group: t(`plans.group.${groupFilter}.label`),
+                  })}
+                </Typography>
+              )}
+              {visibleCatalog.map((plan) => {
                 const selected = plan.planCode === planCode;
+                const color = groupColor(plan.planGroup);
                 return (
                   <Box
                     key={plan.planCode}
@@ -393,6 +448,15 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
                     <Typography variant="body2" color="text.secondary">
                       {plan.envCount} {t("createPlan.unit.link")}
                     </Typography>
+                    <Divider orientation="vertical" flexItem />
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      color={color}
+                      label={t(`plans.group.${normalizeGroup(plan.planGroup)}.label`)}
+                      onClick={() => { }}
+                      clickable={false}
+                    />
                   </Box>
                 );
               })}
@@ -429,6 +493,26 @@ const CreateSellerPlanDialog = ({ open, onClose, onSuccess, onError, users = [] 
                 onChange={(event) => handleNewPlanChange("envCount", event.target.value)}
                 sx={{ width: { xs: "100%", sm: 120 } }}
               />
+              <Typography variant="body2" color="text.secondary">
+                |
+              </Typography>
+              {/* Said out loud rather than defaulted: a plan created without a
+                  group lands in PRODUCT, and an admin meaning booking would
+                  never find it again in the booking list. */}
+              <TextField
+                select
+                size="small"
+                label={t("createPlan.field.planGroup")}
+                value={newPlan.planGroup}
+                onChange={(event) => handleNewPlanChange("planGroup", event.target.value)}
+                sx={{ width: { xs: "100%", sm: 230 } }}
+              >
+                {[PLAN_GROUP_PRODUCT, PLAN_GROUP_BOOKING].map((group) => (
+                  <MenuItem key={group} value={group}>
+                    {t(`plans.group.${group}.label`)}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Stack>
           )}
         </Stack>

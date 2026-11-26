@@ -8,6 +8,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Menu,
     MenuItem,
     Stack,
     Table,
@@ -61,6 +62,14 @@ const YogaSection = ({ token }) => {
     const [editorOpen, setEditorOpen] = useState(false);
     const [editorDraft, setEditorDraft] = useState(null);
     const [savingClass, setSavingClass] = useState(false);
+
+    // copy class (seller, desktop right-click on a calendar cell). copyMenu
+    // holds the cursor position plus the occurrence under the cursor.
+    const [copyMenu, setCopyMenu] = useState(null);
+    const [copyOpen, setCopyOpen] = useState(false);
+    const [copySource, setCopySource] = useState(null);
+    const [copyTargets, setCopyTargets] = useState([]);
+    const [copySubmitting, setCopySubmitting] = useState(false);
 
     // booking dialog
     const [bookOpen, setBookOpen] = useState(false);
@@ -200,6 +209,70 @@ const YogaSection = ({ token }) => {
         }
     };
 
+    const openCopyDialog = (occurrence) => {
+        setCopyMenu(null);
+        setCopySource(occurrence);
+        setCopyTargets([{ date: "", startTime: occurrence.startTime, endTime: occurrence.endTime }]);
+        setError("");
+        setCopyOpen(true);
+    };
+
+    const updateCopyTarget = (index, patch) =>
+        setCopyTargets((prev) => prev.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+
+    const addCopyTarget = () =>
+        setCopyTargets((prev) => [
+            ...prev,
+            { date: "", startTime: copySource?.startTime || "", endTime: copySource?.endTime || "" },
+        ]);
+
+    const removeCopyTarget = (index) =>
+        setCopyTargets((prev) => prev.filter((_, i) => i !== index));
+
+    /**
+     * Copy the class info onto every target row. The server answers with the
+     * created classes plus one reason per refused row, so a partly wrong batch
+     * still creates what it can and the seller sees exactly what was skipped.
+     */
+    const handleCopyClass = async () => {
+        for (const row of copyTargets) {
+            if (!row.date || !row.startTime || !row.endTime) {
+                setError(t("yoga.copyRowsRequired"));
+                return;
+            }
+            if (row.endTime <= row.startTime) {
+                setError(t("yoga.copyTimeOrder"));
+                return;
+            }
+        }
+        setCopySubmitting(true);
+        setError("");
+        try {
+            const res = await pubApi.post(`${SELLER}/class/copy`, {
+                token,
+                classCode: copySource.classCode,
+                targets: copyTargets,
+            });
+            const created = res.data?.data?.created || [];
+            const failed = res.data?.data?.failed || [];
+            setCopyOpen(false);
+            setNotice(t("yoga.copySuccess", { count: created.length }));
+            if (failed.length > 0) {
+                setError([
+                    t("yoga.copySkipped", { count: failed.length }),
+                    ...failed.map((f) => `${f.date} ${f.startTime}-${f.endTime}: ${f.reason}`),
+                ].join("\n"));
+            }
+            await loadCalendar();
+            await loadRange();
+        } catch (err) {
+            console.error("Copy class failed", err);
+            setError(err?.response?.data?.errorMessage || t("yoga.errors.copy"));
+        } finally {
+            setCopySubmitting(false);
+        }
+    };
+
     const openBook = async (occurrence) => {
         setBookOccurrence(occurrence);
         setBookForm({ buyerName: "", buyerUsername: "", paymentMode: "" });
@@ -317,7 +390,11 @@ const YogaSection = ({ token }) => {
 
     return (
         <Stack spacing={2}>
-            {error && <Alert severity="error" onClose={() => setError("")}>{error}</Alert>}
+            {error && (
+                <Alert severity="error" onClose={() => setError("")} sx={{ whiteSpace: "pre-line" }}>
+                    {error}
+                </Alert>
+            )}
             {notice && <Alert severity="success" onClose={() => setNotice("")}>{notice}</Alert>}
 
             {/* week navigation: shifts the today-centred window by whole weeks */}
@@ -452,6 +529,12 @@ const YogaSection = ({ token }) => {
                                                                     ? openAttendees(occ)
                                                                     : openBook(occ)
                                                             }
+                                                            onContextMenu={(e) => {
+                                                                if (!sellerView) return;
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                setCopyMenu({ x: e.clientX, y: e.clientY, occurrence: occ });
+                                                            }}
                                                             sx={{
                                                                 cursor: "pointer",
                                                                 p: 0.5,
@@ -729,6 +812,97 @@ const YogaSection = ({ token }) => {
                     <Button onClick={() => setBookOpen(false)} disabled={submitting}>{t("common.cancel")}</Button>
                     <Button onClick={handleBook} variant="contained" disabled={submitting}>
                         {submitting ? t("yoga.booking") : t("yoga.book")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* seller: small right-click menu on a calendar class cell. Desktop
+                only by nature; buyers never get here. */}
+            <Menu
+                anchorReference="anchorPosition"
+                anchorPosition={copyMenu ? { top: copyMenu.y, left: copyMenu.x } : undefined}
+                open={Boolean(copyMenu)}
+                onClose={() => setCopyMenu(null)}
+            >
+                <MenuItem onClick={() => copyMenu && openCopyDialog(copyMenu.occurrence)}>
+                    {t("yoga.copyClass")}
+                </MenuItem>
+            </Menu>
+
+            {/* copy dialog: class info is read-only, the seller chooses the
+                target dates and times. Nothing about buyers is copied. */}
+            <Dialog
+                open={copyOpen}
+                onClose={copySubmitting ? undefined : () => setCopyOpen(false)}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>{t("yoga.copyTitle")}</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ pt: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            {copySource?.title}
+                            {copySource?.coach ? ` · ${copySource.coach}` : ""}
+                            {" · "}
+                            {copySource?.startTime}-{copySource?.endTime}
+                            {" · "}
+                            {t("yoga.capacity")}: {copySource?.capacity}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            {t("yoga.copyHint")}
+                        </Typography>
+                        {copyTargets.map((row, index) => (
+                            <Stack key={index} direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+                                <TextField
+                                    size="small"
+                                    type="date"
+                                    label={t("yoga.date")}
+                                    value={row.date}
+                                    onChange={(e) => updateCopyTarget(index, { date: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                                <TextField
+                                    size="small"
+                                    type="time"
+                                    label={t("yoga.start")}
+                                    value={row.startTime}
+                                    onChange={(e) => updateCopyTarget(index, { startTime: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                                <TextField
+                                    size="small"
+                                    type="time"
+                                    label={t("yoga.end")}
+                                    value={row.endTime}
+                                    onChange={(e) => updateCopyTarget(index, { endTime: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                />
+                                <Button
+                                    size="small"
+                                    color="error"
+                                    onClick={() => removeCopyTarget(index)}
+                                    disabled={copyTargets.length === 1}
+                                >
+                                    {t("common.delete")}
+                                </Button>
+                            </Stack>
+                        ))}
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={addCopyTarget}
+                            sx={{ alignSelf: "flex-start" }}
+                        >
+                            {t("yoga.copyAddTarget")}
+                        </Button>
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCopyOpen(false)} disabled={copySubmitting}>
+                        {t("common.cancel")}
+                    </Button>
+                    <Button onClick={handleCopyClass} variant="contained" disabled={copySubmitting}>
+                        {copySubmitting ? t("common.saving") : t("yoga.copyClass")}
                     </Button>
                 </DialogActions>
             </Dialog>

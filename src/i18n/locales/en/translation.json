@@ -145,7 +145,6 @@
         "repeatPassword": "Repeat password",
         "submit": "Create account",
         "submitting": "Creating account…",
-        "afterNote": "Next you choose a payment plan and transfer the fee by bank transfer.",
         "loginLink": "I already have an account",
         "errors": {
             "usernamePattern": "Use 3-30 characters: letters, numbers, dot, dash or underscore.",
@@ -159,14 +158,29 @@
             "encryptFailed": "The password could not be secured for transport. Please try again.",
             "keyUnavailable": "The server's encryption key is unavailable, so the password cannot be sent safely. Please contact admin (gateway RSA public key).",
             "noResponse": "No response from server. Please check your network connection.",
-            "failed": "Registration failed. Please try again."
+            "failed": "Registration failed. Please try again.",
+            "purposeRequired": "Please choose what you will sell, so we can show you the right price list."
+        },
+        "purpose": {
+            "title": "What will you sell?",
+            "helper": "This decides which price list you are shown next. A booking plan cannot create a normal product link, and a product plan cannot create a booking page.",
+            "chosen": "Selected",
+            "PRODUCT": {
+                "title": "Normal products",
+                "description": "Sell through a product page: orders, quantities and a payment link per buyer.",
+                "afterNote": "Next you pick a normal product plan and transfer its fee by bank transfer."
+            },
+            "BOOKING": {
+                "title": "Yoga & badminton booking",
+                "description": "Run a yoga class timetable or a badminton court grid that players book from.",
+                "afterNote": "Next you pick a yoga / badminton booking plan and transfer its fee by bank transfer."
+            }
         }
     },
     "plans": {
         "title": "Choose your payment plan",
         "subtitle": "Buy a plan yourself, pay by bank transfer, and start selling once it is activated.",
         "catalogTitle": "Plans on offer",
-        "catalogHint": "Pick one plan. The fee covers the days listed and that many product links.",
         "catalogEmpty": "No plan is on sale right now. Please contact us via chat.",
         "selected": "Selected",
         "continueToPayment": "Continue to payment",
@@ -183,6 +197,28 @@
             "catalog": "The plan list could not be loaded. Please try again.",
             "pickFirst": "Please select a plan first.",
             "buy": "Your order could not be created. Please try again."
+        },
+        "group": {
+            "PRODUCT": {
+                "label": "Normal product links",
+                "short": "Product",
+                "hint": "Pick this if you sell products. One link is one product sales page.",
+                "emptyNote": "Need yoga or badminton booking links instead? Switch below."
+            },
+            "BOOKING": {
+                "label": "Yoga & badminton booking",
+                "short": "Booking",
+                "hint": "Pick this for yoga classes or badminton courts. One link is one booking page. A product plan cannot open a booking page, and this one cannot open a product page.",
+                "emptyNote": "Need normal product links instead? Switch below."
+            }
+        },
+        "switchPurpose": {
+            "link": "Need {{group}} plans instead?",
+            "dialogTitle": "Change what you sell",
+            "dialogBody": "You are currently offered {{current}} plans. Switching shows {{target}} plans instead. Plans you already paid for keep working for their own kind of link.",
+            "confirm": "Yes, switch",
+            "switching": "Switching…",
+            "failed": "The switch did not go through. Please try again, or contact us via chat."
         }
     },
     "morePlan": {
@@ -194,7 +230,8 @@
         "noPlans": "No running plan right now. Buy one below to start selling.",
         "tabs": {
             "buy": "Buy another plan",
-            "extend": "Add days"
+            "extend": "Add days",
+            "convert": "Convert plan"
         },
         "catalogHint": "Every plan adds its own links and days on top of the plan you already run.",
         "catalogEmpty": "No plan is on sale right now. Please contact us via chat.",
@@ -228,7 +265,24 @@
             "extend": "The extension order could not be created. Please try again.",
             "pickFirst": "Please select a plan first.",
             "pickTarget": "Please choose the plan to extend.",
-            "daysInvalid": "Enter a valid number of days."
+            "daysInvalid": "Enter a valid number of days.",
+            "convert": "The conversion could not be created. Please try again."
+        },
+        "convert": {
+            "hint": "Move a running plan onto a better one of the same kind and pay only the difference. The new plan starts again from today with its own number of links.",
+            "source": "Plan to convert",
+            "noPlan": "You have no running plan to convert. Buy a plan instead.",
+            "noTarget": "No other plan of this kind is on sale right now.",
+            "targetsNote": "Only plans of this same kind can replace the one you run.",
+            "payMore": "You pay {{amount}} VND more. An admin activates the new plan once the transfer is confirmed.",
+            "samePrice": "This plan costs the same, so nothing is charged. Your plan changes as soon as you confirm.",
+            "loseMoney": "This plan is {{amount}} VND cheaper. If you continue, your plan changes immediately and the {{amount}} VND difference is LOST: it is not refunded and not carried over.",
+            "noRefundNote": "We do not refund a difference when you move to a cheaper plan.",
+            "restartNote": "The new plan always starts today for its full length and its own link count. Links you already created keep running to their own end date.",
+            "submitPay": "Create my order for the difference",
+            "submitAcceptLoss": "I understand the difference is lost — convert anyway",
+            "submitting": "Opening your order…",
+            "pickBoth": "Please choose the plan to convert and the plan to move to."
         }
     },
     "saleUrl": {
@@ -493,7 +547,9 @@
             "loadFailed": "Unable to load seller data."
         },
         "generateProductLink": "Generate product link",
-        "generateSuccess": "Product link generated successfully."
+        "generateSuccess": "Product link generated successfully.",
+        "planConverted": "Your plan was converted: {{days}} day(s) with {{links}} link(s), starting today.",
+        "planConvertedLost": "Nothing was charged because the new plan cost no more. The surplus of {{amount}} VND was not refunded."
     },
     "publink": {
         "saleSpace": "Sale Space",
@@ -794,7 +850,8 @@
             "fee": "Fee (VND)",
             "planDay": "Days",
             "envCount": "Links",
-            "userOptional": "Seller (optional)"
+            "userOptional": "Seller (optional)",
+            "planGroup": "Plan type"
         },
         "mode": {
             "existing": "Existing plan",
@@ -822,7 +879,12 @@
         "retry": "Retry",
         "searchUserPlaceholder": "Type to search seller by username, name or email",
         "noMatchingUsers": "No seller matches this search",
-        "sellerOptionalHint": "Leave empty to only create the plan; it can be linked to a seller later."
+        "sellerOptionalHint": "Leave empty to only create the plan; it can be linked to a seller later.",
+        "filter": {
+            "group": "Type",
+            "all": "All",
+            "empty": "No {{group}} plan yet. Clear the filter to see the others."
+        }
     },
     "paymentResult": {
         "successTitle": "Payment link is ready",
@@ -906,7 +968,8 @@
             "submit": "Unable to generate the product link right now."
         },
         "validUntil": "Valid until",
-        "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of your paid plan. To keep selling after that, contact admin via chat or buy a new plan."
+        "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of your paid plan. To keep selling after that, contact admin via chat or buy a new plan.",
+        "wrongGroup": "Your running plan does not cover {{group}} links. Please buy or convert to a {{group}} plan first."
     },
     "transferInfo": {
         "empty": "No transfer account yet.",
@@ -978,7 +1041,8 @@
             "endedDate": "Ended date",
             "payment": "Payment",
             "action": "Action",
-            "paymentLink": "Link"
+            "paymentLink": "Link",
+            "planGroup": "Plan type"
         },
         "action": {
             "approve": "Approve",
@@ -1023,7 +1087,8 @@
             "amountNote": "Charged at the plan's daily price. Send the link to the seller; the plan is extended after you mark the order paid.",
             "daysInvalid": "Enter at least 1 day",
             "onlyActive": "Only an active plan can be extended"
-        }
+        },
+        "conversionTag": "converts plan"
     },
     "sellerSetup": {
         "title": "My Setup",
@@ -1239,11 +1304,20 @@
         "attendees": "Buyers",
         "attendeesTitle": "Registered buyers",
         "attendeesEmpty": "No buyers registered for this class yet.",
+        "copyClass": "Copy class",
+        "copyTitle": "Copy this class",
+        "copyHint": "Each target creates a class that repeats weekly on the weekday of the chosen date, and must fall inside this sale page's active window.",
+        "copyAddTarget": "Add time slot",
+        "copySuccess": "Copied {{count}} class(es).",
+        "copySkipped": "Skipped {{count}} target(s):",
+        "copyRowsRequired": "Date, start and end time are required for every target.",
+        "copyTimeOrder": "End time must be after start time.",
         "errors": {
             "load": "Failed to load the calendar.",
             "titleRequired": "Class title is required.",
             "saveClass": "Failed to save the class.",
             "deleteClass": "Failed to delete the class.",
+            "copy": "Failed to copy the class.",
             "book": "Booking failed.",
             "cancel": "Cancellation failed.",
             "loadAttendees": "Failed to load the buyer list.",

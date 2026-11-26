@@ -3,6 +3,9 @@ import {
     Alert,
     Box,
     Button,
+    Card,
+    CardActionArea,
+    Chip,
     Grid,
     Link,
     Stack,
@@ -15,6 +18,11 @@ import api, { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import OnboardingSteps from "../components/OnboardingSteps";
+import {
+    PLAN_GROUP_BOOKING,
+    PLAN_GROUP_PRODUCT,
+    groupColor,
+} from "../util/planGroup";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -39,7 +47,14 @@ const SelfRegisterPage = () => {
     // created as a player and the copy drops the seller onboarding steps.
     const isPlayerReturn = nextPath.startsWith("/api/v1/publish/saleUrl");
 
-    const [form, setForm] = useState({ username: "", name: "", email: "", password: "", repeatPassword: "" });
+    const [form, setForm] = useState({
+        username: "",
+        name: "",
+        email: "",
+        password: "",
+        repeatPassword: "",
+        planPurpose: "",
+    });
     const [fieldErrors, setFieldErrors] = useState({});
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -66,6 +81,11 @@ const SelfRegisterPage = () => {
         });
     };
 
+    const choosePurpose = (purpose) => {
+        setForm((prev) => ({ ...prev, planPurpose: purpose }));
+        setFieldErrors((prev) => ({ ...prev, planPurpose: "" }));
+    };
+
     const validate = () => {
         const next = {};
         if (!USERNAME_PATTERN.test(form.username.trim())) {
@@ -82,6 +102,10 @@ const SelfRegisterPage = () => {
         }
         if (form.repeatPassword !== form.password) {
             next.repeatPassword = t("selfRegister.errors.mismatch");
+        }
+        // A player never buys a plan, so only the seller path has to answer.
+        if (!isPlayerReturn && !form.planPurpose) {
+            next.planPurpose = t("selfRegister.errors.purposeRequired");
         }
         setFieldErrors(next);
         return Object.keys(next).length === 0;
@@ -132,6 +156,9 @@ const SelfRegisterPage = () => {
                 // Court booking visitors become BUYER; the standalone
                 // seller onboarding keeps the SELLER default.
                 role: isPlayerReturn ? "BUYER" : "SELLER",
+                // Which price list this account will be shown. Omitted for a
+                // player, who buys nothing.
+                planPurpose: isPlayerReturn ? undefined : form.planPurpose,
             });
 
             navigate("/login", {
@@ -180,6 +207,73 @@ const SelfRegisterPage = () => {
 
                         <Box component="form" onSubmit={handleSubmit} noValidate>
                             <Grid container spacing={2}>
+                                {/* Asked first, because it decides which price list this
+                                    account is shown next. A booking plan cannot create a
+                                    product link and the other way round, so guessing here
+                                    costs money later. */}
+                                {!isPlayerReturn && (
+                                    <Grid size={{ xs: 12 }}>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                                            {t("selfRegister.purpose.title")}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                                            {t("selfRegister.purpose.helper")}
+                                        </Typography>
+                                        <Grid container spacing={1.5}>
+                                            {[PLAN_GROUP_PRODUCT, PLAN_GROUP_BOOKING].map((purpose) => {
+                                                const selected = form.planPurpose === purpose;
+                                                const color = groupColor(purpose);
+                                                return (
+                                                    <Grid size={{ xs: 12, sm: 6 }} key={purpose}>
+                                                        <Card
+                                                            variant="outlined"
+                                                            sx={{
+                                                                height: "100%",
+                                                                borderColor: selected ? `${color}.main` : "divider",
+                                                                borderWidth: selected ? 2 : 1,
+                                                            }}
+                                                        >
+                                                            <CardActionArea
+                                                                onClick={() => choosePurpose(purpose)}
+                                                                sx={{ height: "100%" }}
+                                                            >
+                                                                <Stack spacing={1} sx={{ p: 2 }}>
+                                                                    <Stack
+                                                                        direction="row"
+                                                                        justifyContent="space-between"
+                                                                        alignItems="center"
+                                                                        spacing={1}
+                                                                    >
+                                                                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                                                            {t(`selfRegister.purpose.${purpose}.title`)}
+                                                                        </Typography>
+                                                                        {selected && (
+                                                                            <Chip
+                                                                                size="small"
+                                                                                color={color}
+                                                                                onClick={() => { }}
+                                                                                clickable={false}
+                                                                                label={t("selfRegister.purpose.chosen")}
+                                                                            />
+                                                                        )}
+                                                                    </Stack>
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        {t(`selfRegister.purpose.${purpose}.description`)}
+                                                                    </Typography>
+                                                                </Stack>
+                                                            </CardActionArea>
+                                                        </Card>
+                                                    </Grid>
+                                                );
+                                            })}
+                                        </Grid>
+                                        {fieldErrors.planPurpose && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
+                                                {fieldErrors.planPurpose}
+                                            </Typography>
+                                        )}
+                                    </Grid>
+                                )}
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
                                         label={t("selfRegister.username")}
@@ -264,7 +358,9 @@ const SelfRegisterPage = () => {
 
                         <Stack spacing={1}>
                             <Typography variant="body2" color="text.secondary">
-                                {isPlayerReturn ? t("selfRegister.playerAfterNote") : t("selfRegister.afterNote")}
+                                {isPlayerReturn
+                                    ? t("selfRegister.playerAfterNote")
+                                    : t(`selfRegister.purpose.${form.planPurpose || PLAN_GROUP_PRODUCT}.afterNote`)}
                             </Typography>
                             <Typography variant="body2">
                                 <Link component={RouterLink} to={`/login?next=${encodeURIComponent(nextPath)}`}>

@@ -26,6 +26,7 @@ import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { useTranslation } from "react-i18next";
 import { getExportLocale } from "../i18n/exportLocale";
+import { formatVND } from "../util/clipboard";
 
 const DEFAULT_ROWS_PER_PAGE = 10;
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
@@ -187,6 +188,18 @@ const SellerHome = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const auth = useAuth();
+
+  /**
+   * A conversion that owed nothing lands here: MorePlanPage has already applied
+   * it and sent the account home, so the confirmation is carried by the
+   * navigation rather than shown on the page being left behind.
+   */
+  const [convertedNote, setConvertedNote] = useState(state?.planConverted || null);
+  useEffect(() => {
+    if (state?.planConverted) {
+      setConvertedNote(state.planConverted);
+    }
+  }, [state]);
 
   useEffect(() => {
     const sellerName = state?.username || auth.username || "";
@@ -352,6 +365,29 @@ const SellerHome = () => {
               {t("sellerHome.usePublicLink")}
             </Typography>
             {successMessage && <Alert severity="success">{successMessage}</Alert>}
+            {convertedNote && (
+              <Alert
+                severity="success"
+                onClose={() => setConvertedNote(null)}
+                sx={{ alignItems: "center" }}
+              >
+                <Stack spacing={0.5}>
+                  <Typography variant="body2">
+                    {t("sellerHome.planConverted", {
+                      days: convertedNote.targetPlanDay,
+                      links: convertedNote.targetEnvCount,
+                    })}
+                  </Typography>
+                  {Number(convertedNote.feeDelta) < 0 && (
+                    <Typography variant="caption" color="text.secondary">
+                      {t("sellerHome.planConvertedLost", {
+                        amount: formatVND(Math.abs(Number(convertedNote.feeDelta))),
+                      })}
+                    </Typography>
+                  )}
+                </Stack>
+              </Alert>
+            )}
           </Stack>
         </SectionBlock>
 

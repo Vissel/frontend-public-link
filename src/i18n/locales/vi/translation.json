@@ -145,7 +145,6 @@
         "repeatPassword": "Nhập lại mật khẩu",
         "submit": "Tạo tài khoản",
         "submitting": "Đang tạo tài khoản…",
-        "afterNote": "Tiếp theo bạn chọn gói thanh toán và chuyển khoản phí bằng chuyển khoản ngân hàng.",
         "loginLink": "Tôi đã có tài khoản",
         "errors": {
             "usernamePattern": "Dùng 3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới.",
@@ -159,14 +158,29 @@
             "encryptFailed": "Mật khẩu không thể được mã hóa khi gửi. Vui lòng thử lại.",
             "keyUnavailable": "Khóa mã hóa của máy chủ hiện không dùng được nên không thể gửi mật khẩu an toàn. Vui lòng liên hệ quản trị viên (khóa công khai RSA của gateway).",
             "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
-            "failed": "Đăng ký thất bại. Vui lòng thử lại."
+            "failed": "Đăng ký thất bại. Vui lòng thử lại.",
+            "purposeRequired": "Vui lòng chọn loại hình bạn sẽ bán để chúng tôi hiển thị đúng bảng giá."
+        },
+        "purpose": {
+            "title": "Bạn sẽ bán gì?",
+            "helper": "Lựa chọn này quyết định bảng giá bạn thấy tiếp theo. Gói đặt lịch không tạo được link sản phẩm, và gói sản phẩm không tạo được trang đặt lịch.",
+            "chosen": "Đã chọn",
+            "PRODUCT": {
+                "title": "Sản phẩm thông thường",
+                "description": "Bán hàng qua trang sản phẩm: đơn hàng, số lượng và link thanh toán cho từng người mua.",
+                "afterNote": "Tiếp theo bạn chọn gói sản phẩm thông thường và chuyển khoản phí bằng chuyển khoản ngân hàng."
+            },
+            "BOOKING": {
+                "title": "Đặt lịch Yoga & Cầu lông",
+                "description": "Vận hành lịch lớp yoga hoặc sơ đồ sân cầu lông để người chơi tự đặt lịch.",
+                "afterNote": "Tiếp theo bạn chọn gói đặt lịch yoga / cầu lông và chuyển khoản phí bằng chuyển khoản ngân hàng."
+            }
         }
     },
     "plans": {
         "title": "Chọn gói thanh toán",
         "subtitle": "Tự mua gói, chuyển khoản ngân hàng và bắt đầu bán hàng sau khi gói được kích hoạt.",
         "catalogTitle": "Các gói đang mở bán",
-        "catalogHint": "Chọn một gói. Phí bao gồm số ngày và số liên kết sản phẩm tương ứng.",
         "catalogEmpty": "Hiện chưa có gói nào mở bán. Vui lòng liên hệ qua chat.",
         "selected": "Đã chọn",
         "continueToPayment": "Tiếp tục đến thanh toán",
@@ -183,6 +197,28 @@
             "catalog": "Không tải được danh sách gói. Vui lòng thử lại.",
             "pickFirst": "Vui lòng chọn một gói trước.",
             "buy": "Không tạo được đơn hàng. Vui lòng thử lại."
+        },
+        "group": {
+            "PRODUCT": {
+                "label": "Link sản phẩm thông thường",
+                "short": "Sản phẩm",
+                "hint": "Chọn gói này nếu bạn bán sản phẩm. Mỗi link là một trang bán hàng sản phẩm.",
+                "emptyNote": "Bạn cần link đặt lịch yoga hoặc cầu lông? Hãy chuyển đổi bên dưới."
+            },
+            "BOOKING": {
+                "label": "Đặt lịch Yoga & Cầu lông",
+                "short": "Đặt lịch",
+                "hint": "Chọn gói này cho lớp yoga hoặc sân cầu lông. Mỗi link là một trang đặt lịch. Gói sản phẩm không mở được trang đặt lịch và ngược lại.",
+                "emptyNote": "Bạn cần link sản phẩm thông thường? Hãy chuyển đổi bên dưới."
+            }
+        },
+        "switchPurpose": {
+            "link": "Bạn cần gói {{group}} thay thế?",
+            "dialogTitle": "Thay đổi loại hình kinh doanh",
+            "dialogBody": "Hiện bạn đang được gợi ý gói {{current}}. Chuyển đổi sẽ hiển thị gói {{target}}. Các gói bạn đã trả tiền vẫn dùng cho đúng loại link của nó.",
+            "confirm": "Đồng ý, chuyển đổi",
+            "switching": "Đang chuyển…",
+            "failed": "Không chuyển đổi được. Vui lòng thử lại hoặc liên hệ chat."
         }
     },
     "morePlan": {
@@ -194,7 +230,8 @@
         "noPlans": "Hiện không có gói nào đang chạy. Hãy mua một gói bên dưới để bắt đầu bán hàng.",
         "tabs": {
             "buy": "Mua thêm gói",
-            "extend": "Mua thêm ngày"
+            "extend": "Mua thêm ngày",
+            "convert": "Chuyển đổi gói"
         },
         "catalogHint": "Mỗi gói cộng thêm liên kết và số ngày riêng lên gói bạn đang chạy.",
         "catalogEmpty": "Hiện chưa có gói nào mở bán. Vui lòng liên hệ qua chat.",
@@ -228,7 +265,24 @@
             "extend": "Không tạo được đơn gia hạn. Vui lòng thử lại.",
             "pickFirst": "Vui lòng chọn một gói trước.",
             "pickTarget": "Vui lòng chọn gói cần gia hạn.",
-            "daysInvalid": "Hãy nhập số ngày hợp lệ."
+            "daysInvalid": "Hãy nhập số ngày hợp lệ.",
+            "convert": "Không tạo được yêu cầu chuyển đổi. Vui lòng thử lại."
+        },
+        "convert": {
+            "hint": "Đổi gói đang chạy sang gói tốt hơn cùng loại và chỉ trả phần chênh lệch. Gói mới bắt đầu lại từ hôm nay với số link của chính nó.",
+            "source": "Gói cần chuyển đổi",
+            "noPlan": "Bạn không có gói đang chạy để chuyển đổi. Vui lòng mua gói mới.",
+            "noTarget": "Hiện chưa có gói khác cùng loại để chuyển đổi.",
+            "targetsNote": "Chỉ gói cùng loại mới thay thế được gói bạn đang chạy.",
+            "payMore": "Bạn trả thêm {{amount}} VND. Quản trị viên sẽ kích hoạt gói mới sau khi xác nhận chuyển khoản.",
+            "samePrice": "Gói này có giá bằng nhau nên bạn không phải trả thêm. Gói của bạn thay đổi ngay khi bạn xác nhận.",
+            "loseMoney": "Gói này rẻ hơn {{amount}} VND. Nếu bạn tiếp tục, gói sẽ thay đổi ngay và {{amount}} VND chênh lệch sẽ MẤT: không được hoàn lại và không được bảo lưu.",
+            "noRefundNote": "Chúng tôi không hoàn lại phần chênh lệch khi bạn chuyển sang gói rẻ hơn.",
+            "restartNote": "Gói mới luôn bắt đầu từ hôm nay với toàn bộ thời gian và số link của nó. Các link bạn đã tạo vẫn chạy đến ngày kết thúc riêng của chúng.",
+            "submitPay": "Tạo đơn cho phần chênh lệch",
+            "submitAcceptLoss": "Tôi hiểu phần chênh lệch sẽ mất — vẫn chuyển đổi",
+            "submitting": "Đang tạo đơn…",
+            "pickBoth": "Vui lòng chọn gói cần chuyển đổi và gói sẽ chuyển sang."
         }
     },
     "saleUrl": {
@@ -493,7 +547,9 @@
             "loadFailed": "Không thể tải dữ liệu người bán."
         },
         "generateProductLink": "Tạo link sản phẩm",
-        "generateSuccess": "Đã tạo link sản phẩm thành công."
+        "generateSuccess": "Đã tạo link sản phẩm thành công.",
+        "planConverted": "Gói của bạn đã được chuyển đổi: {{days}} ngày với {{links}} link, bắt đầu từ hôm nay.",
+        "planConvertedLost": "Không thu thêm phí vì gói mới không đắt hơn. Phần chênh lệch {{amount}} VND không được hoàn lại."
     },
     "publink": {
         "saleSpace": "Không gian bán hàng",
@@ -794,7 +850,8 @@
             "fee": "Phí (VND)",
             "planDay": "Số ngày",
             "envCount": "Số link",
-            "userOptional": "Người bán (tùy chọn)"
+            "userOptional": "Người bán (tùy chọn)",
+            "planGroup": "Loại gói"
         },
         "mode": {
             "existing": "Gói có sẵn",
@@ -822,7 +879,12 @@
         "retry": "Thử lại",
         "searchUserPlaceholder": "Nhập để tìm người bán theo tài khoản, tên hoặc email",
         "noMatchingUsers": "Không có người bán nào khớp với từ khóa này",
-        "sellerOptionalHint": "Để trống để chỉ tạo gói; bạn có thể gán nó cho người bán sau."
+        "sellerOptionalHint": "Để trống để chỉ tạo gói; bạn có thể gán nó cho người bán sau.",
+        "filter": {
+            "group": "Loại",
+            "all": "Tất cả",
+            "empty": "Chưa có gói {{group}} nào. Bỏ bộ lọc để xem các gói khác."
+        }
     },
     "paymentResult": {
         "successTitle": "Đã có link thanh toán",
@@ -906,7 +968,8 @@
             "submit": "Không thể tạo link sản phẩm ngay lúc này."
         },
         "validUntil": "Hiệu lực đến",
-        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán của bạn. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
+        "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán của bạn. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới.",
+        "wrongGroup": "Gói hiện tại của bạn không dùng cho link {{group}}. Vui lòng mua hoặc chuyển sang gói {{group}} trước."
     },
     "transferInfo": {
         "empty": "Chưa có tài khoản chuyển khoản nào.",
@@ -978,7 +1041,8 @@
             "endedDate": "Ngày hết hạn",
             "payment": "Thanh toán",
             "action": "Thao tác",
-            "paymentLink": "Liên kết"
+            "paymentLink": "Liên kết",
+            "planGroup": "Loại gói"
         },
         "action": {
             "approve": "Duyệt",
@@ -1023,7 +1087,8 @@
             "amountNote": "Tính theo giá mỗi ngày của gói. Gửi liên kết cho người bán; gói chỉ được gia hạn sau khi bạn đánh dấu đã nhận tiền.",
             "daysInvalid": "Nhập ít nhất 1 ngày",
             "onlyActive": "Chỉ gói đang hoạt động mới được gia hạn"
-        }
+        },
+        "conversionTag": "chuyển đổi gói"
     },
     "sellerSetup": {
         "title": "Cài đặt của tôi",
@@ -1239,11 +1304,20 @@
         "attendees": "Học viên",
         "attendeesTitle": "Học viên đã đăng ký",
         "attendeesEmpty": "Chưa có học viên đăng ký lớp này.",
+        "copyClass": "Sao chép lớp",
+        "copyTitle": "Sao chép lớp này",
+        "copyHint": "Mỗi mục tiêu tạo một lớp lặp lại hằng tuần theo thứ của ngày đã chọn, và phải nằm trong thời gian hoạt động của trang bán này.",
+        "copyAddTarget": "Thêm khung giờ",
+        "copySuccess": "Đã sao chép {{count}} lớp.",
+        "copySkipped": "Đã bỏ qua {{count}} mục tiêu:",
+        "copyRowsRequired": "Mỗi mục tiêu cần ngày, giờ bắt đầu và giờ kết thúc.",
+        "copyTimeOrder": "Giờ kết thúc phải sau giờ bắt đầu.",
         "errors": {
             "load": "Không tải được lịch.",
             "titleRequired": "Tên lớp là bắt buộc.",
             "saveClass": "Không lưu được lớp.",
             "deleteClass": "Không xóa được lớp.",
+            "copy": "Không sao chép được lớp.",
             "book": "Đặt lớp thất bại.",
             "cancel": "Hủy thất bại.",
             "loadAttendees": "Không tải được danh sách học viên.",

@@ -1,0 +1,27 @@
+# PublicLink Zero-Cost Organic Marketing Kit
+
+## Summary
+Build a complete **0đ / pure-organic** marketing kit for PublicLink (`share-link.top`), **phased** awareness-then-conversion, targeting **Vietnamese sellers (primary) and buyers (secondary)**. All deliverables are Markdown files saved in `frontend/frontend-publiclink/marketing/`. Customer-facing copy (video voiceover, captions, posts, DMs) is written in **Vietnamese**; structure/annotations are in English. The existing `marketing/init.md` is kept as the raw draft and superseded by the polished video pack.
+
+## Core Strategic Decisions (baked into the files)
+- **Positioning / USP:** "Tạo link bán hàng + mã QR trong 30 giây. Khách quét mã là đặt hàng và chuyển khoản THẲNG vào tài khoản của bạn. Phí cực thấp theo gói (số ngày + số link)." Differentiators vs competitors: money goes direct to the seller's own VietQR (vs Shopee commission + held funds); timed flash-sale sessions with countdown; no endless Messenger/Zalo order-chasing; no website/coding; Excel order export.
+- **$0 channel ranking (VN effectiveness):** (1) TikTok short video = best free organic reach; (2) Facebook Page + Reels + **Groups** (largest VN seller communities) + Marketplace; (3) Zalo OA + groups (sellers' daily driver); (4) YouTube Shorts (repurpose + SEO longevity); (5) Google Business Profile + long-tail SEO ("tạo link bán hàng miễn phí"); (6) Instagram Reels (repurpose). Plus the **built-in referral loop** on every public sale page ("Powered by PublicLink - Tạo link của bạn").
+- **Posting hours (VN, seller/working-adult audience):** TikTok 11:00-13:00 & 19:00-22:00; Facebook 11:30-13:00 & 19:00-21:30 (+3-5 group seeds/day); Zalo 08:00-10:30 & 13:30-16:30 (business) + evening for community groups; YouTube Shorts 12:00 & 18:00-20:00; Google Business weekly refresh.
+- **Phases (8-week core, then ongoing):** Phase 0 Foundation (Wk1: channel assets, brand kit, GA4+UTM, seed 15-20 groups, produce hero video + 3 variants, add referral CTA) -> Phase 1 Awareness (Wk2-4: daily short videos/posts, value-first group seeding, hashtags/SEO; KPI reach, followers, views, first 30-50 registrations) -> Phase 2 Conversion (Wk5-8: tutorials, before/after, testimonials, starter promo, retarget-with-CTA, referral push; KPI sign-ups -> first link -> paid plan) -> Phase 3 Advocacy (ongoing: UGC, seller spotlights, community, iterate winners).
+- **Video approach:** one 15-20s 9:16 **hero video** (VN voiceover + big VN captions, problem->solution->proof->CTA) refined from `init.md`, plus **3 A/B hook variants** (pain-point, before/after, POV tutorial). **$0 production** = phone screen-recording of the real app + CapCut (free) + free music (YouTube Audio Library / TikTok commercial sounds) + free Canva thumbnails. AI-generation prompts (Sora/Runway/CapCut AI) + image prompts included for a future upgrade path.
+
+## Deliverables (files to create in marketing/)
+- **`marketing/README.md`** - 1-page index linking the kit and stating the 0đ/phased/VN positioning.
+- **`marketing/00-strategy.md`** - Master strategy: positioning + USP vs FB/Zalo/Shopee; seller & buyer personas (incl. niche verticals already in-app: product sellers, badminton court booking, yoga classes); $0 channel ranking with rationale; the phased 8-week plan with duration + weekly cadence; VN posting hours table; the referral/viral loop; $0 tooling stack (CapCut, Canva Free, GA4, Google Business, Bitly/tinyurl, native insights); KPIs + free tracking (UTM/GA4); weekly time-budget (sweat-equity) checklist.
+- **`marketing/01-video-script.md`** - Hero video full script (scene-by-scene: VN on-screen text, VN voiceover, subtitles, SFX, music cue), shot list + storyboard table, 3 alternate hook scripts, $0 CapCut production workflow (step-by-step), AI video + image generation prompts, per-platform export specs and caption/hashtag blocks.
+- **`marketing/02-content-calendar.md`** - 8-week day-by-day calendar (platform, VN time, format, content pillar, topic, hook, CTA, hashtags); content-pillar definitions (educate / pain-point / proof / demo / community); one-video-to-many repurposing map (TikTok -> Reels -> Shorts -> Zalo).
+- **`marketing/03-post-templates.md`** - Ready-to-post **Vietnamese** copy bank: Facebook Page posts (3-5), Facebook/Zalo group seeding (soft value-first + hard CTA), Zalo OA post, TikTok/Reels/Shorts captions, YouTube description, Google Business profile text, channel bios, DM + comment-reply scripts, testimonial-request and referral messages, hashtag sets, and A/B hook lines.
+
+## Test Plan / Verification
+- Files are Markdown content only (no build/runtime impact). Verify: all 5 files created under `marketing/`; every customer-facing string is Vietnamese and free of placeholder text; calendar times/days are internally consistent; strategy, video script, calendar, and templates cross-reference the same channels, hooks, and CTAs; `init.md` left intact.
+
+## Assumptions
+- Brand = "PublicLink", domain `share-link.top`, contact `nguyenjade916@gmail.com`, brand blue `#0f4c81`.
+- 8-week core campaign then ongoing; roughly 5-8 hrs/week of sweat equity (adjustable in the file).
+- A starter promo can use a free or 10.000đ plan (the app already supports fee=0 plans).
+- Real app screen-recording is available for the demo video; no paid tools or ad spend (0đ). If budget is added later, these same assets convert directly into paid Facebook/TikTok campaigns.

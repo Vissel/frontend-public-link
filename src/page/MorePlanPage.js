@@ -21,11 +21,18 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
 import PaymentInfoPanel from "../components/PaymentInfoPanel";
 import { formatVND } from "../util/clipboard";
+import {
+    groupColor,
+    homeRouteFor,
+    normalizeGroup,
+} from "../util/planGroup";
+import { useAuth } from "../AuthContext";
 import { useTranslation } from "react-i18next";
 
 /** How often the screen asks whether the admin has verified the transfer. */
@@ -67,6 +74,8 @@ const formatDate = (date) =>
  */
 const MorePlanPage = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { userRole } = useAuth();
 
     const [state, setState] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -92,6 +101,15 @@ const MorePlanPage = () => {
     const [extendDays, setExtendDays] = useState("1");
     const [extending, setExtending] = useState(false);
 
+    // Conversion. The target list follows the group of the plan being converted,
+    // so a booking plan can only ever become another booking plan here.
+    const [convertSource, setConvertSource] = useState("");
+    const [convertTarget, setConvertTarget] = useState("");
+    const [convertTargets, setConvertTargets] = useState([]);
+    const [convertLoading, setConvertLoading] = useState(false);
+    const [convertError, setConvertError] = useState("");
+    const [converting, setConverting] = useState(false);
+
     const loadState = useCallback(async ({ quiet = false } = {}) => {
         if (!quiet) {
             setLoading(true);
@@ -116,6 +134,11 @@ const MorePlanPage = () => {
     }, [loadState]);
 
     const isOpenOrder = isOpenOrderState(state);
+
+    // The group this account registered to buy from, so the buy tab offers the
+    // same price list the onboarding screen did and not the other one.
+    const purpose = normalizeGroup(state?.planPurpose);
+    const purposeColor = groupColor(purpose);
 
     // The order leaving the open list is the admin marking it paid, which is the
     // news the polling waits for. Tracked from an effect rather than inside the
@@ -153,7 +176,7 @@ const MorePlanPage = () => {
         setCatalogLoading(true);
         setCatalogError("");
         pubApi
-            .get("/api/v1/publish/plans")
+            .get("/api/v1/publish/plans", { params: { group: purpose } })
             .then((res) => {
                 if (!cancelled) {
                     setPlans(res.data?.items || []);
@@ -174,17 +197,39 @@ const MorePlanPage = () => {
         return () => {
             cancelled = true;
         };
-    }, [catalogLoaded, plans.length, isOpenOrder, catalogAttempt, t]);
+    }, [catalogLoaded, plans.length, isOpenOrder, catalogAttempt, purpose, t]);
 
     // Wrapped in its own memo: `state?.activePlans || []` would otherwise hand
     // the memo below a fresh array on every render and defeat it.
     const activePlans = useMemo(() => state?.activePlans || [], [state]);
-    // An extension order cannot be extended again, and the backend only accepts
-    // ACTIVE assignments, so the picker offers exactly what it would accept.
-    const extendablePlans = useMemo(
-        () => activePlans.filter((plan) => plan.extendDays == null),
+    // An extension order cannot be extended, and a conversion order is already
+    // spent, so the pickers offer exactly what the backend would accept.
+    const plainPlans = useMemo(
+        () => activePlans.filter((plan) => plan.extendDays == null && plan.convertsPlanUserCode == null),
         [activePlans]
     );
+    const extendablePlans = plainPlans;
+
+    const chosenConvertSource = useMemo(
+        () => plainPlans.find((plan) => plan.planUserCode === convertSource) || null,
+        [plainPlans, convertSource]
+    );
+    const convertSourceGroup = normalizeGroup(chosenConvertSource?.planGroup);
+    const chosenConvertTarget = useMemo(
+        () => convertTargets.find((plan) => plan.planCode === convertTarget) || null,
+        [convertTargets, convertTarget]
+    );
+    /**
+     * What the seller still owes: the new plan's fee minus what the running one
+     * cost. Zero or negative means nothing is charged and the surplus is lost,
+     * which the screen has to say plainly before the account agrees to it.
+     */
+    const convertDelta = useMemo(() => {
+        if (!chosenConvertSource || !chosenConvertTarget) {
+            return null;
+        }
+        return Number(chosenConvertTarget.fee) - Number(chosenConvertSource.fee);
+    }, [chosenConvertSource, chosenConvertTarget]);
 
     const chosenExtend = useMemo(
         () => extendablePlans.find((plan) => plan.planUserCode === extendTarget) || null,
@@ -256,6 +301,78 @@ const MorePlanPage = () => {
             setError(err?.response?.data?.message || t("morePlan.errors.extend"));
         } finally {
             setExtending(false);
+        }
+    };
+
+    // Conversion targets follow the group of the plan being converted, fetched
+    // when the seller picks one. The plan already owned is dropped from the list:
+    // converting a plan onto itself would owe nothing and change nothing.
+    useEffect(() => {
+        if (!chosenConvertSource) {
+            setConvertTargets([]);
+            setConvertTarget("");
+            return undefined;
+        }
+        let cancelled = false;
+        setConvertLoading(true);
+        setConvertError("");
+        setConvertTarget("");
+        pubApi
+            .get("/api/v1/publish/plans", { params: { group: convertSourceGroup } })
+            .then((res) => {
+                if (!cancelled) {
+                    setConvertTargets((res.data?.items || []).filter((plan) => plan.planCode !== chosenConvertSource.planCode));
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to load the conversion targets", err);
+                if (!cancelled) {
+                    setConvertError(t("morePlan.errors.catalog"));
+                    setConvertTargets([]);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setConvertLoading(false);
+                }
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [chosenConvertSource, convertSourceGroup, t]);
+
+    const handleConvert = async () => {
+        if (!chosenConvertSource || !chosenConvertTarget) {
+            setConvertError(t("morePlan.convert.pickBoth"));
+            return;
+        }
+        setConvertError("");
+        setConverting(true);
+        try {
+            const res = await pubApi.post("/api/v1/sellerPlan/convert", {
+                planUserCode: chosenConvertSource.planUserCode,
+                targetPlanCode: chosenConvertTarget.planCode,
+            });
+            const next = res.data || null;
+            setSettled(false);
+            setConvertTarget("");
+            setConvertSource("");
+            setState(next);
+            if (next?.conversionOutcome?.result === "NO_PAYMENT") {
+                // Nothing to transfer: say so on the home screen rather than on a
+                // page the account is about to leave, so the confirmation survives
+                // the navigation and is not swallowed by an unmount.
+                navigate(homeRouteFor(userRole), {
+                    state: { planConverted: next.conversionOutcome },
+                });
+                return;
+            }
+            setTab(0);
+        } catch (err) {
+            console.error("Failed to open the conversion order", err);
+            setConvertError(err?.response?.data?.message || t("morePlan.errors.convert"));
+        } finally {
+            setConverting(false);
         }
     };
 
@@ -375,6 +492,7 @@ const MorePlanPage = () => {
                                             <TableCell align="right">{t("setup.column.fee")}</TableCell>
                                             <TableCell align="center">{t("setup.column.days")}</TableCell>
                                             <TableCell align="center">{t("setup.column.quota")}</TableCell>
+                                            <TableCell>{t("setup.column.planGroup")}</TableCell>
                                             <TableCell>{t("setup.column.activeDate")}</TableCell>
                                             <TableCell>{t("setup.column.endedDate")}</TableCell>
                                         </TableRow>
@@ -386,6 +504,19 @@ const MorePlanPage = () => {
                                                 <TableCell align="center">{plan.planDay}</TableCell>
                                                 <TableCell align="center">
                                                     {plan.usedCount}/{plan.envQuota}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {/* An account may hold plans of both
+                                                        groups; without this the two price
+                                                        lists look like one. */}
+                                                    <Chip
+                                                        size="small"
+                                                        variant="outlined"
+                                                        color={groupColor(plan.planGroup)}
+                                                        onClick={() => { }}
+                                                        clickable={false}
+                                                        label={t(`plans.group.${normalizeGroup(plan.planGroup)}.label`)}
+                                                    />
                                                 </TableCell>
                                                 <TableCell>{plan.activeDate || "—"}</TableCell>
                                                 <TableCell>{plan.endedDate || "—"}</TableCell>
@@ -446,13 +577,23 @@ const MorePlanPage = () => {
                             <Tabs value={tab} onChange={(event, value) => setTab(value)}>
                                 <Tab label={t("morePlan.tabs.buy")} />
                                 <Tab label={t("morePlan.tabs.extend")} />
+                                <Tab label={t("morePlan.tabs.convert")} />
                             </Tabs>
 
                             {tab === 0 && (
                                 <Stack spacing={2}>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {t("morePlan.catalogHint")}
-                                    </Typography>
+                                    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                                        <Chip
+                                            size="small"
+                                            color={purposeColor}
+                                            onClick={() => { }}
+                                            clickable={false}
+                                            label={t(`plans.group.${purpose}.label`)}
+                                        />
+                                        <Typography variant="body2" color="text.secondary">
+                                            {t("morePlan.catalogHint")}
+                                        </Typography>
+                                    </Stack>
 
                                     {catalogLoading && (
                                         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -538,6 +679,7 @@ const MorePlanPage = () => {
                                         <Button
                                             variant="contained"
                                             size="large"
+                                            color={purposeColor}
                                             onClick={handleBuy}
                                             disabled={buying || !selectedPlan || plans.length === 0}
                                         >
@@ -629,6 +771,159 @@ const MorePlanPage = () => {
                                                 sx={{ alignSelf: "flex-start" }}
                                             >
                                                 {extending ? t("morePlan.extend.submitting") : t("morePlan.extend.submit")}
+                                            </Button>
+                                        </>
+                                    )}
+                                </Stack>
+                            )}
+
+                            {tab === 2 && (
+                                <Stack spacing={2}>
+                                    {plainPlans.length === 0 ? (
+                                        <Alert severity="info">{t("morePlan.convert.noPlan")}</Alert>
+                                    ) : (
+                                        <>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {t("morePlan.convert.hint")}
+                                            </Typography>
+
+                                            <TextField
+                                                select
+                                                size="small"
+                                                label={t("morePlan.convert.source")}
+                                                value={convertSource}
+                                                onChange={(event) => setConvertSource(event.target.value)}
+                                            >
+                                                {plainPlans.map((plan) => (
+                                                    <MenuItem key={plan.planUserCode} value={plan.planUserCode}>
+                                                        {`${formatVND(plan.fee)} VND · ${plan.planDay} ${t("payment.unit.day")} · ${plan.envQuota} ${t("payment.unit.link")}`}
+                                                    </MenuItem>
+                                                ))}
+                                            </TextField>
+
+                                            {convertLoading && (
+                                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                                    <CircularProgress size={18} />
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {t("common.loading")}
+                                                    </Typography>
+                                                </Stack>
+                                            )}
+
+                                            {convertError && <Alert severity="error">{convertError}</Alert>}
+
+                                            {!convertLoading && chosenConvertSource && convertTargets.length === 0 && !convertError && (
+                                                <Alert severity="info">{t("morePlan.convert.noTarget")}</Alert>
+                                            )}
+
+                                            {chosenConvertSource && convertTargets.length > 0 && (
+                                                <>
+                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                        <Chip
+                                                            size="small"
+                                                            color={groupColor(convertSourceGroup)}
+                                                            onClick={() => { }}
+                                                            clickable={false}
+                                                            label={t(`plans.group.${convertSourceGroup}.label`)}
+                                                        />
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            {t("morePlan.convert.targetsNote")}
+                                                        </Typography>
+                                                    </Stack>
+                                                    <Grid container spacing={1.5}>
+                                                        {convertTargets.map((plan) => {
+                                                            const isSelected = convertTarget === plan.planCode;
+                                                            const color = groupColor(plan.planGroup || convertSourceGroup);
+                                                            return (
+                                                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={plan.planCode}>
+                                                                    <Card
+                                                                        variant="outlined"
+                                                                        sx={{
+                                                                            height: "100%",
+                                                                            borderColor: isSelected ? `${color}.main` : "divider",
+                                                                            borderWidth: isSelected ? 2 : 1,
+                                                                        }}
+                                                                    >
+                                                                        <CardActionArea
+                                                                            onClick={() => setConvertTarget(plan.planCode)}
+                                                                            sx={{ height: "100%" }}
+                                                                        >
+                                                                            <Stack spacing={1} sx={{ p: 2 }}>
+                                                                                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                                                                    {formatVND(plan.fee)} VND
+                                                                                </Typography>
+                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                    {plan.planDay} {t("payment.unit.day")} · {plan.envCount} {t("payment.unit.link")}
+                                                                                </Typography>
+                                                                                {isSelected && (
+                                                                                    <Chip
+                                                                                        size="small"
+                                                                                        color={color}
+                                                                                        onClick={() => { }}
+                                                                                        clickable={false}
+                                                                                        label={t("morePlan.selected")}
+                                                                                        sx={{ alignSelf: "flex-start" }}
+                                                                                    />
+                                                                                )}
+                                                                            </Stack>
+                                                                        </CardActionArea>
+                                                                    </Card>
+                                                                </Grid>
+                                                            );
+                                                        })}
+                                                    </Grid>
+                                                </>
+                                            )}
+
+                                            {convertDelta !== null && (
+                                                <>
+                                                    {convertDelta > 0 ? (
+                                                        <Alert severity="info">
+                                                            <Typography variant="body2">
+                                                                {t("morePlan.convert.payMore", {
+                                                                    amount: formatVND(convertDelta),
+                                                                })}
+                                                            </Typography>
+                                                        </Alert>
+                                                    ) : (
+                                                        // Zero or negative: the plan still changes and the
+                                                        // surplus is gone. Said in the warning itself, because
+                                                        // agreeing without reading it would cost real money.
+                                                        <Alert severity="warning">
+                                                            <Stack spacing={0.5}>
+                                                                <Typography variant="body2">
+                                                                    {convertDelta === 0
+                                                                        ? t("morePlan.convert.samePrice")
+                                                                        : t("morePlan.convert.loseMoney", {
+                                                                            amount: formatVND(Math.abs(convertDelta)),
+                                                                        })}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="text.secondary">
+                                                                    {t("morePlan.convert.noRefundNote")}
+                                                                </Typography>
+                                                            </Stack>
+                                                        </Alert>
+                                                    )}
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {t("morePlan.convert.restartNote")}
+                                                    </Typography>
+                                                </>
+                                            )}
+
+                                            <Divider />
+                                            <Button
+                                                variant={convertDelta !== null && convertDelta <= 0 ? "outlined" : "contained"}
+                                                color={convertDelta !== null && convertDelta <= 0 ? "warning" : groupColor(convertSourceGroup)}
+                                                size="large"
+                                                onClick={handleConvert}
+                                                disabled={converting || convertDelta === null}
+                                                sx={{ alignSelf: "flex-start" }}
+                                            >
+                                                {converting
+                                                    ? t("morePlan.convert.submitting")
+                                                    : convertDelta !== null && convertDelta <= 0
+                                                        ? t("morePlan.convert.submitAcceptLoss")
+                                                        : t("morePlan.convert.submitPay")}
                                             </Button>
                                         </>
                                     )}

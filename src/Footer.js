@@ -35,6 +35,9 @@ function Footer() {
               MIT License
             </Link>
           </Typography>
+          <Typography variant="caption" component="p" sx={{ m: 0, lineHeight: 1.2 }}>
+              version 2.1.0
+          </Typography>
           {/* A plain mailto: opens the visitor's mail app directly - no
               target=_blank (new-tab mail links are dead ends in most browsers)
               and a tooltip that says what clicking does. */}

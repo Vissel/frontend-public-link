@@ -33,6 +33,7 @@ import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
 import { CountdownChip } from "../components/CountdownTimer";
 import YogaSection from "../components/YogaSection";
+import BadmintonSection from "../components/BadmintonSection";
 import EnvironmentTransferCard from "../components/EnvironmentTransferCard";
 import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import useDelayedClose from "../hooks/useDelayedClose";
@@ -494,6 +495,7 @@ const PublinkPage = () => {
     // time. The server decides it against DB time, not the browser clock.
     const isScheduled = Boolean(saleSpace.notStartedYet);
     const isYoga = saleSpace.productType === "YOGA_BOOKING";
+    const isBadminton = saleSpace.productType === "BADMINTON_COURT";
     // Only the seller edits the window, and only while it runs: the server
     // refuses a sale that is already closed, and an admin has no role for the
     // seller-only endpoint anyway.
@@ -552,101 +554,123 @@ const PublinkPage = () => {
                         ) : null
                     }
                 >
-                    <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
-                        <Chip
-                            label={isSeller ? t("publink.sellerViewLabel") : t("publink.buyerViewLabel")}
-                            color={isSeller ? "primary" : "default"}
-                            variant="outlined"
-                            size="small"
-                            onClick={() => { }}
-                            clickable={false}
-                        />
-                        {saleSpace.envState && (
-                            <Chip
-                                label={saleSpace.envState === "ACTIVE" ? t("common.active") : t("common.inactive")}
-                                color={saleSpace.envState === "ACTIVE" ? "success" : "default"}
-                                size="small"
-                                onClick={() => { }}
-                                clickable={false}
-                            />
-                        )}
-                        {saleSpace.plannedEndedAt && (
-                            <CountdownChip
-                                targetDate={saleSpace.plannedEndedAt}
-                                {...(canEditWindow
-                                    ? {
-                                        onClick: () => setWindowOpen(true),
-                                        title: t("publink.editTimeHint"),
-                                    }
-                                    : {})}
-                            />
-                        )}
-                    </Stack>
-                    <Stack spacing={0.5} sx={{ mt: 1 }}>
-                        {saleSpace.createdAt && (
-                            <Typography variant="caption" color="text.secondary">
-                                {t("publink.created")} {saleSpace.createdAt}
-                            </Typography>
-                        )}
-                        {saleSpace.endedAt && (
-                            <Typography variant="caption" color="text.secondary">
-                                {t("publink.willEnded")} {saleSpace.endedAt}
-                            </Typography>
-                        )}
-                        {saleSpace.plannedStartedAt && (
-                            <Typography variant="caption" color="text.secondary">
-                                {t("publink.plannedStartedAt")} {saleSpace.plannedStartedAt}
-                            </Typography>
-                        )}
-                        {saleSpace.plannedEndedAt && (
-                            <Typography
-                                variant="caption"
-                                color={canEditWindow ? "text.primary" : "text.secondary"}
-                                title={canEditWindow ? t("publink.editTimeHint") : undefined}
-                                onClick={canEditWindow ? () => setWindowOpen(true) : undefined}
-                                sx={canEditWindow
-                                    ? {
-                                        cursor: "pointer",
-                                        textDecoration: "underline dotted",
-                                        textUnderlineOffset: 3,
-                                    }
-                                    : undefined}
-                            >
-                                {t("publink.plannedEndedAt")} {saleSpace.plannedEndedAt}
-                            </Typography>
-                        )}
-                    </Stack>
-                    {isScheduled && (
-                        <Alert severity="warning" sx={{ mt: 1 }}>
-                            {t("publink.notStartedYet", { start: saleSpace.plannedStartedAt })}
-                        </Alert>
-                    )}
-                    {windowNotice && (
-                        <Alert
-                            severity="success"
-                            sx={{ mt: 1 }}
-                            onClose={() => setWindowNotice("")}
+                    {/* Header body: status and dates on the left, the transfer
+                        account in a narrow bottom-right slot beside them. The
+                        card only takes the height its own content needs. */}
+                    <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={2}
+                        alignItems={{ xs: "stretch", md: "flex-start" }}
+                    >
+                        <Stack spacing={1} sx={{ flexGrow: 1, minWidth: 0 }}>
+                            <Stack direction="row" spacing={2} flexWrap="wrap" alignItems="center">
+                                <Chip
+                                    label={isSeller ? t("publink.sellerViewLabel") : t("publink.buyerViewLabel")}
+                                    color={isSeller ? "primary" : "default"}
+                                    variant="outlined"
+                                    size="small"
+                                    onClick={() => { }}
+                                    clickable={false}
+                                />
+                                {saleSpace.envState && (
+                                    <Chip
+                                        label={saleSpace.envState === "ACTIVE" ? t("common.active") : t("common.inactive")}
+                                        color={saleSpace.envState === "ACTIVE" ? "success" : "default"}
+                                        size="small"
+                                        onClick={() => { }}
+                                        clickable={false}
+                                    />
+                                )}
+                                {saleSpace.plannedEndedAt && (
+                                    <CountdownChip
+                                        targetDate={saleSpace.plannedEndedAt}
+                                        {...(canEditWindow
+                                            ? {
+                                                onClick: () => setWindowOpen(true),
+                                                title: t("publink.editTimeHint"),
+                                            }
+                                            : {})}
+                                    />
+                                )}
+                            </Stack>
+                            <Stack spacing={0.5}>
+                                {saleSpace.createdAt && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        {t("publink.created")} {saleSpace.createdAt}
+                                    </Typography>
+                                )}
+                                {saleSpace.endedAt && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        {t("publink.willEnded")} {saleSpace.endedAt}
+                                    </Typography>
+                                )}
+                                {saleSpace.plannedStartedAt && (
+                                    <Typography variant="caption" color="text.secondary">
+                                        {t("publink.plannedStartedAt")} {saleSpace.plannedStartedAt}
+                                    </Typography>
+                                )}
+                                {saleSpace.plannedEndedAt && (
+                                    <Typography
+                                        variant="caption"
+                                        color={canEditWindow ? "text.primary" : "text.secondary"}
+                                        title={canEditWindow ? t("publink.editTimeHint") : undefined}
+                                        onClick={canEditWindow ? () => setWindowOpen(true) : undefined}
+                                        sx={canEditWindow
+                                            ? {
+                                                cursor: "pointer",
+                                                textDecoration: "underline dotted",
+                                                textUnderlineOffset: 3,
+                                            }
+                                            : undefined}
+                                    >
+                                        {t("publink.plannedEndedAt")} {saleSpace.plannedEndedAt}
+                                    </Typography>
+                                )}
+                            </Stack>
+                            {isScheduled && (
+                                <Alert severity="warning">
+                                    {t("publink.notStartedYet", { start: saleSpace.plannedStartedAt })}
+                                </Alert>
+                            )}
+                            {windowNotice && (
+                                <Alert
+                                    severity="success"
+                                    onClose={() => setWindowNotice("")}
+                                >
+                                    {windowNotice}
+                                </Alert>
+                            )}
+                        </Stack>
+                        <Box
+                            sx={{
+                                width: { xs: "100%", md: 360 },
+                                flexShrink: 0,
+                                // Bottom-right of the header: the left column
+                                // keeps its top alignment, only this slot drops.
+                                alignSelf: { md: "flex-end" },
+                            }}
                         >
-                            {windowNotice}
-                        </Alert>
-                    )}
-                    {/* Payment band spans the header width: big scannable QR on
-                        the left, account details filling the rest. */}
-                    <EnvironmentTransferCard
-                        transferInfo={saleSpace.transferInfo}
-                        canManage={canManageTransfer}
-                        mode={isSeller ? "seller" : "admin"}
-                        requestUuid={saleSpace.reqUuid}
-                        onChanged={refreshSaleSpace}
-                    />
+                            <EnvironmentTransferCard
+                                transferInfo={saleSpace.transferInfo}
+                                canManage={canManageTransfer}
+                                mode={isSeller ? "seller" : "admin"}
+                                requestUuid={saleSpace.reqUuid}
+                                onChanged={refreshSaleSpace}
+                                compact
+                            />
+                        </Box>
+                    </Stack>
                 </SectionBlock>
 
                 {/* Yoga booking: the single weekly calendar screen replaces the
                     product cards and the order form for this link type. */}
                 {isYoga && <YogaSection token={token} />}
+                {isBadminton && (
+                    <BadmintonSection token={token} transferInfo={saleSpace.transferInfo} />
+                )}
 
                 {/* Products */}
-                {!isYoga && saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
+                {!isYoga && !isBadminton && saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
                     <SectionBlock
                         title={t("publink.products")}
                         description={
@@ -741,7 +765,7 @@ const PublinkPage = () => {
                 )}
 
                 {/* Seller/Admin: Orders Table */}
-                {!isYoga && canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
+                {!isYoga && !isBadminton && canManageOrders && saleSpace.listOrder && saleSpace.listOrder.length > 0 && (
                     <SectionBlock
                         title={t("publink.orders")}
                         description={t("publink.ordersDesc")}

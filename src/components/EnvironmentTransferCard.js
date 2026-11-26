@@ -63,7 +63,7 @@ const fallbackCopy = (text, onDone) => {
  * the admin's own accounts - attaches, changes or removes it; "Add" picks the
  * owner's default account straight away, "Change" opens the picker.
  */
-const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, onChanged }) => {
+const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, onChanged, compact = false }) => {
     const { t } = useTranslation();
     const [zoomOpen, setZoomOpen] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -188,9 +188,11 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
             sx={{
                 border: "1px solid",
                 borderColor: (theme) => alpha(theme.palette.primary.main, 0.18),
-                borderRadius: 3,
+                borderRadius: compact ? 2 : 3,
                 bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-                p: { xs: 2, sm: 2.5 },
+                // Compact mode is the narrow right-hand slot of the sale-space
+                // header: just enough padding and QR size to read, no slack.
+                p: compact ? 1.5 : { xs: 2, sm: 2.5 },
             }}
         >
             {error && (
@@ -200,7 +202,7 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
             )}
 
             {transferInfo ? (
-                <Stack spacing={2}>
+                <Stack spacing={compact ? 1.5 : 2}>
                     <Stack
                         direction="row"
                         spacing={1}
@@ -218,8 +220,8 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
 
                     <Stack
                         direction={{ xs: "column", sm: "row" }}
-                        spacing={{ xs: 2, sm: 3 }}
-                        alignItems={{ xs: "center", sm: "center" }}
+                        spacing={compact ? 1.5 : { xs: 2, sm: 3 }}
+                        alignItems={compact ? "flex-start" : { xs: "center", sm: "center" }}
                     >
                         {/* White tile hugs the image's own aspect so a portrait
                             VietQR card is not letterboxed inside a square. */}
@@ -230,7 +232,7 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                                     border: "1px solid",
                                     borderColor: "divider",
                                     borderRadius: 2,
-                                    p: 1,
+                                    p: compact ? 0.75 : 1,
                                     boxShadow: "0 8px 24px rgba(15, 76, 129, 0.10)",
                                     cursor: "zoom-in",
                                     lineHeight: 0,
@@ -244,7 +246,7 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                                         src={transferInfo.qrImage}
                                         alt="transfer qr"
                                         sx={{
-                                            height: { xs: 180, sm: 210 },
+                                            height: compact ? { xs: 110, sm: 120 } : { xs: 180, sm: 210 },
                                             width: "auto",
                                             maxWidth: "100%",
                                             objectFit: "contain",
@@ -266,17 +268,17 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                             </Typography>
                         </Stack>
 
-                        <Stack spacing={1.25} sx={{ flexGrow: 1, minWidth: 0, width: "100%" }}>
+                        <Stack spacing={compact ? 1 : 1.25} sx={{ flexGrow: 1, minWidth: 0, width: "100%" }}>
                             <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap" useFlexGap>
                                 {logo && (
                                     <Box
                                         component="img"
                                         src={logo}
                                         alt=""
-                                        sx={{ height: 28, width: "auto", maxWidth: 96, objectFit: "contain" }}
+                                        sx={{ height: compact ? 20 : 28, width: "auto", maxWidth: 96, objectFit: "contain" }}
                                     />
                                 )}
-                                <Typography variant="subtitle1">{transferInfo.transferIssuer}</Typography>
+                                <Typography variant={compact ? "subtitle2" : "subtitle1"}>{transferInfo.transferIssuer}</Typography>
                                 <Chip
                                     size="small"
                                     variant="outlined"
@@ -286,8 +288,8 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
 
                             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                                 <Typography
-                                    variant="h4"
-                                    sx={{ letterSpacing: 1, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}
+                                    variant={compact ? "h6" : "h4"}
+                                    sx={{ letterSpacing: compact ? 0.5 : 1, fontVariantNumeric: "tabular-nums", wordBreak: "break-all" }}
                                 >
                                     {transferInfo.transferNumber}
                                 </Typography>
@@ -302,11 +304,14 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                             </Stack>
 
                             {transferInfo.accountName && (
-                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                <Typography variant={compact ? "body2" : "body1"} sx={{ fontWeight: 600 }}>
                                     {transferInfo.accountName}
                                 </Typography>
                             )}
-                            {transferInfo.issuerFullName && (
+                            {/* The bank's full legal name and the scan hint are
+                                the first things to go in the narrow slot: the
+                                issuer line and the QR already say both. */}
+                            {!compact && transferInfo.issuerFullName && (
                                 <Typography variant="caption" color="text.secondary">
                                     {transferInfo.issuerFullName}
                                 </Typography>
@@ -320,8 +325,8 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                                         border: "1px solid",
                                         borderColor: (theme) => alpha(theme.palette.success.main, 0.25),
                                         borderRadius: 2,
-                                        px: 1.5,
-                                        py: 1,
+                                        px: compact ? 1.25 : 1.5,
+                                        py: compact ? 0.75 : 1,
                                     }}
                                 >
                                     <Typography variant="caption" color="text.secondary" display="block">
@@ -333,9 +338,11 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                                 </Box>
                             )}
 
-                            <Typography variant="caption" color="text.secondary">
-                                {t("publink.transfer.scanHint")}
-                            </Typography>
+                            {!compact && (
+                                <Typography variant="caption" color="text.secondary">
+                                    {t("publink.transfer.scanHint")}
+                                </Typography>
+                            )}
                         </Stack>
                     </Stack>
                 </Stack>
@@ -343,21 +350,21 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                 /* Nothing attached yet: a full-width call to action instead of
                    an empty corner, so the seller sees what buyers will get. */
                 <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
+                    direction={compact ? "column" : { xs: "column", sm: "row" }}
+                    spacing={compact ? 1 : 2}
                     alignItems="center"
                     sx={{
                         border: "1px dashed",
                         borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
                         borderRadius: 2,
-                        px: 2,
-                        py: 2,
+                        px: compact ? 1.5 : 2,
+                        py: compact ? 1.5 : 2,
                     }}
                 >
                     <Box
                         sx={{
-                            width: 44,
-                            height: 44,
+                            width: compact ? 32 : 44,
+                            height: compact ? 32 : 44,
                             borderRadius: "50%",
                             display: "flex",
                             alignItems: "center",
@@ -367,15 +374,15 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
                             flexShrink: 0,
                         }}
                     >
-                        <QrIcon />
+                        <QrIcon size={compact ? 18 : 22} />
                     </Box>
                     <Stack spacing={0.25} sx={{ flexGrow: 1, minWidth: 0, textAlign: { xs: "center", sm: "left" } }}>
-                        <Typography variant="subtitle2">{t("publink.transfer.emptyTitle")}</Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant={compact ? "body2" : "subtitle2"}>{t("publink.transfer.emptyTitle")}</Typography>
+                        <Typography variant={compact ? "caption" : "body2"} color="text.secondary">
                             {t("publink.transfer.emptyDesc")}
                         </Typography>
                     </Stack>
-                    <Button variant="contained" onClick={handleAdd} disabled={busy} sx={{ flexShrink: 0 }}>
+                    <Button variant="contained" size={compact ? "small" : "medium"} onClick={handleAdd} disabled={busy} sx={{ flexShrink: 0 }}>
                         {t("publink.transfer.add")}
                     </Button>
                 </Stack>

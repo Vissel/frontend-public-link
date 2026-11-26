@@ -223,7 +223,10 @@ const LoginPage = () => {
               </Button>
               <Typography variant="body2" align="center" color="text.secondary">
                 {t("login.noAccount")}{" "}
-                <Link component={RouterLink} to="/register">
+                <Link
+                  component={RouterLink}
+                  to={nextParam ? `/register?next=${encodeURIComponent(nextParam)}` : "/register"}
+                >
                   {t("login.registerLink")}
                 </Link>
               </Typography>

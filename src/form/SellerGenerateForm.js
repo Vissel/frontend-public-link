@@ -203,8 +203,10 @@ const SellerGenerateForm = ({ open, onClose, onSuccess }) => {
 
       const productData = productDataRef.current;
       const isYoga = productData.productType === "YOGA_BOOKING";
+      const isBadminton = productData.productType === "BADMINTON_COURT";
       const hasProductData =
         isYoga ||
+        isBadminton ||
         productData.productName ||
         productData.description ||
         productData.quantity ||

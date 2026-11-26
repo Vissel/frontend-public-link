@@ -56,7 +56,9 @@
         "guestBody": "Khách #{{tag}}"
     },
     "footer": {
-        "licensed": "Được cấp phép theo"
+        "licensed": "Được cấp phép theo",
+        "contact": "Liên hệ",
+        "contactTitle": "Gửi email cho chúng tôi"
     },
     "login": {
         "title": "Đăng nhập",
@@ -129,6 +131,9 @@
     "selfRegister": {
         "title": "Tạo tài khoản người bán",
         "subtitle": "Tự đăng ký, chọn gói và bắt đầu bán hàng - không cần lời mời.",
+        "playerTitle": "Tạo tài khoản người chơi",
+        "playerSubtitle": "Đăng ký nhanh để đặt sân và nhận thông báo đặt sân.",
+        "playerAfterNote": "Tiếp theo bạn đăng nhập bằng tài khoản này và chúng tôi đưa bạn về thẳng trang đặt sân.",
         "username": "Tên đăng nhập",
         "usernameHint": "3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới. Đây là tên đăng nhập của bạn.",
         "name": "Họ và tên",
@@ -370,6 +375,9 @@
         "typeYoga": "Đặt lớp Yoga",
         "typeStandardHint": "Người mua đặt hàng theo số lượng/giá trên trang công khai.",
         "typeYogaHint": "Bạn xếp lịch lớp hàng tuần trên lịch; người mua đặt chỗ.",
+        "typeBadminton": "Đặt sân cầu lông",
+        "typeBadmintonHint": "Bạn thiết lập tối đa 6 sân và khung giờ hàng tuần; người chơi đăng nhập, đặt sân và thanh toán chuyển khoản.",
+        "badmintonPriceHint": "Giá sân được thiết lập theo từng khung giờ hàng tuần trên trang đặt sân.",
         "dropInPrice": "Giá mỗi lớp (VND)"
     },
     "generation": {
@@ -1081,6 +1089,111 @@
         "extendNotice": "Liên kết này gia hạn gói hiện tại của bạn thêm {{days}} ngày.",
         "extendDateNote": "Số ngày gia hạn được cộng sau khi quản trị xác nhận giao dịch của bạn."
     },
+    "badminton": {
+        "previousDay": "Ngày trước",
+        "today": "Hôm nay",
+        "nextDay": "Ngày sau",
+        "date": "Ngày",
+        "time": "Giờ",
+        "manageCourts": "Quản lý sân",
+        "manageBookings": "Quản lý đặt sân",
+        "loginHint": "Đăng nhập bằng tài khoản người chơi để đặt sân. Người chơi mới có thể tạo tài khoản trước.",
+        "accountPrompt": "Đăng nhập để tiếp tục, hoặc tạo tài khoản người chơi miễn phí - bạn sẽ quay lại ngay trang này.",
+        "inactive": "Ngừng hoạt động",
+        "noFrames": "Không có khung giờ nào vào ngày này.",
+        "noAvailability": "Không có khung giờ đặt sân nào trong {{days}} ngày tới.",
+        "yourBooking": "Đặt của bạn",
+        "available": "Còn trống",
+        "booked": "Đã đặt",
+        "scheduleTitle": "Tình trạng sân",
+        "myBookings": "Đặt sân của tôi trong ngày",
+        "court": "Sân",
+        "price": "Giá",
+        "statusLabel": "Trạng thái",
+        "action": "Hành động",
+        "payment": "Thanh toán",
+        "details": "Chi tiết",
+        "bookTitle": "Đặt sân này",
+        "register": "Đăng ký",
+        "login": "Đăng nhập",
+        "booking": "Đang đặt...",
+        "book": "Đặt sân",
+        "paymentTitle": "Thanh toán đặt sân",
+        "paymentGuide": "Chuyển đúng số tiền qua mã QR ngân hàng của người bán, sau đó xác nhận bên dưới.",
+        "waitingSeller": "Đã nhận xác nhận chuyển khoản. Đang chờ người bán xác nhận đặt sân.",
+        "confirmedMessage": "Đặt sân của bạn đã được xác nhận. Hẹn gặp bạn trên sân!",
+        "rejectedMessage": "Người bán đã từ chối đặt sân này. Khung giờ đã mở lại.",
+        "cancelledMessage": "Đặt sân này đã bị hủy.",
+        "bankTransfer": "Chuyển khoản ngân hàng",
+        "bankQr": "Mã QR ngân hàng của người bán",
+        "accountNumber": "Số tài khoản",
+        "accountName": "Tên tài khoản",
+        "transferContent": "Nội dung chuyển khoản",
+        "noTransfer": "Người bán chưa gắn tài khoản ngân hàng. Hãy liên hệ người bán trước khi chuyển tiền.",
+        "cancelBooking": "Hủy đặt sân",
+        "processing": "Đang xử lý...",
+        "iTransferred": "Tôi đã chuyển khoản",
+        "courtsTitle": "Sân và lịch hàng tuần",
+        "courtLimit": "Đã dùng {{count}}/{{max}} sân. Giới hạn áp dụng cho mỗi liên kết sản phẩm.",
+        "addCourt": "Thêm sân",
+        "noCourts": "Chưa thiết lập sân nào.",
+        "scheduleDays": "ngày có lịch",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "confirmDeleteCourt": "Xóa sân {{name}}? Lịch sử đặt sân hiện có sẽ được giữ lại.",
+        "editCourt": "Sửa sân",
+        "newCourt": "Sân mới",
+        "courtName": "Tên sân",
+        "opens": "Mở",
+        "closes": "Đóng",
+        "slotLength": "Độ dài khung giờ",
+        "minutes": "phút",
+        "pricePerSlot": "Giá mỗi khung giờ (VND)",
+        "sellerBookingsTitle": "Đặt sân ngày {{date}}",
+        "buyer": "Người chơi",
+        "noBookings": "Không có đặt sân nào trong ngày này.",
+        "reject": "Từ chối",
+        "confirm": "Xác nhận",
+        "status": {
+            "PENDING_PAYMENT": "Chờ thanh toán",
+            "WAITING_CONFIRM": "Chờ người bán",
+            "CONFIRMED": "Đã xác nhận",
+            "REJECTED": "Đã từ chối",
+            "CANCELLED": "Đã hủy"
+        },
+        "days": {
+            "1": "Thứ Hai",
+            "2": "Thứ Ba",
+            "3": "Thứ Tư",
+            "4": "Thứ Năm",
+            "5": "Thứ Sáu",
+            "6": "Thứ Bảy",
+            "7": "Chủ Nhật"
+        },
+        "errors": {
+            "load": "Không tải được lịch sân.",
+            "loadCourts": "Không tải được danh sách sân.",
+            "loadBookings": "Không tải được danh sách đặt sân.",
+            "courtRequired": "Nhập tên sân và bật ít nhất một lịch hàng tuần.",
+            "saveCourt": "Không lưu được sân.",
+            "deleteCourt": "Không xóa được sân.",
+            "book": "Đặt sân thất bại.",
+            "paymentConfirm": "Xác nhận thanh toán thất bại.",
+            "cancel": "Hủy đặt sân thất bại.",
+            "sellerDecision": "Không cập nhật được đặt sân.",
+            "rejected": "Người bán đã từ chối đặt sân của bạn."
+        },
+        "success": {
+            "booked": "Đã giữ sân. Hoàn tất chuyển khoản để tiếp tục.",
+            "paymentConfirmed": "Đã gửi xác nhận chuyển khoản cho người bán.",
+            "confirmed": "Đặt sân của bạn đã được xác nhận.",
+            "cancelled": "Đã hủy đặt sân.",
+            "courtSaved": "Đã lưu sân và lịch hàng tuần.",
+            "courtDeleted": "Đã xóa sân khỏi trang đặt sân.",
+            "sellerConfirmed": "Đã xác nhận đặt sân. Người chơi đã được thông báo.",
+            "sellerRejected": "Đã từ chối đặt sân. Người chơi đã được thông báo."
+        }
+    },
     "yoga": {
         "prevWeek": "Tuần trước",
         "thisWeek": "Tuần này",
@@ -1141,6 +1254,15 @@
             "classDeleted": "Đã xóa lớp.",
             "booked": "Đã giữ chỗ.",
             "cancelled": "Đã hủy đặt chỗ."
+        },
+        "days": {
+            "1": "Thứ Hai",
+            "2": "Thứ Ba",
+            "3": "Thứ Tư",
+            "4": "Thứ Năm",
+            "5": "Thứ Sáu",
+            "6": "Thứ Bảy",
+            "7": "Chủ Nhật"
         }
     },
     "yogaPlans": {
@@ -1156,22 +1278,23 @@
         "notSetPassword": "Chưa đặt",
         "edit": "Sửa",
         "resend": "Gửi lại liên kết",
+        "resendUnavailable": "Chức năng này không khả dụng.",
         "empty": "Chưa có gói nào.",
         "noEnvironments": "Hãy tạo liên kết sản phẩm Yoga trước để quản lý gói người mua.",
         "createTitle": "Gói người mua mới",
         "editTitle": "Sửa gói người mua",
+        "linkTitle": "Liên kết đặt mật khẩu",
+        "linkHint": "Gửi liên kết này cho {{buyer}} để đặt mật khẩu. Liên kết chỉ dùng được một lần và hết hạn sau 48 giờ.",
         "errors": {
             "loadEnvs": "Không tải được trang Yoga của bạn.",
             "load": "Không tải được gói.",
             "save": "Không lưu được gói.",
-            "resend": "Không gửi lại được liên kết.",
             "buyerRequired": "Tên người mua là bắt buộc."
         },
         "success": {
             "created": "Đã tạo gói và lập tài khoản người mua.",
             "createdWithLink": "Đã tạo gói. Liên kết đặt mật khẩu đã được gửi / sẵn sàng để sao chép.",
-            "updated": "Đã cập nhật gói.",
-            "linkSent": "Liên kết đặt mật khẩu mới đã được tạo."
+            "updated": "Đã cập nhật gói."
         }
     },
     "buyerSetup": {
@@ -1193,6 +1316,48 @@
             "accountMissing": "Tài khoản này không còn tồn tại. Hãy yêu cầu người bán tạo lại gói.",
             "serviceUnreachable": "Không kết nối được dịch vụ tài khoản. Vui lòng thử lại sau.",
             "failed": "Không lưu được mật khẩu."
+        }
+    },
+    "notificationPage": {
+        "sellerColumn": "Người bán",
+        "envColumn": "KG",
+        "loadingEnvironments": "Đang tải danh sách không gian bán hàng...",
+        "envName": "Tên",
+        "envCreatedAt": "Ngày tạo",
+        "envStatus": "Trạng thái",
+        "ended": "Đã kết thúc",
+        "endedAt": "Đã kết thúc: {{date}}",
+        "noEnvironments": "Không tìm thấy không gian bán hàng nào của người bán này.",
+        "title": "Gửi thông báo",
+        "description": "Soạn và gửi thông báo đến người bán. Tìm kiếm, chọn người nhận và tùy chọn giới hạn theo từng không gian bán hàng.",
+        "recipients": "Người nhận",
+        "searchLabel": "Tìm người bán",
+        "searchPlaceholder": "Tìm theo tên đăng nhập hoặc tên...",
+        "allSelected": "Đã chọn tất cả người bán",
+        "selectAllPage": "Chọn tất cả trên trang này",
+        "selectedCount": "Đã chọn {{count}}",
+        "noSellers": "Không tìm thấy người bán.",
+        "perPage": "Mỗi trang",
+        "compose": "Soạn tin nhắn",
+        "fieldTitle": "Tiêu đề",
+        "fieldMessage": "Nội dung",
+        "messagePlaceholder": "Nhập nội dung thông báo tại đây...",
+        "clear": "Làm mới",
+        "send": "Gửi thông báo",
+        "confirmTitle": "Xác nhận gửi",
+        "confirmAll": "Thao tác này sẽ gửi thông báo đến TẤT CẢ người bán. Tiếp tục?",
+        "confirmSelected": "Thao tác này sẽ gửi thông báo đến {{count}} người bán. Tiếp tục?",
+        "confirmSend": "Xác nhận và gửi",
+        "errors": {
+            "loadSellers": "Không tải được danh sách người bán.",
+            "titleRequired": "Tiêu đề là bắt buộc.",
+            "messageRequired": "Nội dung là bắt buộc.",
+            "selectSeller": "Hãy chọn ít nhất một người bán hoặc dùng 'Chọn tất cả'.",
+            "sendFailed": "Không gửi được thông báo."
+        },
+        "success": {
+            "sentAll": "Đã gửi thông báo đến tất cả người bán thành công.",
+            "sentCount": "Đã gửi thông báo đến {{count}} người bán thành công."
         }
     }
 }

@@ -29,6 +29,12 @@ function Header() {
   const normalizedRole = normalizeRole(userRole);
   const isAuthenticated = Boolean(auth);
   const isAdmin = ADMIN_ROLES.includes(normalizedRole);
+  // Anonymous visitors on a public product link (court booking) must come
+  // back to it after signing up or signing in.
+  const isSaleUrl = location.pathname === "/api/v1/publish/saleUrl";
+  const returnTo = `${location.pathname}${location.search}`;
+  const registerTarget = isSaleUrl ? `/register?next=${encodeURIComponent(returnTo)}` : "/register";
+  const loginTarget = isSaleUrl ? `/login?next=${encodeURIComponent(returnTo)}` : "/login";
   // Admins and sellers keep their workspaces. Any other signed-in role (a
   // buyer, for instance) has no workspace to land in: the seller home would
   // bounce it straight back to the login form, so the plan screen - which
@@ -161,7 +167,7 @@ function Header() {
             {!isAuthenticated && (
               <Button
                 component={RouterLink}
-                to="/register"
+                to={registerTarget}
                 variant={location.pathname === "/register" ? "contained" : "outlined"}
               >
                 {t("header.register")}
@@ -170,7 +176,7 @@ function Header() {
             {!isAuthenticated && (
               <Button
                 component={RouterLink}
-                to="/login"
+                to={loginTarget}
                 variant={location.pathname === "/login" ? "contained" : "text"}
               >
                 {t("header.login")}

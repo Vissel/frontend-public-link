@@ -26,6 +26,8 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
         productType: initialData.productType || "STANDARD",
     });
     const isYoga = form.productType === "YOGA_BOOKING";
+    const isBadminton = form.productType === "BADMINTON_COURT";
+    const isBookingType = isYoga || isBadminton;
 
     const [images, setImages] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
@@ -128,9 +130,14 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
                 >
                     <ToggleButton value="STANDARD">{t("productForm.typeStandard")}</ToggleButton>
                     <ToggleButton value="YOGA_BOOKING">{t("productForm.typeYoga")}</ToggleButton>
+                    <ToggleButton value="BADMINTON_COURT">{t("productForm.typeBadminton")}</ToggleButton>
                 </ToggleButtonGroup>
                 <Typography variant="caption" color="text.secondary">
-                    {isYoga ? t("productForm.typeYogaHint") : t("productForm.typeStandardHint")}
+                    {isBadminton
+                        ? t("productForm.typeBadmintonHint")
+                        : isYoga
+                            ? t("productForm.typeYogaHint")
+                            : t("productForm.typeStandardHint")}
                 </Typography>
             </Stack>
 
@@ -153,7 +160,7 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
             />
 
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                {!isYoga && (
+                {!isBookingType && (
                     <TextField
                         label="Quantity"
                         name="quantity"
@@ -164,17 +171,24 @@ const ProductForm = ({ initialData = {}, onDataChange }) => {
                         fullWidth
                     />
                 )}
-                <TextField
-                    label={isYoga ? t("productForm.dropInPrice") : "Price for one (VND)"}
-                    name="price"
-                    type="text"
-                    inputRef={priceInputRef}
-                    value={priceDisplay}
-                    onFocus={handlePriceFocus}
-                    onBlur={handlePriceBlur}
-                    onChange={handlePriceChange}
-                    fullWidth
-                />
+                {!isBadminton && (
+                    <TextField
+                        label={isYoga ? t("productForm.dropInPrice") : "Price for one (VND)"}
+                        name="price"
+                        type="text"
+                        inputRef={priceInputRef}
+                        value={priceDisplay}
+                        onFocus={handlePriceFocus}
+                        onBlur={handlePriceBlur}
+                        onChange={handlePriceChange}
+                        fullWidth
+                    />
+                )}
+                {isBadminton && (
+                    <Typography variant="caption" color="text.secondary">
+                        {t("productForm.badmintonPriceHint")}
+                    </Typography>
+                )}
             </Stack>
 
             <Stack spacing={1.5}>

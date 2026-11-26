@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import JSEncrypt from "jsencrypt";
-import { pubApi } from "../api";
+import api, { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
@@ -75,12 +75,19 @@ const BuyerSetupPage = () => {
     setMismatch(false);
     setSubmitting(true);
     try {
+      // The RSA key lives on the gateway's permit-all /api/v1/auth/** route, so
+      // it must go through `api` (gateway base). pubApi would prepend the
+      // /publiclink context path, which the gateway treats as a protected
+      // route and answers 401 to this logged-out setup page.
       let publicKey = sessionStorage.getItem("publicKey");
-      if (publicKey === null) {
-        const keyResponse = await pubApi.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
+      if (!publicKey) {
+        const keyResponse = await api.get("/api/v1/auth/public-key", { responseType: "arraybuffer" });
         publicKey = new TextDecoder().decode(keyResponse.data);
-        sessionStorage.setItem("publicKey", publicKey);
+        // Never cache an empty body: a swallowed failure would otherwise be
+        // reused for every later attempt on this page.
+        if (publicKey) sessionStorage.setItem("publicKey", publicKey);
       }
+      if (!publicKey) throw new Error(t("buyerSetup.errors.encryptFailed"));
       const encryptor = new JSEncrypt();
       encryptor.setPublicKey(publicKey);
       const encryptedPassword = encryptor.encrypt(password);

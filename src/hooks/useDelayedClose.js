@@ -32,31 +32,31 @@ export const SUCCESS_CLOSE_DELAY_MS = 800;
  * @returns {{ schedule: Function, cancel: Function }}
  */
 const useDelayedClose = (onClose, { delay = SUCCESS_CLOSE_DELAY_MS } = {}) => {
-  const timerRef = useRef(null);
-  const closeRef = useRef(onClose);
+    const timerRef = useRef(null);
+    const closeRef = useRef(onClose);
 
-  useEffect(() => {
-    closeRef.current = onClose;
-  }, [onClose]);
+    useEffect(() => {
+        closeRef.current = onClose;
+    }, [onClose]);
 
-  const cancel = useCallback(() => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
+    const cancel = useCallback(() => {
+        if (timerRef.current !== null) {
+            window.clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
 
-  const schedule = useCallback(() => {
-    cancel();
-    timerRef.current = window.setTimeout(() => {
-      timerRef.current = null;
-      closeRef.current?.();
-    }, delay);
-  }, [cancel, delay]);
+    const schedule = useCallback(() => {
+        cancel();
+        timerRef.current = window.setTimeout(() => {
+            timerRef.current = null;
+            closeRef.current?.();
+        }, delay);
+    }, [cancel, delay]);
 
-  useEffect(() => cancel, [cancel]);
+    useEffect(() => cancel, [cancel]);
 
-  return { schedule, cancel };
+    return { schedule, cancel };
 };
 
 export default useDelayedClose;

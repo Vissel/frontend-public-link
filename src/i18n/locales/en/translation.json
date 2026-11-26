@@ -56,7 +56,9 @@
         "guestBody": "Guest #{{tag}}"
     },
     "footer": {
-        "licensed": "Licensed under the"
+        "licensed": "Licensed under the",
+        "contact": "Contact us",
+        "contactTitle": "Send us an email"
     },
     "login": {
         "title": "Login",
@@ -129,6 +131,9 @@
     "selfRegister": {
         "title": "Create your seller account",
         "subtitle": "Register yourself, pick a plan and start selling - no invitation needed.",
+        "playerTitle": "Create your player account",
+        "playerSubtitle": "One quick sign-up lets you book courts and receive booking updates.",
+        "playerAfterNote": "Next you sign in with this account and we bring you straight back to the court page.",
         "username": "Username",
         "usernameHint": "3-30 characters: letters, numbers, dot, dash or underscore. This is your login.",
         "name": "Full name",
@@ -370,6 +375,9 @@
         "typeYoga": "Yoga booking",
         "typeStandardHint": "Buyers place quantity/price orders on the public page.",
         "typeYogaHint": "You schedule weekly classes on a calendar; buyers book slots.",
+        "typeBadminton": "Badminton court booking",
+        "typeBadmintonHint": "You configure up to 6 courts and weekly time frames; signed-in players book and pay by bank transfer.",
+        "badmintonPriceHint": "Court prices are configured per weekly time frame on the public booking page.",
         "dropInPrice": "Drop-in price per class (VND)"
     },
     "generation": {
@@ -1081,6 +1089,111 @@
         "extendNotice": "This link extends your current plan by {{days}} day(s).",
         "extendDateNote": "The extra days are added after the admin confirms your transfer."
     },
+    "badminton": {
+        "previousDay": "Previous day",
+        "today": "Today",
+        "nextDay": "Next day",
+        "date": "Date",
+        "time": "Time",
+        "manageCourts": "Manage courts",
+        "manageBookings": "Manage bookings",
+        "loginHint": "Sign in with your player account to book a court. New players can create one first.",
+        "accountPrompt": "Sign in to continue, or create a free player account - you will come right back to this page.",
+        "inactive": "Inactive",
+        "noFrames": "No time frames are available for this date.",
+        "noAvailability": "No court time frames are available within the next {{days}} days.",
+        "yourBooking": "Your booking",
+        "available": "Available",
+        "booked": "Booked",
+        "scheduleTitle": "Court availability",
+        "myBookings": "My bookings on this date",
+        "court": "Court",
+        "price": "Price",
+        "statusLabel": "Status",
+        "action": "Action",
+        "payment": "Payment",
+        "details": "Details",
+        "bookTitle": "Book this court",
+        "register": "Register",
+        "login": "Sign in",
+        "booking": "Booking...",
+        "book": "Book court",
+        "paymentTitle": "Court booking payment",
+        "paymentGuide": "Transfer the exact amount using the seller's bank QR, then confirm below.",
+        "waitingSeller": "Transfer confirmation received. Waiting for the seller to confirm your booking.",
+        "confirmedMessage": "Your court booking is confirmed. See you on court!",
+        "rejectedMessage": "The seller rejected this booking. The time frame is available again.",
+        "cancelledMessage": "This booking has been cancelled.",
+        "bankTransfer": "Bank transfer",
+        "bankQr": "Seller bank QR",
+        "accountNumber": "Account number",
+        "accountName": "Account name",
+        "transferContent": "Transfer content",
+        "noTransfer": "The seller has not attached a bank account yet. Contact the seller before transferring.",
+        "cancelBooking": "Cancel booking",
+        "processing": "Processing...",
+        "iTransferred": "I have transferred",
+        "courtsTitle": "Courts and weekly schedules",
+        "courtLimit": "{{count}} of {{max}} courts used. The limit is per product link.",
+        "addCourt": "Add court",
+        "noCourts": "No courts configured yet.",
+        "scheduleDays": "scheduled days",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDeleteCourt": "Delete court {{name}}? Existing booking history will be preserved.",
+        "editCourt": "Edit court",
+        "newCourt": "New court",
+        "courtName": "Court name",
+        "opens": "Opens",
+        "closes": "Closes",
+        "slotLength": "Frame length",
+        "minutes": "minutes",
+        "pricePerSlot": "Price per frame (VND)",
+        "sellerBookingsTitle": "Bookings on {{date}}",
+        "buyer": "Player",
+        "noBookings": "No bookings for this date.",
+        "reject": "Reject",
+        "confirm": "Confirm",
+        "status": {
+            "PENDING_PAYMENT": "Waiting payment",
+            "WAITING_CONFIRM": "Waiting seller",
+            "CONFIRMED": "Confirmed",
+            "REJECTED": "Rejected",
+            "CANCELLED": "Cancelled"
+        },
+        "days": {
+            "1": "Monday",
+            "2": "Tuesday",
+            "3": "Wednesday",
+            "4": "Thursday",
+            "5": "Friday",
+            "6": "Saturday",
+            "7": "Sunday"
+        },
+        "errors": {
+            "load": "Failed to load the court calendar.",
+            "loadCourts": "Failed to load courts.",
+            "loadBookings": "Failed to load bookings.",
+            "courtRequired": "Enter a court name and enable at least one weekly schedule.",
+            "saveCourt": "Failed to save the court.",
+            "deleteCourt": "Failed to delete the court.",
+            "book": "Booking failed.",
+            "paymentConfirm": "Payment confirmation failed.",
+            "cancel": "Cancellation failed.",
+            "sellerDecision": "Failed to update the booking.",
+            "rejected": "The seller rejected your booking."
+        },
+        "success": {
+            "booked": "Court reserved. Complete the bank transfer to continue.",
+            "paymentConfirmed": "Transfer confirmation sent to the seller.",
+            "confirmed": "Your court booking is confirmed.",
+            "cancelled": "Booking cancelled.",
+            "courtSaved": "Court and weekly schedule saved.",
+            "courtDeleted": "Court removed from the booking page.",
+            "sellerConfirmed": "Booking confirmed. The player has been notified.",
+            "sellerRejected": "Booking rejected. The player has been notified."
+        }
+    },
     "yoga": {
         "prevWeek": "Prev week",
         "thisWeek": "This week",
@@ -1141,6 +1254,15 @@
             "classDeleted": "Class removed.",
             "booked": "Slot booked.",
             "cancelled": "Booking cancelled."
+        },
+        "days": {
+            "1": "Mon",
+            "2": "Tue",
+            "3": "Wed",
+            "4": "Thu",
+            "5": "Fri",
+            "6": "Sat",
+            "7": "Sun"
         }
     },
     "yogaPlans": {
@@ -1156,22 +1278,23 @@
         "notSetPassword": "Not set",
         "edit": "Edit",
         "resend": "Resend link",
+        "resendUnavailable": "This action is not available.",
         "empty": "No plans yet.",
         "noEnvironments": "Create a yoga product link first to manage buyer plans.",
         "createTitle": "New buyer plan",
         "editTitle": "Edit buyer plan",
+        "linkTitle": "Password setup link",
+        "linkHint": "Send this link to {{buyer}} so they can choose their password. It works once and expires within 48 hours.",
         "errors": {
             "loadEnvs": "Failed to load your yoga pages.",
             "load": "Failed to load plans.",
             "save": "Failed to save the plan.",
-            "resend": "Failed to resend the link.",
             "buyerRequired": "Buyer name is required."
         },
         "success": {
             "created": "Plan created and buyer account provisioned.",
             "createdWithLink": "Plan created. The setup link was emailed / is ready to copy.",
-            "updated": "Plan updated.",
-            "linkSent": "A fresh setup link was issued."
+            "updated": "Plan updated."
         }
     },
     "buyerSetup": {
@@ -1193,6 +1316,48 @@
             "accountMissing": "This account no longer exists. Ask the seller to create the plan again.",
             "serviceUnreachable": "The account service is unreachable. Try again in a moment.",
             "failed": "Could not save your password."
+        }
+    },
+    "notificationPage": {
+        "sellerColumn": "Seller",
+        "envColumn": "Env",
+        "loadingEnvironments": "Loading environments...",
+        "envName": "Name",
+        "envCreatedAt": "Created At",
+        "envStatus": "Status",
+        "ended": "Ended",
+        "endedAt": "Ended: {{date}}",
+        "noEnvironments": "No environments found for this seller.",
+        "title": "Send Notification",
+        "description": "Compose and deliver notifications to sellers. Search, select recipients, and optionally scope to specific environments.",
+        "recipients": "Recipients",
+        "searchLabel": "Search sellers",
+        "searchPlaceholder": "Search by username or name...",
+        "allSelected": "All sellers selected",
+        "selectAllPage": "Select all on this page",
+        "selectedCount": "{{count}} selected",
+        "noSellers": "No sellers found.",
+        "perPage": "Per page",
+        "compose": "Compose Message",
+        "fieldTitle": "Title",
+        "fieldMessage": "Message",
+        "messagePlaceholder": "Type your notification message here...",
+        "clear": "Reset",
+        "send": "Send Notification",
+        "confirmTitle": "Confirm Send",
+        "confirmAll": "This will send the notification to ALL sellers. Continue?",
+        "confirmSelected": "This will send the notification to {{count}} seller(s). Continue?",
+        "confirmSend": "Confirm & Send",
+        "errors": {
+            "loadSellers": "Failed to load seller list.",
+            "titleRequired": "Title is required.",
+            "messageRequired": "Message is required.",
+            "selectSeller": "Select at least one seller or use 'Select All'.",
+            "sendFailed": "Failed to send notification."
+        },
+        "success": {
+            "sentAll": "Notification sent to all sellers successfully.",
+            "sentCount": "Notification sent to {{count}} seller(s) successfully."
         }
     }
 }

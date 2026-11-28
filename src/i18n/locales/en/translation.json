@@ -1534,5 +1534,37 @@
         "tooltip": "Show QR code",
         "hint": "Scan to open the product page.",
         "error": "Could not generate the QR code."
+    },
+    "comment": {
+        "title": "Discussion",
+        "sectionDesc": "Ask questions and share feedback about this product.",
+        "placeholder": "Write a comment…",
+        "replyPlaceholder": "Write a reply…",
+        "post": "Post comment",
+        "save": "Save",
+        "replySubmit": "Reply",
+        "reply": "Reply",
+        "edit": "Edit",
+        "delete": "Delete",
+        "deleteConfirm": "Delete this comment?",
+        "deletedPlaceholder": "This comment was deleted.",
+        "edited": "edited",
+        "replyingTo": "replying to {{name}}",
+        "showReplies": "Show {{count}} replies",
+        "loadMore": "Load more",
+        "loading": "Loading…",
+        "empty": "No comments yet. Be the first to comment.",
+        "attach": "Attach image or file",
+        "loginToComment": "Sign in to join the discussion.",
+        "errors": {
+            "load": "Could not load the comments.",
+            "empty": "Write something or attach a file.",
+            "tooLong": "This comment is too long.",
+            "tooLarge": "A file is larger than {{max}}.",
+            "tooManyFiles": "At most {{max}} files per comment.",
+            "filetype": "That file type is not allowed (images or standard documents only).",
+            "submit": "Could not save your comment. Please try again.",
+            "forbidden": "Please sign in to post, edit or delete comments."
+        }
     }
 }

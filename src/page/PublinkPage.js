@@ -31,6 +31,7 @@ import { useAuth } from "../AuthContext";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
+import CommentSection from "../components/comment/CommentSection";
 import { CountdownChip } from "../components/CountdownTimer";
 import YogaSection from "../components/YogaSection";
 import BadmintonSection from "../components/BadmintonSection";
@@ -763,6 +764,23 @@ const PublinkPage = () => {
                                 </Grid>
                             ))}
                         </Grid>
+                    </SectionBlock>
+                )}
+
+                {/* Product discussion: one comment thread on the primary product.
+                    Reads are public (anonymous buyers see it), posting/editing
+                    requires a signed-in account. targetType/product id are generic
+                    so the same component drops onto post/guideline pages later. */}
+                {!isYoga && !isBadminton && saleSpace.listProduct && saleSpace.listProduct.length > 0 && (
+                    <SectionBlock
+                        title={t("comment.title")}
+                        description={t("comment.sectionDesc")}
+                    >
+                        <CommentSection
+                            targetType="PRODUCT"
+                            targetId={String(saleSpace.listProduct[0].productId)}
+                            showTitle={false}
+                        />
                     </SectionBlock>
                 )}
 

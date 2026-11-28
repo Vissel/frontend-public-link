@@ -6,6 +6,10 @@ export const CONTEXT_PATH = "/publiclink";
 // Zalo chat bridge lives in its own service and its own public namespace, so the
 // gateway routes /chat/** to chat-app rather than to publiclink-app.
 export const CHAT_CONTEXT_PATH = "/chat";
+// Comment service: its own namespace too. Public reads (/comment/api/v1/public/**)
+// are permit-all at the gateway; writes (/comment/api/v1/comments/**) carry the JWT
+// the interceptor below attaches.
+export const COMMENT_CONTEXT_PATH = "/comment";
 
 const api = axios.create({
   baseURL: config.baseURL,
@@ -25,6 +29,15 @@ const pubApi = axios.create({
 // console endpoints get the same Authorization header the other instances attach.
 const chatApi = axios.create({
   baseURL: `${config.baseURL}${CHAT_CONTEXT_PATH}`,
+  withCredentials: true,
+  timeout: config.timeout,
+  headers: { "ngrok-skip-browser-warning": "true" },
+});
+
+// Comment service calls. Anonymous buyers can read a product's discussion;
+// posting/editing/deleting rides the same JWT + X-User-ID the other instances attach.
+const commentApi = axios.create({
+  baseURL: `${config.baseURL}${COMMENT_CONTEXT_PATH}`,
   withCredentials: true,
   timeout: config.timeout,
   headers: { "ngrok-skip-browser-warning": "true" },
@@ -229,5 +242,15 @@ chatApi.interceptors.response.use(
   createResponseErrorHandler(chatApi)
 );
 
+// ── Wire up commentApi ──────────────────────────────────────────────────────
+// Writes are JWT-guarded at the gateway, so the refresh-on-401 path applies here as
+// well; anonymous reads simply go through with no Authorization header attached.
+commentApi.interceptors.request.use(createRequestInterceptor());
+
+commentApi.interceptors.response.use(
+  (response) => response,
+  createResponseErrorHandler(commentApi)
+);
+
 export default api;
-export { pubApi, chatApi, config };
+export { pubApi, chatApi, commentApi, config };

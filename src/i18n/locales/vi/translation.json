@@ -1534,5 +1534,37 @@
         "tooltip": "Xem mã QR",
         "hint": "Quét mã để mở trang sản phẩm.",
         "error": "Không tạo được mã QR."
+    },
+    "comment": {
+        "title": "Thảo luận",
+        "sectionDesc": "Đặt câu hỏi và chia sẻ phản hồi về sản phẩm này.",
+        "placeholder": "Viết bình luận…",
+        "replyPlaceholder": "Viết câu trả lời…",
+        "post": "Gửi bình luận",
+        "save": "Lưu",
+        "replySubmit": "Trả lời",
+        "reply": "Trả lời",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "deleteConfirm": "Xóa bình luận này?",
+        "deletedPlaceholder": "Bình luận đã bị xóa.",
+        "edited": "đã sửa",
+        "replyingTo": "trả lời {{name}}",
+        "showReplies": "Hiển thị {{count}} trả lời",
+        "loadMore": "Tải thêm",
+        "loading": "Đang tải…",
+        "empty": "Chưa có bình luận. Hãy là người đầu tiên.",
+        "attach": "Đính kèm ảnh hoặc tệp",
+        "loginToComment": "Đăng nhập để tham gia thảo luận.",
+        "errors": {
+            "load": "Không tải được bình luận.",
+            "empty": "Hãy viết gì đó hoặc đính kèm một tệp.",
+            "tooLong": "Bình luận quá dài.",
+            "tooLarge": "Một tệp vượt quá {{max}}.",
+            "tooManyFiles": "Tối đa {{max}} tệp mỗi bình luận.",
+            "filetype": "Loại tệp không được phép (chỉ ảnh hoặc tài liệu thông dụng).",
+            "submit": "Không lưu được bình luận. Vui lòng thử lại.",
+            "forbidden": "Vui lòng đăng nhập để đăng, sửa hoặc xóa bình luận."
+        }
     }
 }

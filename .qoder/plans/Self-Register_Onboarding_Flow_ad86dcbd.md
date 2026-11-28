@@ -90,3 +90,34 @@ In [SellerPlanController.java](file:///Users/user/eclipse-workspace/publiclink-r
 - Receiving admin username is set in `publiclink-app` `application.properties` (`app.payment.self-service-admin`) before go-live; its default ACTIVE transfer account must exist (same requirement as admin-created payments).
 - No auto payment reconciliation; admin verifies transfers manually as today.
 - Self-registered accounts get SELLER role immediately; the existing quota gate (`/sellerPlan/check`) blocks link generation until a plan is ACTIVE.
+
+## Addendum — requirement 1: one free plan per account, auto-approved
+
+Scope: requirement 1 ONLY. The device-telemetry / financial-grade hardening drafts (items 2 and 3) are explicitly NOT part of this change.
+
+Rule: an account may obtain a 0-fee plan at most ONCE through self-service. Every 0-fee assignment ever created counts, in any state (including ones an admin later rejected/deactivated). Only the ADMIN role may assign 0-fee plans repeatedly. A 0-fee plan AUTO-APPROVES: no transfer, no VietQR, no admin "Mark Paid" wait.
+
+### Backend — publiclink-app
+1. Allowance is derived, no new column/changeset. New `PaymentPlanUserRepository.countFreePlanGrants(username)`:
+   `SELECT COUNT(ppu) FROM PaymentPlanUser ppu JOIN ppu.user u JOIN ppu.plan p WHERE u.userName = :username AND p.fee = 0 AND ppu.extendDays IS NULL AND ppu.convertsPlanUserCode IS NULL` (no state filter, so "ever"). Order rows (extension/conversion) are excluded because they are not plan grants. Expose via `CorePaymentPlanService.hasEverHadFreePlan` and `PaymentPlanService.freePlanUsed`.
+2. Auto-approve inside `PaymentPlanService.createSellerPlan` (single place, covers self-service AND admin): after the assignment + payment are created, if `fee.signum() == 0` call the existing `markPaidAssignments(List.of(planUserCode), "auto-approved free plan", adminUsername, null)`. That reuses payment->PAID, bill creation, CREATE->ACTIVE activation and the "Plan activated" notification; response `status` becomes PAID. The row never sits in the "Waiting for pay" queue.
+3. Once-guard in `SelfServicePlanService.buyPlan` and `buyAdditionalPlan`, BEFORE `createSellerPlan`: resolve the catalog plan (`findOnSalePlan`), and if `fee == 0 && freePlanUsed(username)` throw `ApplicationException(..., 409)`. The admin `createSellerPlan` path has NO guard (unlimited).
+4. Skip `PaymentCreatedEvent` (VietQR generation) when `fee == 0` in `buyPlan`/`buyAdditionalPlan`: the payment is already PAID, there is nothing to transfer.
+5. `SelfServicePlanService.convertOwnPlan`: refuse a 0-fee target unconditionally (400) with a clear message; conversion can never hand out a free plan.
+6. `SelfServiceStateResponse` and `MorePlanStateResponse` gain `freePlanUsed` (boolean), set in `buildState`/`buildMoreState`, so the UI can disable the free card without a second call.
+7. `extendMore` is unchanged (out of scope for this requirement).
+
+### Frontend — frontend-publiclink
+- `PlanSelectPage` and `MorePlanPage` Buy tab: when `state.freePlanUsed`, render every `fee == 0` card as disabled (`CardActionArea disabled`, dimmed, Chip `t("plans.freeUsed")` + caption) and non-selectable. When not yet used the free card stays selectable; after selecting it the backend returns STATE_ACTIVE, so the existing success panel ("go to workspace") shows with no QR step.
+- `MorePlanPage` Convert tab: filter 0-fee targets out of the list and show `t("morePlan.convert.noFreeTarget")`; the backend refusal is the backstop.
+- i18n in BOTH locales: `plans.freeUsed`, `plans.freeAutoNote`, `morePlan.freeUsed`, `morePlan.convert.noFreeTarget`, `plans.errors.freeAlreadyUsed`, `morePlan.errors.convertFree`.
+- Admin `CreateSellerPlanDialog` unchanged (0-fee assignment stays unlimited); it now simply lands on an already-PAID/ACTIVE result.
+
+### Test Plan (addendum)
+- Backend: first self-service free select -> assignment ACTIVE + payment PAID immediately, no open order; second free select/buyMore -> 409; a DEACTIVE free row still counts; admin second free assignment allowed; convert onto a 0-fee target -> 400.
+- Frontend: free card disabled and unselectable when `freePlanUsed`; convert target list excludes 0-fee plans; EN/VI keys present.
+
+### Assumptions (addendum)
+- "Ever" includes rejected/deactivated free grants (user chose the strictest count).
+- Auto-approve applies to admin-assigned 0-fee plans too, because it lives in the shared `createSellerPlan`.
+- No schema migration: the allowance is computed from `payment_plan_user` history.

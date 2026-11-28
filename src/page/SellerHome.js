@@ -24,6 +24,7 @@ import SellerGenerateForm from "../form/SellerGenerateForm";
 import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import SectionBlock from "../components/SectionBlock";
 import CardWrapper from "../components/CardWrapper";
+import ShareLinkQrButton from "../components/ShareLinkQrButton";
 import { useTranslation } from "react-i18next";
 import { getExportLocale } from "../i18n/exportLocale";
 import { formatVND } from "../util/clipboard";
@@ -537,6 +538,7 @@ const SellerHome = () => {
                                     ? t("common.copied")
                                     : t("common.copy")}
                                 </Button>
+                                <ShareLinkQrButton url={addHostToHref(env.publicLink)} />
                               </Stack>
                             ) : (
                               "\u2014"

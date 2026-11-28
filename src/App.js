@@ -13,7 +13,7 @@ import EnvironmentDetailPage from "./page/EnvironmentDetailPage";
 import NotificationPage from "./page/NotificationPage";
 import AdminChatPage from "./page/AdminChatPage";
 import SetupPage from "./page/SetupPage";
-import SellerSetupPage from "./page/SellerSetupPage";
+import SelfAccountPage from "./page/SelfAccountPage";
 import PaymentPage from "./page/PaymentPage";
 import BuyerSetupPage from "./page/BuyerSetupPage";
 
@@ -189,14 +189,6 @@ function App() {
                 </Layout>
               }
             />
-            <Route
-              path="/sellerSetup"
-              element={
-                <Layout>
-                  <SellerSetupPage />
-                </Layout>
-              }
-            />
           </Route>
 
           {/* Buy more capacity on top of a plan that is already running. Open
@@ -208,6 +200,18 @@ function App() {
               element={
                 <Layout>
                   <MorePlanPage />
+                </Layout>
+              }
+            />
+            {/* The account's own page, opened from the identity block of the
+                header account menu. It replaced the old /sellerSetup screen
+                and serves buyers as well, so the seller-only sections below
+                it are hidden by the page itself. */}
+            <Route
+              path="/self"
+              element={
+                <Layout>
+                  <SelfAccountPage />
                 </Layout>
               }
             />

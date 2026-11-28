@@ -191,7 +191,14 @@ const createRequestInterceptor = () => {
       setHeader(headers, "Accept", "application/json");
     }
 
-    setHeader(headers, "Content-Type", "application/json");
+    // Multipart uploads must keep the browser-generated boundary: axios builds
+    // the whole Content-Type header itself when the body is a FormData, so the
+    // JSON default must stay out of the way for those requests.
+    if (typeof FormData !== "undefined" && requestConfig.data instanceof FormData) {
+      removeHeader(headers, "Content-Type");
+    } else if (!hasHeader(headers, "Content-Type")) {
+      setHeader(headers, "Content-Type", "application/json");
+    }
 
     return requestConfig;
   };

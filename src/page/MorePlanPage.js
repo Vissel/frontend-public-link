@@ -26,6 +26,7 @@ import { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
 import PaymentInfoPanel from "../components/PaymentInfoPanel";
+import PlanWindowDialog from "../form/PlanWindowDialog";
 import { formatVND } from "../util/clipboard";
 import {
     groupColor,
@@ -95,6 +96,11 @@ const MorePlanPage = () => {
     // already false - would otherwise not retrigger it.
     const [catalogAttempt, setCatalogAttempt] = useState(0);
     const [selectedPlan, setSelectedPlan] = useState("");
+    // The plan whose window popup is open, and the window the seller confirmed
+    // for the plan they picked: the start is part of choosing a plan, so a card
+    // click opens the popup instead of selecting straight away.
+    const [windowPlan, setWindowPlan] = useState(null);
+    const [appliedWindow, setAppliedWindow] = useState(null);
     const [buying, setBuying] = useState(false);
 
     const [extendTarget, setExtendTarget] = useState("");
@@ -106,6 +112,9 @@ const MorePlanPage = () => {
     const [convertSource, setConvertSource] = useState("");
     const [convertTarget, setConvertTarget] = useState("");
     const [convertTargets, setConvertTargets] = useState([]);
+    // True when the only plans hidden from the target list were free ones, so the
+    // empty message can say that rather than "nothing is on sale".
+    const [convertFreeHidden, setConvertFreeHidden] = useState(false);
     const [convertLoading, setConvertLoading] = useState(false);
     const [convertError, setConvertError] = useState("");
     const [converting, setConverting] = useState(false);
@@ -139,6 +148,9 @@ const MorePlanPage = () => {
     // same price list the onboarding screen did and not the other one.
     const purpose = normalizeGroup(state?.planPurpose);
     const purposeColor = groupColor(purpose);
+    // Owned by the backend: "ever taken" counts free grants an admin rejected,
+    // which are not visible in any list this screen receives.
+    const freePlanUsed = Boolean(state?.freePlanUsed);
 
     // The order leaving the open list is the admin marking it paid, which is the
     // news the polling waits for. Tracked from an effect rather than inside the
@@ -266,8 +278,14 @@ const MorePlanPage = () => {
         setError("");
         setBuying(true);
         try {
-            const res = await pubApi.post("/api/v1/sellerPlan/buyMore", { planCode: selectedPlan });
+            // The chosen start travels with the order; without one the plan
+            // starts whenever the admin confirms the money.
+            const res = await pubApi.post("/api/v1/sellerPlan/buyMore", {
+                planCode: selectedPlan,
+                ...(appliedWindow?.startAt ? { startAt: appliedWindow.startAt } : {}),
+            });
             setSelectedPlan("");
+            setAppliedWindow(null);
             setSettled(false);
             setState(res.data || null);
         } catch (err) {
@@ -320,14 +338,22 @@ const MorePlanPage = () => {
         pubApi
             .get("/api/v1/publish/plans", { params: { group: convertSourceGroup } })
             .then((res) => {
-                if (!cancelled) {
-                    setConvertTargets((res.data?.items || []).filter((plan) => plan.planCode !== chosenConvertSource.planCode));
+                if (cancelled) {
+                    return;
                 }
+                const others = (res.data?.items || []).filter(
+                    (plan) => plan.planCode !== chosenConvertSource.planCode
+                );
+                // A conversion can never land on the one-time free plan, and the
+                // backend refuses it too; hiding those keeps the choice honest.
+                setConvertFreeHidden(others.some((plan) => Number(plan.fee) === 0));
+                setConvertTargets(others.filter((plan) => Number(plan.fee) !== 0));
             })
             .catch((err) => {
                 console.error("Failed to load the conversion targets", err);
                 if (!cancelled) {
                     setConvertError(t("morePlan.errors.catalog"));
+                    setConvertFreeHidden(false);
                     setConvertTargets([]);
                 }
             })
@@ -631,6 +657,11 @@ const MorePlanPage = () => {
                                         <Grid container spacing={2}>
                                             {plans.map((plan) => {
                                                 const isSelected = selectedPlan === plan.planCode;
+                                                // Buying more is not a second chance at the
+                                                // one-time free plan, so it is greyed out here
+                                                // exactly as on the onboarding screen.
+                                                const free = Number(plan.fee) === 0;
+                                                const freeBlocked = free && freePlanUsed;
                                                 return (
                                                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={plan.planCode}>
                                                         <Card
@@ -639,9 +670,14 @@ const MorePlanPage = () => {
                                                                 height: "100%",
                                                                 borderColor: isSelected ? "primary.main" : "divider",
                                                                 borderWidth: isSelected ? 2 : 1,
+                                                                opacity: freeBlocked ? 0.6 : 1,
                                                             }}
                                                         >
-                                                            <CardActionArea onClick={() => setSelectedPlan(plan.planCode)} sx={{ height: "100%" }}>
+                                                            <CardActionArea
+                                                                disabled={freeBlocked}
+                                                                onClick={() => setWindowPlan(plan)}
+                                                                sx={{ height: "100%" }}
+                                                            >
                                                                 <Stack spacing={1} sx={{ p: 2 }}>
                                                                     <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                                                                         <Typography variant="h5" sx={{ fontWeight: 700 }}>
@@ -656,10 +692,30 @@ const MorePlanPage = () => {
                                                                                 label={t("morePlan.selected")}
                                                                             />
                                                                         )}
+                                                                        {freeBlocked && (
+                                                                            <Chip
+                                                                                size="small"
+                                                                                variant="outlined"
+                                                                                color="warning"
+                                                                                onClick={() => { }}
+                                                                                clickable={false}
+                                                                                label={t("plans.freeUsed")}
+                                                                            />
+                                                                        )}
                                                                     </Stack>
                                                                     <Typography variant="body2" color="text.secondary">
                                                                         {plan.planDay} {t("payment.unit.day")} · {plan.envCount} {t("payment.unit.link")}
                                                                     </Typography>
+                                                                    {free && !freeBlocked && (
+                                                                        <Typography variant="caption" color="success.main">
+                                                                            {t("plans.freeAutoNote")}
+                                                                        </Typography>
+                                                                    )}
+                                                                    {freeBlocked && (
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            {t("plans.freeUsedNote")}
+                                                                        </Typography>
+                                                                    )}
                                                                     {plan.description && (
                                                                         <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
                                                                             {plan.description}
@@ -813,7 +869,11 @@ const MorePlanPage = () => {
                                             {convertError && <Alert severity="error">{convertError}</Alert>}
 
                                             {!convertLoading && chosenConvertSource && convertTargets.length === 0 && !convertError && (
-                                                <Alert severity="info">{t("morePlan.convert.noTarget")}</Alert>
+                                                <Alert severity="info">
+                                                    {convertFreeHidden
+                                                        ? t("morePlan.convert.noFreeTarget")
+                                                        : t("morePlan.convert.noTarget")}
+                                                </Alert>
                                             )}
 
                                             {chosenConvertSource && convertTargets.length > 0 && (
@@ -932,6 +992,24 @@ const MorePlanPage = () => {
                         </Stack>
                     </CardWrapper>
                 )}
+
+                <PlanWindowDialog
+                    open={Boolean(windowPlan)}
+                    plan={windowPlan}
+                    appliedStartAt={
+                        appliedWindow && appliedWindow.planCode === windowPlan?.planCode
+                            ? appliedWindow.startAt
+                            : ""
+                    }
+                    onApplied={(startAt, endAt) => {
+                        if (!windowPlan) {
+                            return;
+                        }
+                        setSelectedPlan(windowPlan.planCode);
+                        setAppliedWindow({ planCode: windowPlan.planCode, startAt, endAt });
+                    }}
+                    onClose={() => setWindowPlan(null)}
+                />
             </Stack>
         </PageContainer>
     );

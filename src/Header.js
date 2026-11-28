@@ -29,12 +29,14 @@ function Header() {
   const normalizedRole = normalizeRole(userRole);
   const isAuthenticated = Boolean(auth);
   const isAdmin = ADMIN_ROLES.includes(normalizedRole);
-  // Anonymous visitors on a public product link (court booking) must come
-  // back to it after signing up or signing in.
-  const isSaleUrl = location.pathname === "/api/v1/publish/saleUrl";
+  // Anonymous visitors on a public sale space must come back to it after
+  // signing up or signing in: the older /api/v1/publish/saleUrl link and the
+  // /publink page, which is where yoga timetables and court grids are booked.
+  const isPublicSpace =
+    location.pathname === "/api/v1/publish/saleUrl" || location.pathname === "/publink";
   const returnTo = `${location.pathname}${location.search}`;
-  const registerTarget = isSaleUrl ? `/register?next=${encodeURIComponent(returnTo)}` : "/register";
-  const loginTarget = isSaleUrl ? `/login?next=${encodeURIComponent(returnTo)}` : "/login";
+  const registerTarget = isPublicSpace ? `/register?next=${encodeURIComponent(returnTo)}` : "/register";
+  const loginTarget = isPublicSpace ? `/login?next=${encodeURIComponent(returnTo)}` : "/login";
   // Admins and sellers keep their workspaces. Any other signed-in role (a
   // buyer, for instance) has no workspace to land in: the seller home would
   // bounce it straight back to the login form, so the plan screen - which
@@ -147,12 +149,11 @@ function Header() {
                 {t("header.morePlan")}
               </Button>
             )}
-            {isAuthenticated && (normalizedRole === "admin" || normalizedRole === "seller") && (
-              <Button
-                component={RouterLink}
-                to={normalizedRole === "admin" ? "/setup" : "/sellerSetup"}
-                variant="text"
-              >
+            {/* Admins keep the setup screen. Sellers and buyers reach their own
+                settings, plans and transfer accounts from the identity block of
+                the account menu (/self), so there is no header entry for them. */}
+            {isAuthenticated && normalizedRole === "admin" && (
+              <Button component={RouterLink} to="/setup" variant="text">
                 {t("header.setup")}
               </Button>
             )}

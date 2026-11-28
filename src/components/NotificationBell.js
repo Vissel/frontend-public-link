@@ -184,7 +184,10 @@ const NotificationBell = () => {
                 {
                     planUserCodes: [planUserCode],
                     note: t("notificationBell.payment.billNote"),
-                    activeDate: null,
+                    // No start here on purpose: the plan starts from what the
+                    // seller asked for, and the setup page is where an admin
+                    // overrides a window.
+                    startAt: null,
                 },
                 { headers: { "X-User-ID": username } }
             );

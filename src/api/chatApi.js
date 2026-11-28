@@ -17,6 +17,26 @@ export const startChat = (payload) => chatApi.post("/api/v1/chat/start", payload
 
 export const sendChatMessage = (payload) => chatApi.post("/api/v1/chat/message", payload);
 
+/**
+ * Visitor message carrying one image or document. The body is a FormData
+ * (file part + conversationUuid/deviceId/clientMessageId/caption); the axios
+ * interceptor drops its JSON Content-Type default for FormData so the browser
+ * can write the multipart boundary.
+ */
+export const sendChatMessageWithAttachment = (formData) =>
+  chatApi.post("/api/v1/chat/message/attachment", formData);
+
+/**
+ * Attachment bytes. Fetched through axios (not as a plain <img src>) because
+ * the credential travels in headers: the device id for anonymous threads, the
+ * gateway-forwarded identity for signed-in owners.
+ */
+export const fetchChatAttachment = (uuid, deviceId) =>
+  chatApi.get(`/api/v1/chat/attachment/${uuid}`, {
+    params: deviceId ? { deviceId } : undefined,
+    responseType: "blob",
+  });
+
 export const fetchChatHistory = (payload) => chatApi.post("/api/v1/chat/history", payload);
 
 export const sendChatTyping = (payload) => chatApi.post("/api/v1/chat/typing", payload);
@@ -52,6 +72,14 @@ export const fetchAdminHistory = (conversationUuid) =>
   chatApi.get("/admin/v1/chat/history", { params: { conversationUuid } });
 
 export const sendAdminReply = (payload) => chatApi.post("/admin/v1/chat/reply", payload);
+
+/** Console answer carrying one image or document (FormData: file, conversationUuid, caption). */
+export const sendAdminReplyWithAttachment = (formData) =>
+  chatApi.post("/admin/v1/chat/reply/attachment", formData);
+
+/** Attachment bytes for the console; the JWT rides along in the interceptor. */
+export const fetchAdminAttachment = (uuid) =>
+  chatApi.get(`/admin/v1/chat/attachment/${uuid}`, { responseType: "blob" });
 
 export const sendAdminTyping = (payload) => chatApi.post("/admin/v1/chat/typing", payload);
 

@@ -29,6 +29,12 @@ const formatVND = (value) => {
   return Number.isFinite(num) ? num.toLocaleString("en-US") : "-";
 };
 
+const QUOTA_DAYS = "DAYS";
+const QUOTA_BOOKINGS = "BOOKINGS";
+
+/** The consumed number in the unit this package itself counts. */
+const usedOf = (plan) => (plan?.quotaType === QUOTA_BOOKINGS ? plan.usedBookings : plan?.usedDays);
+
 /**
  * Seller yoga payment plans. Pick one of the seller's yoga environments, then
  * create / top up / deactivate the buyer plans linked to it. Creating a plan
@@ -90,7 +96,15 @@ const YogaPlansManager = () => {
   }, [loadPlans]);
 
   const openCreate = () => {
-    setDraft({ sellerPlanCode: "", buyerName: "", buyerEmail: "", totalDays: 1, amountVnd: "" });
+    setDraft({
+      sellerPlanCode: "",
+      buyerName: "",
+      buyerEmail: "",
+      totalDays: 1,
+      amountVnd: "",
+      quotaType: QUOTA_DAYS,
+      consumed: false,
+    });
     setDialogOpen(true);
   };
 
@@ -102,6 +116,8 @@ const YogaPlansManager = () => {
       totalDays: plan.totalDays,
       amountVnd: plan.amountVnd,
       state: plan.state,
+      quotaType: plan.quotaType || QUOTA_DAYS,
+      consumed: usedOf(plan) > 0,
     });
     setDialogOpen(true);
   };
@@ -120,6 +136,7 @@ const YogaPlansManager = () => {
         buyerName: draft.buyerName.trim(),
         buyerEmail: draft.buyerEmail.trim(),
         totalDays: Number(draft.totalDays),
+        quotaType: draft.quotaType || QUOTA_DAYS,
         amountVnd: Number(draft.amountVnd || 0),
       };
       if (isCreate) {
@@ -199,7 +216,7 @@ const YogaPlansManager = () => {
               <TableCell>{t("yogaPlans.buyer")}</TableCell>
               <TableCell>{t("yogaPlans.username")}</TableCell>
               <TableCell>{t("yogaPlans.email")}</TableCell>
-              <TableCell align="center">{t("yogaPlans.days")}</TableCell>
+              <TableCell align="center">{t("yogaPlans.quota")}</TableCell>
               <TableCell align="right">{t("yogaPlans.amount")}</TableCell>
               <TableCell>{t("yogaPlans.password")}</TableCell>
               <TableCell>{t("setup.column.state")}</TableCell>
@@ -221,7 +238,20 @@ const YogaPlansManager = () => {
                 <TableCell>{plan.buyerName}</TableCell>
                 <TableCell>{plan.buyerUsername}</TableCell>
                 <TableCell>{plan.buyerEmail || "—"}</TableCell>
-                <TableCell align="center">{plan.usedDays}/{plan.totalDays}</TableCell>
+                <TableCell align="center">
+                  <Stack spacing={0.25}>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {usedOf(plan)}/{plan.totalDays}
+                    </Typography>
+                    {/* The other count, always shown so days and bookings stay
+                        visibly different numbers whatever the unit is. */}
+                    <Typography variant="caption" color="text.secondary">
+                      {plan.quotaType === QUOTA_BOOKINGS
+                        ? t("yogaPlans.daysUsed", { count: plan.usedDays })
+                        : t("yogaPlans.bookingsUsed", { count: plan.usedBookings })}
+                    </Typography>
+                  </Stack>
+                </TableCell>
                 <TableCell align="right">{formatVND(plan.amountVnd)} VND</TableCell>
                 <TableCell>
                   <Chip
@@ -277,8 +307,22 @@ const YogaPlansManager = () => {
               fullWidth
             />
             <TextField
+              select
+              label={t("yogaPlans.quotaType")}
+              value={draft?.quotaType || QUOTA_DAYS}
+              onChange={(e) => setDraft((p) => ({ ...p, quotaType: e.target.value }))}
+              fullWidth
+              disabled={Boolean(draft?.consumed)}
+              helperText={draft?.consumed ? t("yogaPlans.quotaTypeLocked") : t("yogaPlans.quotaTypeHint")}
+            >
+              <MenuItem value={QUOTA_DAYS}>{t("yogaPlans.quotaDays")}</MenuItem>
+              <MenuItem value={QUOTA_BOOKINGS}>{t("yogaPlans.quotaBookings")}</MenuItem>
+            </TextField>
+            <TextField
               type="number"
-              label={t("yogaPlans.days")}
+              label={draft?.quotaType === QUOTA_BOOKINGS
+                ? t("yogaPlans.quotaBookings")
+                : t("yogaPlans.quotaDays")}
               value={draft?.totalDays ?? ""}
               onChange={(e) => setDraft((p) => ({ ...p, totalDays: e.target.value }))}
               inputProps={{ min: 1 }}

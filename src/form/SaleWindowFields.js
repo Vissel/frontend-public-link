@@ -1,6 +1,8 @@
 import React from "react";
-import { Alert, Grid, TextField, Typography } from "@mui/material";
+import { Alert, Grid, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { DateTimePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 import { formatDateTime, fromInputValue, parsePlanDate, toInputValue } from "../util/planWindow";
 
 /**
@@ -29,31 +31,25 @@ const SaleWindowFields = ({
             <Typography variant="subtitle2">{t("saleWindow.title")}</Typography>
             <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        type="datetime-local"
+                    <DateTimePicker
                         label={t("saleWindow.start")}
-                        value={startValue}
+                        ampm={false}
+                        value={startValue ? dayjs(startValue) : null}
                         disabled={disabled}
-                        onChange={(event) => onStartChange(event.target.value)}
-                        slotProps={{ inputLabel: { shrink: true } }}
+                        onChange={(d) => onStartChange(d ? d.format("YYYY-MM-DDTHH:mm") : "")}
+                        slotProps={{ textField: { fullWidth: true, size: "small" } }}
                     />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                        fullWidth
-                        size="small"
-                        type="datetime-local"
+                    <DateTimePicker
                         label={t("saleWindow.end")}
-                        value={endValue}
+                        ampm={false}
+                        value={endValue ? dayjs(endValue) : null}
                         disabled={disabled}
-                        onChange={(event) => onEndChange(event.target.value)}
-                        slotProps={{
-                            inputLabel: { shrink: true },
-                            // The hard limit: the plan end. The server rejects anything later.
-                            htmlInput: planEnd ? { max: toInputValue(planEnd) } : undefined,
-                        }}
+                        onChange={(d) => onEndChange(d ? d.format("YYYY-MM-DDTHH:mm") : "")}
+                        // The hard limit: the plan end. The server rejects anything later.
+                        maxDateTime={planEnd ? dayjs(toInputValue(planEnd)) : undefined}
+                        slotProps={{ textField: { fullWidth: true, size: "small" } }}
                     />
                 </Grid>
             </Grid>

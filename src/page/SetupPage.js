@@ -21,10 +21,13 @@ import api from "../api";
 import PageContainer from "../components/PageContainer";
 import ExtendPlanDialog from "../components/ExtendPlanDialog";
 import PaymentLinksDialog from "../components/PaymentLinksDialog";
+import PlanStartDialog from "../components/PlanStartDialog";
 import SectionBlock from "../components/SectionBlock";
 import TransferInfoManager from "../components/TransferInfoManager";
 import { useTranslation } from "react-i18next";
 import { groupColor, normalizeGroup } from "../util/planGroup";
+import { DateTimePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 
 const contextPath = "/publiclink";
 const DEFAULT_ROWS = 10;
@@ -35,16 +38,8 @@ const STATE_CREATE = "CREATE";
 const STATE_ACTIVE = "ACTIVE";
 const STATE_ALL = "ALL";
 
-/**
- * Today in the admin's own time zone, as the yyyy-MM-dd a date input expects.
- * toISOString() would hand back the UTC day, which is a day behind in the
- * evening for UTC+7 and would silently activate plans on the wrong date.
- */
-const todayInputValue = () => {
-  const now = new Date();
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-};
+/** Wire format of a chosen plan start, shared with the server. */
+const WIRE_FORMAT = "YYYY-MM-DDTHH:mm";
 
 const formatVND = (value) => {
   const num = Number(value);
@@ -113,7 +108,7 @@ const PlanAssignmentTable = ({
   onRowsChange,
   bulkActions,
   emptyMessage,
-  rowAction,
+  rowActions,
   reloadToken,
   onCompleted,
 }) => {
@@ -223,6 +218,8 @@ const PlanAssignmentTable = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appliedSearch, locallyFiltered, serverSearchActive]);
+
+  const hasRowActions = Boolean(rowActions && rowActions.length > 0);
 
   const allSelected =
     locallyFiltered.length > 0 && locallyFiltered.every((row) => selected.includes(row.planUserCode));
@@ -335,8 +332,8 @@ const PlanAssignmentTable = ({
             </Typography>
             {bulkActions.map((action) => {
               // The actions only ever mean "do this to what I picked", so an
-              // empty selection greys them out instead of failing on click.
-              const dateMissing = action.needsDate && !action.dateValue;
+              // empty selection greys them out instead of failing on click. The
+              // start field may stay empty: blank means "use the seller's start".
               const selectionMissing = selected.length === 0;
               return (
                 <Button
@@ -344,14 +341,8 @@ const PlanAssignmentTable = ({
                   size="small"
                   variant={action.variant || "outlined"}
                   color={action.color || "primary"}
-                  disabled={dateMissing || selectionMissing}
-                  title={
-                    dateMissing
-                      ? t("setup.errors.activeDateRequired")
-                      : selectionMissing
-                        ? t("setup.errors.noSelection")
-                        : undefined
-                  }
+                  disabled={selectionMissing}
+                  title={selectionMissing ? t("setup.errors.noSelection") : undefined}
                   onClick={() =>
                     runBulk((codes) => action.handler(codes, action), action.successMessage)
                   }
@@ -379,7 +370,7 @@ const PlanAssignmentTable = ({
                 <TableCell>{t("setup.column.activeDate")}</TableCell>
                 <TableCell>{t("setup.column.endedDate")}</TableCell>
                 <TableCell>{t("setup.column.payment")}</TableCell>
-                {rowAction && (
+                {hasRowActions && (
                   <TableCell align="right">{t("setup.column.action")}</TableCell>
                 )}
               </TableRow>
@@ -387,7 +378,7 @@ const PlanAssignmentTable = ({
             <TableBody>
               {locallyFiltered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={rowAction ? 11 : 10}>
+                  <TableCell colSpan={hasRowActions ? 11 : 10}>
                     <Typography variant="body2" color="text.secondary">
                       {loading ? t("common.loading") : emptyMessage || t("common.noRecords")}
                     </Typography>
@@ -401,6 +392,7 @@ const PlanAssignmentTable = ({
                       size="small"
                       checked={selected.includes(row.planUserCode)}
                       onChange={() => toggleRow(row.planUserCode)}
+                      slotProps={{ input: { "aria-label": row.planUserCode } }}
                     />
                   </TableCell>
                   <TableCell>{row.username}</TableCell>
@@ -448,7 +440,19 @@ const PlanAssignmentTable = ({
                       />
                     </Stack>
                   </TableCell>
-                  <TableCell>{row.activeDate || "-"}</TableCell>
+                  <TableCell>
+                    <Stack spacing={0.25}>
+                      <Typography variant="body2">{row.activeDate || "-"}</Typography>
+                      {/* What the seller asked for when buying the plan
+                          themselves. The date field above the table is the
+                          override: left on today the request is honoured. */}
+                      {row.planState === "CREATE" && row.requestedStartAt ? (
+                        <Typography variant="caption" color="primary">
+                          {t("setup.requestedStart", { date: row.requestedStartAt })}
+                        </Typography>
+                      ) : null}
+                    </Stack>
+                  </TableCell>
                   <TableCell>{row.endedDate || "-"}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
@@ -488,20 +492,25 @@ const PlanAssignmentTable = ({
                       )}
                     </Stack>
                   </TableCell>
-                  {rowAction && (
+                  {hasRowActions && (
                     <TableCell align="right">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={!!rowAction.reasonFor?.(row)}
-                        title={rowAction.reasonFor?.(row)}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          rowAction.handler(row);
-                        }}
-                      >
-                        {rowAction.label}
-                      </Button>
+                      <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+                        {rowActions.map((action) => (
+                          <Button
+                            key={action.key || action.label}
+                            size="small"
+                            variant="outlined"
+                            disabled={!!action.reasonFor?.(row)}
+                            title={action.reasonFor?.(row)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              action.handler(row);
+                            }}
+                          >
+                            {action.label}
+                          </Button>
+                        ))}
+                      </Stack>
                     </TableCell>
                   )}
                 </TableRow>
@@ -534,18 +543,20 @@ const PlanAssignmentTable = ({
  */
 const SetupPage = () => {
   const { t } = useTranslation();
-  const [activeDate, setActiveDate] = useState(todayInputValue);
+  // Empty on purpose: blank means "use the start the seller asked for", and
+  // only a value typed here is a deliberate override - today at a time
+  // included, which the old date field could not express.
+  const [startAt, setStartAt] = useState("");
   const [linkItems, setLinkItems] = useState([]);
   const [linksOpen, setLinksOpen] = useState(false);
   const [extendRow, setExtendRow] = useState(null);
+  const [startRow, setStartRow] = useState(null);
   const [reloadToken, setReloadToken] = useState(0);
-
-  const dateValue = useMemo(() => (activeDate || "").slice(0, 10), [activeDate]);
 
   const approve = async (codes) => {
     await api.post(`${contextPath}/admin/v1/paymentPlan/approve`, {
       planUserCodes: codes,
-      activeDate: dateValue || null,
+      startAt: startAt || null,
     });
   };
 
@@ -557,13 +568,14 @@ const SetupPage = () => {
   // queue to the other shows up in its new table without a browser reload.
   const refreshTables = () => setReloadToken((token) => token + 1);
 
-  // Receiving the money starts the plan on the activation date above, so the
-  // row leaves "Waiting for pay" and lands in the plan list.
+  // Receiving the money starts the plan from the start above (the seller's own
+  // when the field is empty), so the row leaves "Waiting for pay" and lands in
+  // the plan list.
   const markPaid = async (codes) => {
     await api.post(`${contextPath}/admin/v1/paymentPlan/payment/markPaid`, {
       planUserCodes: codes,
       note: t("setup.billNote"),
-      activeDate: dateValue || null,
+      startAt: startAt || null,
     });
   };
 
@@ -604,6 +616,20 @@ const SetupPage = () => {
     }
   };
 
+  // One plan, one start: the bulk field above would apply the same value to
+  // every selected row, so a correction goes through this dialog instead.
+  const submitStart = async (nextStartAt) => {
+    if (!startRow) {
+      return;
+    }
+    await api.post(`${contextPath}/admin/v1/paymentPlan/start`, {
+      planUserCodes: [startRow.planUserCode],
+      startAt: nextStartAt,
+    });
+    setStartRow(null);
+    refreshTables();
+  };
+
   const paymentActions = [
     {
       key: "markPaid",
@@ -634,16 +660,16 @@ const SetupPage = () => {
         </Box>
 
         <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ xs: "stretch", sm: "flex-end" }}>
-          <TextField
-            size="small"
-            type="date"
-            label={t("setup.activeDate")}
-            value={activeDate}
-            onChange={(event) => setActiveDate(event.target.value)}
-            InputLabelProps={{ shrink: true }}
+          <DateTimePicker
+            label={t("setup.start")}
+            ampm={false}
+            format="DD/MM/YYYY HH:mm"
+            value={startAt ? dayjs(startAt) : null}
+            onChange={(value) => setStartAt(value ? value.format(WIRE_FORMAT) : "")}
+            slotProps={{ textField: { size: "small" } }}
           />
           <Typography variant="caption" color="text.secondary">
-            {t("setup.activeDateHint")}
+            {t("setup.startHint")}
           </Typography>
         </Stack>
 
@@ -656,21 +682,23 @@ const SetupPage = () => {
           onCompleted={refreshTables}
           bulkActions={[
             ...paymentActions,
-            // {
-            //   key: "approve",
-            //   label: t("setup.action.approve"),
-            //   handler: approve,
-            //   needsDate: true,
-            //   dateValue,
-            //   variant: "contained",
-            //   successMessage: t("setup.success.approved"),
-            // },
             {
               key: "reject",
               label: t("setup.action.reject"),
               handler: reject,
               color: "error",
               successMessage: t("setup.success.rejected"),
+            },
+          ]}
+          rowActions={[
+            {
+              key: "setStart",
+              label: t("setup.action.setStart"),
+              handler: setStartRow,
+              // An extension or conversion order is money for another plan, so
+              // it has no window of its own to move.
+              reasonFor: (row) =>
+                row.extendDays || row.convertsPlanUserCode ? t("setup.startRules.onlyPlans") : undefined,
             },
           ]}
         />
@@ -688,8 +716,6 @@ const SetupPage = () => {
               key: "activate",
               label: t("setup.action.activate"),
               handler: approve,
-              needsDate: true,
-              dateValue,
               variant: "contained",
               successMessage: t("setup.success.activated"),
             },
@@ -701,14 +727,26 @@ const SetupPage = () => {
               successMessage: t("setup.success.deactivated"),
             },
           ]}
-          rowAction={{
-            label: t("setup.action.extend"),
-            handler: setExtendRow,
-            // Only a running plan has an end date to push back; the server
-            // refuses anything else, so the button says why it is greyed out.
-            reasonFor: (row) =>
-              row.planState === STATE_ACTIVE ? undefined : t("setup.extend.onlyActive"),
-          }}
+          rowActions={[
+            {
+              key: "extend",
+              label: t("setup.action.extend"),
+              handler: setExtendRow,
+              // Only a running plan has an end date to push back; the server
+              // refuses anything else, so the button says why it is greyed out.
+              reasonFor: (row) =>
+                row.planState === STATE_ACTIVE ? undefined : t("setup.extend.onlyActive"),
+            },
+            {
+              key: "changeStart",
+              label: t("setup.action.changeStart"),
+              handler: setStartRow,
+              reasonFor: (row) =>
+                row.planState === STATE_ACTIVE && !row.extendDays && !row.convertsPlanUserCode
+                  ? undefined
+                  : t("setup.startRules.onlyRunning"),
+            },
+          ]}
         />
 
         <SectionBlock title={t("setup.transferTitle")} description={t("setup.transferDesc")}>
@@ -726,6 +764,13 @@ const SetupPage = () => {
           row={extendRow}
           onClose={() => setExtendRow(null)}
           onSubmit={submitExtend}
+        />
+
+        <PlanStartDialog
+          open={!!startRow}
+          row={startRow}
+          onClose={() => setStartRow(null)}
+          onSubmit={submitStart}
         />
       </Stack>
     </PageContainer>

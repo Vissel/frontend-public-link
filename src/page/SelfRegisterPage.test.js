@@ -33,25 +33,17 @@ jest.mock("jsencrypt", () => ({
 }));
 
 /**
- * The purpose choice decides which price list a new account is shown, and the
- * backend will refuse a link whose plan group does not match — so picking wrong
- * costs real money. These tests pin that the question is asked, that it is
- * required, and that the answer actually reaches the server.
+ * The register form is username + password (name and email optional). The
+ * "what will you sell" question moved to the plan screen, so this page must
+ * never ask it - and a visitor who arrived from a public sale space signs up
+ * as a buyer with no seller steps at all.
  */
 
-const fillRequired = () => {
-    // MUI appends the required marker to the rendered label, so every lookup has
-    // to be a prefix match rather than the bare field name.
-    const values = {
-        "^Username": "new.seller",
-        "^Full name": "New Seller",
-        "^Email": "seller@example.com",
-        "^Password": "longenough",
-        "^Repeat password": "longenough",
-    };
-    Object.entries(values).forEach(([pattern, value]) => {
-        fireEvent.change(screen.getByLabelText(new RegExp(pattern)), { target: { value } });
-    });
+/** Only what the form insists on: username and password. */
+const fillMinimal = () => {
+    fireEvent.change(screen.getByLabelText(/^Username/), { target: { value: "new.seller" } });
+    fireEvent.change(screen.getByLabelText(/^Password/), { target: { value: "longenough" } });
+    fireEvent.change(screen.getByLabelText(/^Repeat password/), { target: { value: "longenough" } });
 };
 
 const submit = () => fireEvent.click(screen.getByRole("button", { name: "Create account" }));
@@ -71,71 +63,107 @@ afterAll(() => {
     window.sessionStorage.removeItem("publicKey");
 });
 
-describe("SelfRegisterPage plan purpose", () => {
-    it("asks a seller what they will sell", async () => {
+describe("SelfRegisterPage seller sign-up", () => {
+    it("keeps the onboarding steps and asks no purpose question", async () => {
         render(<SelfRegisterPage />);
 
-        expect(await screen.findByText("What will you sell?")).toBeInTheDocument();
-        expect(screen.getByText("Normal products")).toBeInTheDocument();
-        expect(screen.getByText("Yoga & badminton booking")).toBeInTheDocument();
-    });
-
-    /**
-     * A court visitor becomes a BUYER who books, never a plan buyer, so asking
-     * them for a purpose would only invite a wrong answer.
-     */
-    it("does not ask a player arriving from a court page", async () => {
-        mockNextParam = "/api/v1/publish/saleUrl?requestUuid=abc";
-        render(<SelfRegisterPage />);
-
-        await screen.findByText("Create your player account");
+        // The three-step bar stays on the register page...
+        expect(await screen.findByText("Choose plan & transfer")).toBeInTheDocument();
+        // ...while the "what will you sell" question moved to the plan screen.
         expect(screen.queryByText("What will you sell?")).toBeNull();
     });
 
-    it("refuses to submit until a purpose is chosen", async () => {
-        render(<SelfRegisterPage />);
-        await screen.findByText("What will you sell?");
-
-        fillRequired();
-        submit();
-
-        expect(
-            await screen.findByText(/choose what you will sell/i)
-        ).toBeInTheDocument();
-        expect(pubApi.post).not.toHaveBeenCalled();
-    });
-
-    it("sends the chosen booking purpose to the server", async () => {
+    it("registers with only a username and a password", async () => {
         pubApi.post.mockResolvedValue({ data: {} });
         render(<SelfRegisterPage />);
-        await screen.findByText("What will you sell?");
+        await screen.findByText("Choose plan & transfer");
 
-        fillRequired();
-        fireEvent.click(screen.getByText("Yoga & badminton booking"));
+        fillMinimal();
         submit();
 
-        await waitFor(() => expect(pubApi.post).toHaveBeenCalledWith(
-            "/api/v1/publish/self-register",
-            expect.objectContaining({
-                username: "new.seller",
-                role: "SELLER",
-                planPurpose: "BOOKING",
-            })
-        ));
+        await waitFor(() => expect(pubApi.post).toHaveBeenCalled());
+        const payload = pubApi.post.mock.calls[0][1];
+        expect(payload).toEqual(expect.objectContaining({
+            username: "new.seller",
+            name: "",
+            email: "",
+            role: "SELLER",
+        }));
+        // The purpose is decided on the plan screen, never here.
+        expect(payload.planPurpose).toBeUndefined();
     });
+});
 
-    it("sends PRODUCT when the normal tiles is chosen", async () => {
+describe("SelfRegisterPage player sign-up", () => {
+    /**
+     * A visitor from a public sale space - a seller's product page, a yoga
+     * timetable or a court grid - registers as a buyer: no seller steps, no
+     * plan purpose, and after login they go straight back to that page.
+     */
+    it("registers a /publink visitor as a buyer without the seller steps", async () => {
+        mockNextParam = "/publink?token=abc";
         pubApi.post.mockResolvedValue({ data: {} });
         render(<SelfRegisterPage />);
-        await screen.findByText("What will you sell?");
 
-        fillRequired();
-        fireEvent.click(screen.getByText("Normal products"));
+        expect(await screen.findByText("Create your player account")).toBeInTheDocument();
+        expect(screen.queryByText("Choose plan & transfer")).toBeNull();
+
+        fillMinimal();
         submit();
 
-        await waitFor(() => expect(pubApi.post).toHaveBeenCalledWith(
-            "/api/v1/publish/self-register",
-            expect.objectContaining({ planPurpose: "PRODUCT" })
-        ));
+        await waitFor(() => expect(pubApi.post).toHaveBeenCalled());
+        const payload = pubApi.post.mock.calls[0][1];
+        expect(payload.role).toBe("BUYER");
+        expect(payload.planPurpose).toBeUndefined();
+    });
+
+    it("carries the page the visitor left over to the login screen", async () => {
+        mockNextParam = "/publink?token=abc";
+        pubApi.post.mockResolvedValue({ data: {} });
+        render(<SelfRegisterPage />);
+        await screen.findByText("Create your player account");
+
+        fillMinimal();
+        submit();
+
+        await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/login", {
+            state: expect.objectContaining({ next: "/publink?token=abc" }),
+        }));
+    });
+});
+
+describe("SelfRegisterPage duplicate account", () => {
+    const rejectedWith = (field) =>
+        pubApi.post.mockRejectedValue({
+            response: { status: 409, data: { field, message: "server wording" } },
+        });
+
+    /**
+     * The backend names the input that clashes (username, then email, then full
+     * name). The refusal has to land on that field with wording that says what
+     * to change, and the visitor must not be moved on to the login step.
+     */
+    it("marks the email field and stays on the form", async () => {
+        rejectedWith("email");
+        render(<SelfRegisterPage />);
+        await screen.findByText("Choose plan & transfer");
+
+        fillMinimal();
+        submit();
+
+        expect(await screen.findByText(/This email is already registered/i)).toBeInTheDocument();
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("marks the full name field", async () => {
+        rejectedWith("name");
+        render(<SelfRegisterPage />);
+        await screen.findByText("Choose plan & transfer");
+
+        fillMinimal();
+        submit();
+
+        expect(await screen.findByText(/An account with this full name already exists/i)).toBeInTheDocument();
+        expect(mockNavigate).not.toHaveBeenCalled();
     });
 });

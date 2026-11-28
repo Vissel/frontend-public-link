@@ -35,6 +35,7 @@ import { CountdownChip } from "../components/CountdownTimer";
 import YogaSection from "../components/YogaSection";
 import BadmintonSection from "../components/BadmintonSection";
 import EnvironmentTransferCard from "../components/EnvironmentTransferCard";
+import ShareLinkQrButton from "../components/ShareLinkQrButton";
 import SaleWindowEditDialog from "../form/SaleWindowEditDialog";
 import useDelayedClose from "../hooks/useDelayedClose";
 import { useTranslation } from "react-i18next";
@@ -543,10 +544,11 @@ const PublinkPage = () => {
                     }
                     action={
                         isSeller ? (
-                            <Stack direction="row" spacing={1}>
+                            <Stack direction="row" spacing={1} alignItems="center">
                                 <Button variant="outlined" onClick={handleShareLink}>
                                     {linkCopied ? t("common.copied") : t("publink.shareLink")}
                                 </Button>
+                                <ShareLinkQrButton url={buildShareUrl()} />
                                 <Button variant="contained" color="success" onClick={exportToExcel}>
                                     {t("publink.exportExcel")}
                                 </Button>

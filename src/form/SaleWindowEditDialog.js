@@ -7,12 +7,13 @@ import {
     DialogContent,
     DialogTitle,
     Stack,
-    TextField,
     Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { pubApi } from "../api";
 import { formatDateTime, fromInputValue, parsePlanDate, toInputValue } from "../util/planWindow";
+import { DateTimePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 
 /**
  * Seller edit of an existing sale window: move the closing time earlier, close
@@ -153,18 +154,14 @@ const SaleWindowEditDialog = ({ open, environment, onClose, onSaved }) => {
                                 : "\u2026"}
                     </Typography>
 
-                    <TextField
-                        fullWidth
-                        size="small"
-                        type="datetime-local"
+                    <DateTimePicker
                         label={t("saleWindow.newEnd")}
-                        value={endValue}
+                        ampm={false}
+                        value={endValue ? dayjs(endValue) : null}
                         disabled={submitting}
-                        onChange={(event) => setEndValue(event.target.value)}
-                        slotProps={{
-                            inputLabel: { shrink: true },
-                            htmlInput: coverage ? { max: toInputValue(coverage) } : undefined,
-                        }}
+                        onChange={(d) => setEndValue(d ? d.format("YYYY-MM-DDTHH:mm") : "")}
+                        maxDateTime={coverage ? dayjs(toInputValue(coverage)) : undefined}
+                        slotProps={{ textField: { fullWidth: true, size: "small" } }}
                     />
 
                     <Alert severity="info" variant="outlined">

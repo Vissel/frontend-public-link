@@ -22,6 +22,7 @@ import config from "../api/config";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import { CountdownBadge } from "../components/CountdownTimer";
+import ShareLinkQrButton from "../components/ShareLinkQrButton";
 import { useTranslation } from "react-i18next";
 
 const contextPath = "/publiclink";
@@ -330,6 +331,7 @@ const EnvironmentDetailPage = () => {
                                     >
                                         {copiedKey === "public" ? t("common.copied") : t("common.copy")}
                                     </Button>
+                                    <ShareLinkQrButton url={addHostToHref(detail.publicLink)} />
                                 </Stack>
                             ) : (
                                 <Typography variant="body2">{"\u2014"}</Typography>

@@ -132,14 +132,15 @@
         "title": "Create your seller account",
         "subtitle": "Register yourself, pick a plan and start selling - no invitation needed.",
         "playerTitle": "Create your player account",
-        "playerSubtitle": "One quick sign-up lets you book courts and receive booking updates.",
-        "playerAfterNote": "Next you sign in with this account and we bring you straight back to the court page.",
+        "playerSubtitle": "One quick sign-up lets you book classes or courts and receive booking updates.",
+        "playerAfterNote": "Next you sign in with this account and we bring you straight back to the page you came from.",
+        "afterNote": "Next you pick your plan and transfer its fee by bank transfer.",
         "username": "Username",
-        "usernameHint": "3-30 characters: letters, numbers, dot, dash or underscore. This is your login.",
+        "usernameHint": "Letters or numbers written together, without Vietnamese diacritics.",
         "name": "Full name",
-        "nameHint": "Shown to your buyers and on the transfer content.",
+        "nameHint": "Optional. Shown to your buyers and on the transfer content.",
         "email": "Email",
-        "emailHint": "We use it to contact you about your plan and your payment.",
+        "emailHint": "Optional. We use it to contact you about your plan and your payment.",
         "password": "Password",
         "passwordHint": "At least 8 characters.",
         "repeatPassword": "Repeat password",
@@ -148,7 +149,9 @@
         "loginLink": "I already have an account",
         "errors": {
             "usernamePattern": "Use 3-30 characters: letters, numbers, dot, dash or underscore.",
-            "nameRequired": "Please tell us your name.",
+            "duplicateUsername": "This username is already taken. Please choose another one.",
+            "duplicateEmail": "This email is already registered. Sign in with it, or use another email address.",
+            "duplicateName": "An account with this full name already exists. Please make it distinguishable, for example with a middle name or a number.",
             "emailInvalid": "Please enter a valid email address.",
             "tooShort": "The password must be at least 8 characters.",
             "mismatch": "The passwords do not match.",
@@ -158,23 +161,7 @@
             "encryptFailed": "The password could not be secured for transport. Please try again.",
             "keyUnavailable": "The server's encryption key is unavailable, so the password cannot be sent safely. Please contact admin (gateway RSA public key).",
             "noResponse": "No response from server. Please check your network connection.",
-            "failed": "Registration failed. Please try again.",
-            "purposeRequired": "Please choose what you will sell, so we can show you the right price list."
-        },
-        "purpose": {
-            "title": "What will you sell?",
-            "helper": "This decides which price list you are shown next. A booking plan cannot create a normal product link, and a product plan cannot create a booking page.",
-            "chosen": "Selected",
-            "PRODUCT": {
-                "title": "Normal products",
-                "description": "Sell through a product page: orders, quantities and a payment link per buyer.",
-                "afterNote": "Next you pick a normal product plan and transfer its fee by bank transfer."
-            },
-            "BOOKING": {
-                "title": "Yoga & badminton booking",
-                "description": "Run a yoga class timetable or a badminton court grid that players book from.",
-                "afterNote": "Next you pick a yoga / badminton booking plan and transfer its fee by bank transfer."
-            }
+            "failed": "Registration failed. Please try again."
         }
     },
     "plans": {
@@ -184,6 +171,7 @@
         "catalogEmpty": "No plan is on sale right now. Please contact us via chat.",
         "selected": "Selected",
         "continueToPayment": "Continue to payment",
+        "orGoHome": "or go to home",
         "buying": "Opening your order…",
         "transferGuide": "You will get a VietQR code and the account to transfer to on the next step.",
         "activeMessage": "Your plan is active from {{from}} to {{to}} with {{links}} product link(s).",
@@ -212,6 +200,18 @@
                 "emptyNote": "Need normal product links instead? Switch below."
             }
         },
+        "purpose": {
+            "title": "What will you sell?",
+            "helper": "This decides which price list you are shown. A booking plan cannot create a normal product link, and a product plan cannot create a booking page.",
+            "PRODUCT": {
+                "title": "Normal products",
+                "description": "Sell through a product page: orders, quantities and a payment link per buyer."
+            },
+            "BOOKING": {
+                "title": "Yoga & badminton booking",
+                "description": "Run a yoga class timetable or a badminton court grid that players book from."
+            }
+        },
         "switchPurpose": {
             "link": "Need {{group}} plans instead?",
             "dialogTitle": "Change what you sell",
@@ -219,7 +219,10 @@
             "confirm": "Yes, switch",
             "switching": "Switching…",
             "failed": "The switch did not go through. Please try again, or contact us via chat."
-        }
+        },
+        "freeUsed": "Free plan already used",
+        "freeAutoNote": "Activates immediately once selected, no bank transfer needed.",
+        "freeUsedNote": "One free plan per account, and you have already used it. Only a paid plan can be bought here. Contact admin if you think this is wrong."
     },
     "morePlan": {
         "title": "Buy more plans",
@@ -282,7 +285,8 @@
             "submitPay": "Create my order for the difference",
             "submitAcceptLoss": "I understand the difference is lost — convert anyway",
             "submitting": "Opening your order…",
-            "pickBoth": "Please choose the plan to convert and the plan to move to."
+            "pickBoth": "Please choose the plan to convert and the plan to move to.",
+            "noFreeTarget": "The plans left are free ones, and a conversion cannot move onto the free plan."
         }
     },
     "saleUrl": {
@@ -793,7 +797,17 @@
         "errors": {
             "startFailed": "Unable to open the chat. Please try again.",
             "sendFailed": "Your message could not be sent.",
-            "sessionChanged": "Your session changed. Reopen the chat to continue in your own thread."
+            "sessionChanged": "Your session changed. Reopen the chat to continue in your own thread.",
+            "fileTooLarge": "This file is larger than the {{limit}} limit.",
+            "fileTypeNotAllowed": "This file type is not allowed. Images: PNG, JPEG, WebP, GIF. Documents: PDF, TXT, CSV, Word, Excel, PowerPoint."
+        },
+        "attachment": {
+            "add": "Attach an image or file",
+            "remove": "Remove attachment",
+            "download": "Download",
+            "uploading": "Uploading…",
+            "image": "Image",
+            "file": "File"
         }
     },
     "adminChat": {
@@ -924,6 +938,18 @@
         "validUntil": "Valid until",
         "linkExpiryNotice": "This product link will stop working at {{expiry}} - the end of the paid plan. To keep selling after that, contact admin via chat or buy a new plan."
     },
+    "planWindow": {
+        "title": "When should the {{price}} VND plan start?",
+        "startLabel": "Plan starts at",
+        "endLabel": "Plan ends at",
+        "update": "Update",
+        "close": "Close",
+        "retry": "Retry",
+        "daysHint": "The end is the start plus the {{planDay}} day(s) the plan buys.",
+        "defaultNote": "Left as it is, the plan starts now. The admin still has to confirm your transfer before it begins.",
+        "pastStart": "The start cannot be earlier than now. Please pick a later date.",
+        "loadError": "Unable to calculate the plan window. Please try again."
+    },
     "saleWindow": {
         "title": "Sale window",
         "start": "Starts at",
@@ -1019,8 +1045,8 @@
         "search": "Search seller",
         "total": "Total records:",
         "selected": "Selected",
-        "activeDate": "Activation date",
-        "activeDateHint": "Applied when you approve the selected plans or mark them as paid. Defaults to today; the end date is derived from the plan length.",
+        "start": "Plan start",
+        "startHint": "Leave empty to use the start the seller asked for. A value here overrides it for every selected plan and is never confused with an untouched field.",
         "pendingTitle": "Waiting for pay",
         "pendingDesc": "Plans linked to a seller where the payment has not been received yet.",
         "pendingEmpty": "No seller is waiting to pay.",
@@ -1051,7 +1077,9 @@
             "deactivate": "Deactivate",
             "markPaid": "Mark paid",
             "regenerateLink": "Regenerate payment link",
-            "extend": "Extend plan"
+            "extend": "Extend plan",
+            "setStart": "Set start",
+            "changeStart": "Change start"
         },
         "transferTitle": "My transfer accounts",
         "transferDesc": "These accounts are shown on the seller payment page. Only one can be the default.",
@@ -1066,7 +1094,7 @@
             "load": "Failed to load payment plans.",
             "bulkAction": "The action failed. Please try again.",
             "noSelection": "Please select at least one payment plan.",
-            "activeDateRequired": "Pick an activation date above to enable this action.",
+            "startFailed": "Could not change the plan start. Please try again.",
             "actionFailed": "The action failed. Please try again."
         },
         "links": {
@@ -1076,6 +1104,18 @@
             "copyAll": "Copy all"
         },
         "extensionTag": "Extension",
+        "requestedStart": "Seller asked to start {{date}}",
+        "startRules": {
+            "onlyPlans": "An extension or conversion order has no window of its own",
+            "onlyRunning": "Only a running plan can have its start changed"
+        },
+        "startDialog": {
+            "title": "Plan start",
+            "startLabel": "Plan starts at",
+            "endLabel": "Plan ends at",
+            "hint": "Seller {{user}}: the plan runs {{planDay}} day(s) from the start you pick. Saving moves a running plan and keeps its full length.",
+            "submit": "Save start"
+        },
         "extend": {
             "title": "Extend plan",
             "hint": "The days are added to the plan end date once this order is paid.",
@@ -1090,20 +1130,57 @@
         },
         "conversionTag": "converts plan"
     },
-    "sellerSetup": {
-        "title": "My Setup",
-        "subtitle": "Review your payment plans and manage the transfer accounts used for public payments.",
+    "selfAccount": {
+        "title": "My account",
+        "subtitle": "Your details, the payment plans behind what you do, and your page settings.",
+        "menuLabel": "My account",
+        "accountTitle": "Account information",
+        "accountDesc": "Your full name is what other people see. The email receives setup and reset links and cannot change once it is set.",
+        "username": "Username",
+        "fullName": "Full name",
+        "email": "Email",
+        "emailLockedHint": "Email is set and cannot be changed.",
+        "emailAddHint": "Add an email so setup and reset links can reach you.",
+        "saveProfile": "Save changes",
+        "saved": "Profile updated.",
+        "nameRequired": "Full name is required.",
+        "passwordTitle": "Change password",
+        "passwordDesc": "Confirm your current password, then choose the new one.",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmPassword": "Confirm new password",
+        "newPasswordHint": "At least 8 characters.",
+        "passwordPrivacyHint": "Both passwords are encrypted in this browser before they are sent.",
+        "passwordSubmit": "Change password",
+        "passwordSaving": "Changing...",
+        "passwordSuccess": "Password changed.",
         "plansTitle": "My payment plans",
         "plansDesc": "Active plans assigned to you and how many product links are still available.",
+        "packagesTitle": "My payment packages",
+        "packagesDesc": "Packages a seller issued to you, and how much of each you have used.",
+        "package": "Seller page",
+        "seller": "Seller",
         "empty": "No active payment plan yet.",
+        "packagesEmpty": "No seller has issued you a package yet.",
         "remaining": "Remaining",
         "transferTitle": "My transfer accounts",
         "transferDesc": "Buyers can use these accounts when paying for your orders.",
-        "errors": {
-            "load": "Failed to load your payment plans."
-        },
         "yogaPlansTitle": "Yoga payment plans",
-        "yogaPlansDesc": "Define what each buyer paid for (days mapped to a VND amount) on your yoga pages. Creating a plan sets up the buyer's account and password link."
+        "yogaPlansDesc": "Define what each buyer paid for (days mapped to a VND amount) on your yoga pages. Creating a plan sets up the buyer's account and password link.",
+        "errors": {
+            "load": "Failed to load your payment plans.",
+            "save": "Failed to save your profile.",
+            "emailInvalid": "Please enter a valid email address.",
+            "emailTooLong": "The email address must be at most 100 characters.",
+            "currentRequired": "Please enter your current password.",
+            "newRequired": "Please enter a new password.",
+            "tooShort": "The password must be at least 8 characters.",
+            "sameAsCurrent": "The new password must differ from the current one.",
+            "mismatch": "The passwords do not match.",
+            "wrongCurrent": "Current password is not correct.",
+            "encryptFailed": "Could not secure your password.",
+            "passwordFailed": "Failed to change the password."
+        }
     },
     "payment": {
         "title": "Payment",
@@ -1312,6 +1389,16 @@
         "copySkipped": "Skipped {{count}} target(s):",
         "copyRowsRequired": "Date, start and end time are required for every target.",
         "copyTimeOrder": "End time must be after start time.",
+        "nextClass": "Next class",
+        "goToClass": "Go to this class",
+        "noClassesThisWeek": "No classes in this week yet.",
+        "seeNextWeek": "See next week",
+        "weekSummary": "{{count}} classes this week",
+        "weekFree": "{{count}} with slots left",
+        "hourClasses": "{{count}} class(es) at {{hour}}",
+        "copyOverlapHint": "Two classes may run in the same time frame; give the copy a different coach to keep them apart.",
+        "planBannerBookings": "Your plan: {{used}}/{{total}} bookings used, {{remaining}} left.",
+        "bookingsLeft": "bookings left",
         "errors": {
             "load": "Failed to load the calendar.",
             "titleRequired": "Class title is required.",
@@ -1357,6 +1444,14 @@
         "noEnvironments": "Create a yoga product link first to manage buyer plans.",
         "createTitle": "New buyer plan",
         "editTitle": "Edit buyer plan",
+        "quota": "Quota",
+        "quotaType": "Package counts",
+        "quotaTypeHint": "Days: several classes on one date cost one day. Bookings: each class costs one.",
+        "quotaTypeLocked": "The unit cannot change once bookings have started.",
+        "quotaDays": "Days",
+        "quotaBookings": "Bookings",
+        "daysUsed": "{{count}} days used",
+        "bookingsUsed": "{{count}} bookings used",
         "linkTitle": "Password setup link",
         "linkHint": "Send this link to {{buyer}} so they can choose their password. It works once and expires within 48 hours.",
         "errors": {
@@ -1433,5 +1528,11 @@
             "sentAll": "Notification sent to all sellers successfully.",
             "sentCount": "Notification sent to {{count}} seller(s) successfully."
         }
+    },
+    "shareQr": {
+        "title": "QR code of the share link",
+        "tooltip": "Show QR code",
+        "hint": "Scan to open the product page.",
+        "error": "Could not generate the QR code."
     }
 }

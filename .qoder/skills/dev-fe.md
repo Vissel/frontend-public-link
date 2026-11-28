@@ -281,3 +281,45 @@ const handleExportAll = async () => {
 - Small JSON downloads (<100 rows)
 - When you need to process the response before saving
 - When you need custom error handling on the download itself
+
+---
+
+## Date / Time Picker Format
+
+**Rule**: every date and datetime input must use the **MUI X pickers** (`DatePicker`, `DateTimePicker` from `@mui/x-date-pickers`) and display **dd/mm/yyyy**. Native `<TextField type="date">` / `type="datetime-local"` are forbidden: their day/month order comes from the visitor's browser settings and cannot be overridden from the page (the `lang="en-GB"` pin did not work in all browsers and was removed).
+
+### Setup (already in place)
+
+- `src/components/PickerProvider.js` wraps the app in `index.js`; its `LocalizationProvider` uses `AdapterDayjs`, `dateFormats={{ date: "DD/MM/YYYY", dateTime: "DD/MM/YYYY HH:mm", time: "HH:mm" }}`, and `adapterLocale` from the i18n language (`vi` / `en`).
+- Dependencies: `@mui/x-date-pickers@^7` (pinned to v7 so CRA/Jest keep resolving CommonJS) + `dayjs`.
+
+### Field pattern
+
+State stays the wire string; convert at the field boundary:
+
+```jsx
+// yyyy-MM-dd string state (date only)
+<DatePicker
+    label={t("...")}
+    value={dateStr ? dayjs(dateStr) : null}
+    onChange={(d) => setDate(d ? d.format("YYYY-MM-DD") : "")}
+    slotProps={{ textField: { size: "small" } }}
+/>
+
+// yyyy-MM-ddTHH:mm string state (datetime), 24-hour, with an upper bound
+<DateTimePicker
+    label={t("...")}
+    ampm={false}
+    value={value ? dayjs(value) : null}
+    onChange={(d) => setValue(d ? d.format("YYYY-MM-DDTHH:mm") : "")}
+    maxDateTime={limit ? dayjs(toInputValue(limit)) : undefined}
+    slotProps={{ textField: { fullWidth: true, size: "small" } }}
+/>
+```
+
+### Key points
+
+- Wire/backend formats stay `yyyy-MM-dd` / `yyyy-MM-ddTHH:mm`; only the display is DD/MM/YYYY — never change payload formats.
+- `type="time"` TextFields may stay native (no date order involved).
+- Tests rendering components with pickers must wrap them in `PickerProvider`, otherwise MUI X throws "Can not find the date and time pickers localization context" (see `YogaSection.test.js`).
+- Converted sites: `SetupPage` (plan active date), `YogaSection` (range from/to, copy-target date), `BadmintonSection` (grid date), `SaleWindowEditDialog` + `SaleWindowFields` (sale window datetimes).

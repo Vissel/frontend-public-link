@@ -20,6 +20,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { pubApi } from "../api";
 import { useAuth } from "../AuthContext";
@@ -32,14 +33,20 @@ import {
     todayIso,
     weekDates,
 } from "../util/yoga";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const YOGA = "/api/v1/publish/yoga";
 const SELLER = "/api/v1/yoga/seller";
-// The grid shows a fixed 5-row window of hours that scrolls vertically through
-// all 24 hours, centred on the current hour; 7 day-columns scroll horizontally.
+// The grid shows a fixed 7-row window of hours that scrolls vertically through
+// all 24 hours and opens on the hours that actually hold classes; 7 day-columns
+// scroll horizontally.
 const ROW_HEIGHT = 64;
-const VISIBLE_HOURS = 5;
+const HEADER_HEIGHT = 56;
+const VISIBLE_HOURS = 7;
+const MAX_ROW = HOURS.length - VISIBLE_HOURS;
+const SPOTLIGHT_MS = 1800;
 
 /**
  * The single yoga screen: a weekly Mon..Sun grid over the 24h clock with the
@@ -69,6 +76,7 @@ const YogaSection = ({ token }) => {
     const [copyOpen, setCopyOpen] = useState(false);
     const [copySource, setCopySource] = useState(null);
     const [copyTargets, setCopyTargets] = useState([]);
+    const [copyInfo, setCopyInfo] = useState({ title: "", coach: "" });
     const [copySubmitting, setCopySubmitting] = useState(false);
 
     // booking dialog
@@ -113,15 +121,6 @@ const YogaSection = ({ token }) => {
         loadCalendar();
     }, [loadCalendar]);
 
-    // Keep the current hour as the middle of the 5-row viewport after each load.
-    useEffect(() => {
-        const el = scrollRef.current;
-        if (el) {
-            const target = Math.max(0, (currentHour() - Math.floor(VISIBLE_HOURS / 2)) * ROW_HEIGHT);
-            el.scrollTop = target;
-        }
-    }, [data, anchor]);
-
     const loadRange = async () => {
         if (!token || !range.from || !range.to) return;
         setError("");
@@ -151,6 +150,78 @@ const YogaSection = ({ token }) => {
     }, [data]);
 
     const dates = weekDates(windowStart);
+
+    // The visible week's occurrences, earliest first. This drives the opening
+    // scroll position and the "next class" strip, so the screen never lands on
+    // empty hours while classes sit a scroll away.
+    const weekOccurrences = useMemo(() => {
+        const items = data?.items || [];
+        return [...items].sort((a, b) => (a.date === b.date
+            ? (a.startTime || "").localeCompare(b.startTime || "")
+            : (a.date || "").localeCompare(b.date || "")));
+    }, [data]);
+
+    const nextOccurrence = useMemo(
+        () => weekOccurrences.find((occ) => !occ.past) || weekOccurrences[0] || null,
+        [weekOccurrences]
+    );
+
+    const freeSlotsCount = useMemo(
+        () => weekOccurrences.filter((occ) => !occ.past && occ.remaining > 0).length,
+        [weekOccurrences]
+    );
+
+    // How many classes sit on each hour of the week, for the time-gutter markers.
+    const hourCounts = useMemo(() => {
+        const counts = {};
+        weekOccurrences.forEach((occ) => {
+            const hour = parseInt((occ.startTime || "0").slice(0, 2), 10);
+            counts[hour] = (counts[hour] || 0) + 1;
+        });
+        return counts;
+    }, [weekOccurrences]);
+
+    const focusedWeekRef = useRef(null);
+    const spotlightTimer = useRef(null);
+    const [spotlight, setSpotlight] = useState("");
+
+    useEffect(() => () => {
+        if (spotlightTimer.current) clearTimeout(spotlightTimer.current);
+    }, []);
+
+    /** Bring an hour to the top of the body viewport, one row of context above. */
+    const focusHour = useCallback((hour, smooth) => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const row = Math.max(0, Math.min(MAX_ROW, hour - 1));
+        const top = row * ROW_HEIGHT;
+        if (typeof el.scrollTo === "function") {
+            el.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
+        } else {
+            el.scrollTop = top;
+        }
+    }, []);
+
+    const jumpToOccurrence = (occ) => {
+        if (!occ) return;
+        focusHour(parseInt((occ.startTime || "0").slice(0, 2), 10), true);
+        setSpotlight(`${occ.classCode}-${occ.date}`);
+        if (spotlightTimer.current) clearTimeout(spotlightTimer.current);
+        spotlightTimer.current = setTimeout(() => setSpotlight(""), SPOTLIGHT_MS);
+    };
+
+    // Open on the hours that hold classes: the first still-bookable occurrence
+    // of the week, else the first class, else the current hour. Runs only when
+    // the week changes, so refreshing counts after a booking never yanks the
+    // viewport away from what the visitor was reading.
+    useEffect(() => {
+        if (!data || focusedWeekRef.current === windowStart) return;
+        focusedWeekRef.current = windowStart;
+        const hour = nextOccurrence
+            ? parseInt((nextOccurrence.startTime || "0").slice(0, 2), 10)
+            : currentHour();
+        focusHour(hour, false);
+    }, [data, windowStart, nextOccurrence, focusHour]);
 
     const openEditor = (dayOfWeek, hour, occurrence) => {
         setEditorDraft({
@@ -213,6 +284,7 @@ const YogaSection = ({ token }) => {
         setCopyMenu(null);
         setCopySource(occurrence);
         setCopyTargets([{ date: "", startTime: occurrence.startTime, endTime: occurrence.endTime }]);
+        setCopyInfo({ title: occurrence.title || "", coach: occurrence.coach || "" });
         setError("");
         setCopyOpen(true);
     };
@@ -235,6 +307,10 @@ const YogaSection = ({ token }) => {
      * still creates what it can and the seller sees exactly what was skipped.
      */
     const handleCopyClass = async () => {
+        if (!copyInfo.title.trim()) {
+            setError(t("yoga.errors.titleRequired"));
+            return;
+        }
         for (const row of copyTargets) {
             if (!row.date || !row.startTime || !row.endTime) {
                 setError(t("yoga.copyRowsRequired"));
@@ -251,6 +327,8 @@ const YogaSection = ({ token }) => {
             const res = await pubApi.post(`${SELLER}/class/copy`, {
                 token,
                 classCode: copySource.classCode,
+                title: copyInfo.title.trim(),
+                coach: copyInfo.coach.trim(),
                 targets: copyTargets,
             });
             const created = res.data?.data?.created || [];
@@ -275,7 +353,14 @@ const YogaSection = ({ token }) => {
 
     const openBook = async (occurrence) => {
         setBookOccurrence(occurrence);
-        setBookForm({ buyerName: "", buyerUsername: "", paymentMode: "" });
+        // A logged-in buyer gets their own name prefilled (the server sends the
+        // account full name, falling back to the username); the seller books on
+        // behalf of someone else, so their walk-in field stays empty.
+        setBookForm({
+            buyerName: sellerView ? "" : data?.buyerFullName || "",
+            buyerUsername: "",
+            paymentMode: "",
+        });
         setError("");
         if (sellerView) {
             try {
@@ -415,30 +500,123 @@ const YogaSection = ({ token }) => {
 
             {data?.buyerPlan && !sellerView && (
                 <Alert severity="info">
-                    {t("yoga.planBanner", {
-                        used: data.buyerPlan.usedDays,
-                        total: data.buyerPlan.totalDays,
-                        remaining: data.buyerPlan.remainingDays,
-                    })}
+                    {data.buyerPlan.quotaType === "BOOKINGS"
+                        ? t("yoga.planBannerBookings", {
+                            used: data.buyerPlan.usedBookings,
+                            total: data.buyerPlan.totalDays,
+                            remaining: data.buyerPlan.remainingDays,
+                        })
+                        : t("yoga.planBanner", {
+                            used: data.buyerPlan.usedDays,
+                            total: data.buyerPlan.totalDays,
+                            remaining: data.buyerPlan.remainingDays,
+                        })}
                 </Alert>
             )}
             {!sellerView && !isAuthenticated && (
                 <Alert severity="info">{t("yoga.anonymousHint")}</Alert>
             )}
 
-            {/* the calendar: 7 day-columns centred on today, a 5-row time
-                viewport centred on the current hour, with vertical + horizontal
-                scroll and a divider line on every column. */}
+            {/* Week strip: proves there are classes and jumps straight to the
+                next bookable one, so an empty-looking grid never sends a
+                visitor away. */}
+            <Box
+                sx={(theme) => ({
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    flexWrap: "wrap",
+                    px: 2,
+                    py: 1.25,
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: alpha(theme.palette.primary.main, 0.16),
+                    background: `linear-gradient(115deg, ${alpha(theme.palette.primary.main, 0.09)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
+                })}
+            >
+                {nextOccurrence ? (
+                    <>
+                        <Stack spacing={0.25} sx={{ minWidth: 0 }}>
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    color: "secondary.dark",
+                                    fontWeight: 700,
+                                    letterSpacing: 0.4,
+                                    textTransform: "uppercase",
+                                }}
+                            >
+                                {t("yoga.nextClass")}
+                            </Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {nextOccurrence.title}
+                                {" · "}
+                                {t(`yoga.days.${isoWeekday(nextOccurrence.date)}`)} {shortDate(nextOccurrence.date)}
+                                {" · "}
+                                {nextOccurrence.startTime}-{nextOccurrence.endTime}
+                                {nextOccurrence.coach ? ` · ${nextOccurrence.coach}` : ""}
+                            </Typography>
+                        </Stack>
+                        <Chip
+                            size="small"
+                            color={remainingColor(nextOccurrence)}
+                            label={nextOccurrence.remaining <= 0
+                                ? t("yoga.full")
+                                : `${nextOccurrence.remaining}/${nextOccurrence.capacity}`}
+                            onClick={() => { }}
+                            clickable={false}
+                        />
+                        <Button size="small" variant="contained" onClick={() => jumpToOccurrence(nextOccurrence)}>
+                            {t("yoga.goToClass")}
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <Typography variant="body2" color="text.secondary">
+                            {t("yoga.noClassesThisWeek")}
+                        </Typography>
+                        <Button size="small" variant="outlined" onClick={() => setAnchor(addDays(anchor, 7))}>
+                            {t("yoga.seeNextWeek")}
+                        </Button>
+                    </>
+                )}
+                <Typography variant="caption" color="text.secondary" sx={{ ml: "auto" }}>
+                    {t("yoga.weekSummary", { count: weekOccurrences.length })}
+                    {freeSlotsCount > 0 ? ` · ${t("yoga.weekFree", { count: freeSlotsCount })}` : ""}
+                </Typography>
+            </Box>
+
+            {/* the calendar: 7 day-columns centred on today and a 7-row time
+                viewport that opens on the hours holding classes, with vertical
+                + horizontal scroll and a divider line on every column. */}
             <TableContainer
                 ref={scrollRef}
-                sx={{ overflow: "auto", height: 56 + VISIBLE_HOURS * ROW_HEIGHT, maxWidth: "100%" }}
+                data-testid="yoga-grid"
+                sx={(theme) => ({
+                    overflow: "auto",
+                    height: HEADER_HEIGHT + VISIBLE_HOURS * ROW_HEIGHT,
+                    maxWidth: "100%",
+                    borderRadius: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    scrollbarWidth: "thin",
+                    scrollbarColor: `${theme.palette.primary.main} ${alpha(theme.palette.primary.main, 0.08)}`,
+                    "&::-webkit-scrollbar": { width: 10, height: 10 },
+                    "&::-webkit-scrollbar-track": { background: alpha(theme.palette.primary.main, 0.06) },
+                    "&::-webkit-scrollbar-thumb": {
+                        background: theme.palette.primary.main,
+                        borderRadius: 999,
+                        border: `2px solid ${theme.palette.background.paper}`,
+                    },
+                    "&::-webkit-scrollbar-thumb:hover": { background: theme.palette.primary.dark },
+                })}
             >
-                <Table stickyHeader size="small" sx={{ minWidth: 72 + 7 * 112, tableLayout: "fixed" }}>
+                <Table stickyHeader size="small" sx={{ minWidth: 80 + 7 * 112, tableLayout: "fixed" }}>
                     <TableHead>
                         <TableRow>
                             <TableCell
                                 sx={{
-                                    width: 72,
+                                    width: 80,
                                     bgcolor: "primary.main",
                                     position: "sticky",
                                     left: 0,
@@ -481,8 +659,12 @@ const YogaSection = ({ token }) => {
                             return (
                                 <TableRow key={hour} sx={{ height: ROW_HEIGHT }}>
                                     <TableCell
+                                        onClick={() => focusHour(hour, true)}
+                                        title={hourCounts[hour]
+                                            ? t("yoga.hourClasses", { count: hourCounts[hour], hour: hourLabel(hour) })
+                                            : undefined}
                                         sx={{
-                                            width: 72,
+                                            width: 80,
                                             bgcolor: isNowRow ? "action.selected" : "action.hover",
                                             fontWeight: 600,
                                             position: "sticky",
@@ -490,9 +672,33 @@ const YogaSection = ({ token }) => {
                                             zIndex: 1,
                                             borderRight: "1px solid",
                                             borderColor: "divider",
+                                            cursor: hourCounts[hour] ? "pointer" : "default",
                                         }}
                                     >
-                                        {hourLabel(hour)}
+                                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                                            <span>{hourLabel(hour)}</span>
+                                            {hourCounts[hour] ? (
+                                                <Box
+                                                    component="span"
+                                                    sx={(theme) => ({
+                                                        display: "inline-flex",
+                                                        alignItems: "center",
+                                                        justifyContent: "center",
+                                                        minWidth: 16,
+                                                        height: 16,
+                                                        px: 0.4,
+                                                        flexShrink: 0,
+                                                        borderRadius: 999,
+                                                        fontSize: "0.6rem",
+                                                        fontWeight: 700,
+                                                        color: "common.white",
+                                                        bgcolor: theme.palette.secondary.main,
+                                                    })}
+                                                >
+                                                    {hourCounts[hour]}
+                                                </Box>
+                                            ) : null}
+                                        </Stack>
                                     </TableCell>
                                     {dates.map((iso) => {
                                         const dayOfWeek = isoWeekday(iso);
@@ -535,7 +741,7 @@ const YogaSection = ({ token }) => {
                                                                 e.stopPropagation();
                                                                 setCopyMenu({ x: e.clientX, y: e.clientY, occurrence: occ });
                                                             }}
-                                                            sx={{
+                                                            sx={(theme) => ({
                                                                 cursor: "pointer",
                                                                 p: 0.5,
                                                                 borderRadius: 1,
@@ -552,7 +758,15 @@ const YogaSection = ({ token }) => {
                                                                     ? "common.white"
                                                                     : "primary.contrastText",
                                                                 minHeight: 34,
-                                                            }}
+                                                                transition: "transform 140ms ease, box-shadow 140ms ease",
+                                                                boxShadow: spotlight === `${occ.classCode}-${occ.date}`
+                                                                    ? `0 0 0 3px ${alpha(theme.palette.secondary.main, 0.6)}`
+                                                                    : "none",
+                                                                "&:hover": {
+                                                                    transform: "translateY(-1px)",
+                                                                    boxShadow: `0 6px 14px ${alpha(theme.palette.primary.dark, 0.28)}`,
+                                                                },
+                                                            })}
                                                         >
                                                             <Typography variant="caption" sx={{ display: "block", fontWeight: 700 }}>
                                                                 {occ.title}
@@ -567,6 +781,8 @@ const YogaSection = ({ token }) => {
                                                                 label={occ.remaining <= 0
                                                                     ? t("yoga.full")
                                                                     : `${occ.remaining}/${occ.capacity}`}
+                                                                onClick={() => { }}
+                                                                clickable={false}
                                                                 sx={{ mt: 0.25, height: 18, fontSize: "0.65rem" }}
                                                             />
                                                             {occ.myBookingCode && (
@@ -600,21 +816,17 @@ const YogaSection = ({ token }) => {
                     {t("yoga.classListTitle")}
                 </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ mb: 1.5 }}>
-                    <TextField
-                        size="small"
-                        type="date"
+                    <DatePicker
                         label={t("yoga.dateFrom")}
-                        value={range.from}
-                        onChange={(e) => setRange((prev) => ({ ...prev, from: e.target.value }))}
-                        InputLabelProps={{ shrink: true }}
+                        value={range.from ? dayjs(range.from) : null}
+                        onChange={(date) => setRange((prev) => ({ ...prev, from: date ? date.format("YYYY-MM-DD") : "" }))}
+                        slotProps={{ textField: { size: "small" } }}
                     />
-                    <TextField
-                        size="small"
-                        type="date"
+                    <DatePicker
                         label={t("yoga.dateTo")}
-                        value={range.to}
-                        onChange={(e) => setRange((prev) => ({ ...prev, to: e.target.value }))}
-                        InputLabelProps={{ shrink: true }}
+                        value={range.to ? dayjs(range.to) : null}
+                        onChange={(date) => setRange((prev) => ({ ...prev, to: date ? date.format("YYYY-MM-DD") : "" }))}
+                        slotProps={{ textField: { size: "small" } }}
                     />
                     <Button size="small" variant="contained" onClick={loadRange} sx={{ alignSelf: "flex-start" }}>
                         {t("yoga.filter")}
@@ -780,7 +992,11 @@ const YogaSection = ({ token }) => {
                                 </MenuItem>
                                 {plans.map((plan) => (
                                     <MenuItem key={plan.buyerUsername} value={plan.buyerUsername}>
-                                        {plan.buyerName} ({plan.remainingDays} {t("yoga.daysLeft")})
+                                        {plan.buyerName} ({plan.remainingDays}{" "}
+                                        {plan.quotaType === "BOOKINGS"
+                                            ? t("yoga.bookingsLeft")
+                                            : t("yoga.daysLeft")}
+                                        )
                                     </MenuItem>
                                 ))}
                             </TextField>
@@ -829,8 +1045,9 @@ const YogaSection = ({ token }) => {
                 </MenuItem>
             </Menu>
 
-            {/* copy dialog: class info is read-only, the seller chooses the
-                target dates and times. Nothing about buyers is copied. */}
+            {/* copy dialog: the class name and coach arrive pre-filled and stay
+                editable, the seller picks the target dates and times. Nothing
+                about buyers or bookings is copied. */}
             <Dialog
                 open={copyOpen}
                 onClose={copySubmitting ? undefined : () => setCopyOpen(false)}
@@ -841,52 +1058,75 @@ const YogaSection = ({ token }) => {
                 <DialogContent>
                     <Stack spacing={2} sx={{ pt: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                            {copySource?.title}
-                            {copySource?.coach ? ` · ${copySource.coach}` : ""}
-                            {" · "}
                             {copySource?.startTime}-{copySource?.endTime}
                             {" · "}
                             {t("yoga.capacity")}: {copySource?.capacity}
                         </Typography>
+                        <Stack direction="row" spacing={1}>
+                            <TextField
+                                size="small"
+                                label={t("yoga.title")}
+                                value={copyInfo.title}
+                                onChange={(e) => setCopyInfo((p) => ({ ...p, title: e.target.value }))}
+                                required
+                            />
+                            <TextField
+                                size="small"
+                                label={t("yoga.coach")}
+                                value={copyInfo.coach}
+                                onChange={(e) => setCopyInfo((p) => ({ ...p, coach: e.target.value }))}
+                            />
+                        </Stack>
                         <Typography variant="caption" color="text.secondary">
                             {t("yoga.copyHint")}
                         </Typography>
-                        {copyTargets.map((row, index) => (
-                            <Stack key={index} direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                                <TextField
-                                    size="small"
-                                    type="date"
-                                    label={t("yoga.date")}
-                                    value={row.date}
-                                    onChange={(e) => updateCopyTarget(index, { date: e.target.value })}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <TextField
-                                    size="small"
-                                    type="time"
-                                    label={t("yoga.start")}
-                                    value={row.startTime}
-                                    onChange={(e) => updateCopyTarget(index, { startTime: e.target.value })}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <TextField
-                                    size="small"
-                                    type="time"
-                                    label={t("yoga.end")}
-                                    value={row.endTime}
-                                    onChange={(e) => updateCopyTarget(index, { endTime: e.target.value })}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <Button
-                                    size="small"
-                                    color="error"
-                                    onClick={() => removeCopyTarget(index)}
-                                    disabled={copyTargets.length === 1}
-                                >
-                                    {t("common.delete")}
-                                </Button>
-                            </Stack>
-                        ))}
+                        <Typography variant="caption" color="text.secondary">
+                            {t("yoga.copyOverlapHint")}
+                        </Typography>
+                        {/* One line per target. The theme makes every TextField
+                            fullWidth by default, so the fields share the line
+                            through flex basis; letting them wrap instead stacked
+                            them and each floating label collided with the field
+                            above. */}
+                        <Stack spacing={2.5}>
+                            {copyTargets.map((row, index) => (
+                                <Stack key={index} direction="row" spacing={1.5} alignItems="center">
+                                    <DatePicker
+                                        label={t("yoga.date")}
+                                        value={row.date ? dayjs(row.date) : null}
+                                        onChange={(date) => updateCopyTarget(index, { date: date ? date.format("YYYY-MM-DD") : "" })}
+                                        slotProps={{ textField: { size: "small", sx: { flex: "1 1 42%", minWidth: 0 } } }}
+                                    />
+                                    <TextField
+                                        size="small"
+                                        type="time"
+                                        label={t("yoga.start")}
+                                        value={row.startTime}
+                                        onChange={(e) => updateCopyTarget(index, { startTime: e.target.value })}
+                                        InputLabelProps={{ shrink: true }}
+                                        sx={{ flex: "1 1 26%", minWidth: 0 }}
+                                    />
+                                    <TextField
+                                        size="small"
+                                        type="time"
+                                        label={t("yoga.end")}
+                                        value={row.endTime}
+                                        onChange={(e) => updateCopyTarget(index, { endTime: e.target.value })}
+                                        InputLabelProps={{ shrink: true }}
+                                        sx={{ flex: "1 1 26%", minWidth: 0 }}
+                                    />
+                                    <Button
+                                        size="small"
+                                        color="error"
+                                        onClick={() => removeCopyTarget(index)}
+                                        disabled={copyTargets.length === 1}
+                                        sx={{ flexShrink: 0 }}
+                                    >
+                                        {t("common.delete")}
+                                    </Button>
+                                </Stack>
+                            ))}
+                        </Stack>
                         <Button
                             size="small"
                             variant="outlined"

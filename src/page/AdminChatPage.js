@@ -23,15 +23,20 @@ import { useTranslation } from "react-i18next";
 import {
     beginZaloConsent,
     closeAdminConversation,
+    fetchAdminAttachment,
     fetchAdminConversations,
     fetchAdminHistory,
     fetchZaloStatus,
     sendAdminReply,
+    sendAdminReplyWithAttachment,
     sendAdminTyping,
 } from "../api/chatApi";
 import { isStreamConnected, subscribeAdminStream } from "../util/chatStream";
 import { colorFromString, initialsOf } from "../util/avatar";
 import { disablePush, enablePush, getPushState } from "../util/push";
+import { useChatAttachmentDraft } from "../util/useChatAttachmentDraft";
+import ChatMessageContent from "../components/ChatMessageContent";
+import { ChatAttachmentDraftRow, ChatAttachmentPicker } from "../components/ChatAttachmentControls";
 
 // The stream carries everything; this timer only runs while it is down, so a
 // dead connection degrades to a slow inbox instead of a silent one.
@@ -186,6 +191,7 @@ const AdminChatPage = () => {
     const [pendingJump, setPendingJump] = useState(0);
     const [pushOn, setPushOn] = useState(false);
     const [pushBusy, setPushBusy] = useState(false);
+    const attachmentDraft = useChatAttachmentDraft();
 
     const threadRef = useRef(null);
     const selectedRef = useRef(selectedUuid);
@@ -289,7 +295,19 @@ const AdminChatPage = () => {
                 return;
             }
             if (event.type === "status" && data) {
-                setMessages((prev) => prev.map((m) => (m.id === data.id ? { ...m, ...data } : m)));
+                setMessages((prev) =>
+                    prev.map((m) =>
+                        m.id === data.id
+                            ? {
+                                ...m,
+                                ...data,
+                                // Status patches carry no attachment; keep the
+                                // rendered image/file instead of nulling it.
+                                attachment: data.attachment ?? m.attachment,
+                            }
+                            : m,
+                    ),
+                );
                 return;
             }
             if (event.type === "conversation" && data) {
@@ -353,6 +371,7 @@ const AdminChatPage = () => {
             setSelectedUuid(uuid);
             stickToBottomRef.current = true;
             setPendingJump(0);
+            attachmentDraft.clear();
             // Keep the URL in step in both directions: leaving the thread on a
             // phone must also drop ?c=, or the deep-link effect reopens it.
             setSearchParams((prev) => {
@@ -365,20 +384,33 @@ const AdminChatPage = () => {
                 return next;
             }, { replace: true });
         },
-        [setSearchParams],
+        [attachmentDraft, setSearchParams],
     );
 
     const handleSend = useCallback(async () => {
         const content = input.trim();
-        if (!content || !selectedUuid) return;
+        const staged = attachmentDraft.take();
+        if ((!content && !staged) || !selectedUuid) return;
         setInput("");
         try {
-            const { data } = await sendAdminReply({ conversationUuid: selectedUuid, content });
+            let data;
+            if (staged) {
+                const form = new FormData();
+                form.append("conversationUuid", selectedUuid);
+                if (content) {
+                    form.append("caption", content);
+                }
+                form.append("file", staged.file);
+                ({ data } = await sendAdminReplyWithAttachment(form));
+            } else {
+                ({ data } = await sendAdminReply({ conversationUuid: selectedUuid, content }));
+            }
+            const preview = data.content || content;
             setMessages((prev) => (prev.some((m) => m.id === data.id) ? prev : [...prev, data]));
             setConversations((prev) =>
                 prev.map((c) =>
                     c.uuid === selectedUuid
-                        ? { ...c, lastMessagePreview: content, lastMessageAt: data.createdAt, awaitingAdmin: false }
+                        ? { ...c, lastMessagePreview: preview, lastMessageAt: data.createdAt, awaitingAdmin: false }
                         : c,
                 ),
             );
@@ -386,7 +418,13 @@ const AdminChatPage = () => {
         } catch (error) {
             setLoadError(error?.response?.data?.message || t("adminChat.errors.replyFailed"));
         }
-    }, [input, selectedUuid, t]);
+    }, [attachmentDraft, input, selectedUuid, t]);
+
+    /** Attachment bytes are JWT-guarded, so they load through axios, not <img src>. */
+    const fetchAttachment = useCallback(
+        (uuid) => fetchAdminAttachment(uuid).then((res) => res.data),
+        [],
+    );
 
     const handleInputChange = useCallback(
         (event) => {
@@ -753,12 +791,10 @@ const AdminChatPage = () => {
                                                     boxShadow: "0 1px 1px rgba(0,0,0,0.08)",
                                                 }}
                                             >
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-                                                >
-                                                    {message.content}
-                                                </Typography>
+                                                <ChatMessageContent
+                                                    message={message}
+                                                    fetchAttachment={fetchAttachment}
+                                                />
                                                 <Stack
                                                     direction="row"
                                                     spacing={0.5}
@@ -789,7 +825,9 @@ const AdminChatPage = () => {
                             ) : null}
 
                             <Divider />
+                            <ChatAttachmentDraftRow controller={attachmentDraft} />
                             <Stack direction="row" spacing={1} alignItems="flex-end" sx={{ p: 1.25 }}>
+                                <ChatAttachmentPicker controller={attachmentDraft} disabled={!selectedUuid} />
                                 <TextField
                                     size="small"
                                     fullWidth
@@ -798,6 +836,7 @@ const AdminChatPage = () => {
                                     placeholder={t("adminChat.placeholder")}
                                     value={input}
                                     onChange={handleInputChange}
+                                    onPaste={attachmentDraft.pickFromClipboard}
                                     onKeyDown={(event) => {
                                         if (event.key === "Enter" && !event.shiftKey) {
                                             event.preventDefault();
@@ -805,7 +844,11 @@ const AdminChatPage = () => {
                                         }
                                     }}
                                 />
-                                <IconButton color="primary" onClick={handleSend} disabled={!input.trim()}>
+                                <IconButton
+                                    color="primary"
+                                    onClick={handleSend}
+                                    disabled={(!input.trim() && !attachmentDraft.draft) || !selectedUuid}
+                                >
                                     <SendSvgIcon />
                                 </IconButton>
                             </Stack>

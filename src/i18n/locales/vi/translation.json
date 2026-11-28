@@ -33,7 +33,7 @@
         "login": "Đăng nhập",
         "register": "Đăng ký",
         "setup": "Cài đặt",
-        "morePlan": "Mua thêm gói",
+        "morePlan": "Gói bán hàng",
         "chat": "Chat",
         "account": "Tài khoản",
         "changeAvatar": "Đổi ảnh đại diện"
@@ -132,14 +132,15 @@
         "title": "Tạo tài khoản người bán",
         "subtitle": "Tự đăng ký, chọn gói và bắt đầu bán hàng - không cần lời mời.",
         "playerTitle": "Tạo tài khoản người chơi",
-        "playerSubtitle": "Đăng ký nhanh để đặt sân và nhận thông báo đặt sân.",
-        "playerAfterNote": "Tiếp theo bạn đăng nhập bằng tài khoản này và chúng tôi đưa bạn về thẳng trang đặt sân.",
+        "playerSubtitle": "Đăng ký nhanh để đặt lớp hoặc sân và nhận thông báo đặt lịch.",
+        "playerAfterNote": "Tiếp theo bạn đăng nhập bằng tài khoản này và chúng tôi đưa bạn về thẳng trang bạn vừa rời đi.",
+        "afterNote": "Tiếp theo, bạn chọn gói và chuyển khoản phí bằng chuyển khoản ngân hàng.",
         "username": "Tên đăng nhập",
-        "usernameHint": "3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới. Đây là tên đăng nhập của bạn.",
+        "usernameHint": "Tên đăng nhập phải là chữ hoặc số viết liền, không dấu tiếng Việt.",
         "name": "Họ và tên",
-        "nameHint": "Tên hiển thị với người mua và trên nội dung chuyển khoản.",
+        "nameHint": "Không bắt buộc. Tên hiển thị với người mua và trên nội dung chuyển khoản.",
         "email": "Email",
-        "emailHint": "Chúng tôi dùng email này để liên hệ về gói thanh toán và khoản chuyển khoản của bạn.",
+        "emailHint": "Không bắt buộc. Chúng tôi dùng email này để liên hệ về gói thanh toán và khoản chuyển khoản của bạn.",
         "password": "Mật khẩu",
         "passwordHint": "Ít nhất 8 ký tự.",
         "repeatPassword": "Nhập lại mật khẩu",
@@ -148,7 +149,9 @@
         "loginLink": "Tôi đã có tài khoản",
         "errors": {
             "usernamePattern": "Dùng 3-30 ký tự: chữ, số, dấu chấm, gạch nối hoặc gạch dưới.",
-            "nameRequired": "Vui lòng cho biết họ tên của bạn.",
+            "duplicateUsername": "Tên đăng nhập này đã có người dùng. Vui lòng chọn tên khác.",
+            "duplicateEmail": "Email này đã được đăng ký. Hãy đăng nhập bằng email đó, hoặc dùng email khác.",
+            "duplicateName": "Đã có tài khoản dùng đúng họ tên này. Vui lòng thêm tên đệm hoặc một con số để phân biệt.",
             "emailInvalid": "Vui lòng nhập địa chỉ email hợp lệ.",
             "tooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
             "mismatch": "Mật khẩu không khớp.",
@@ -158,23 +161,7 @@
             "encryptFailed": "Mật khẩu không thể được mã hóa khi gửi. Vui lòng thử lại.",
             "keyUnavailable": "Khóa mã hóa của máy chủ hiện không dùng được nên không thể gửi mật khẩu an toàn. Vui lòng liên hệ quản trị viên (khóa công khai RSA của gateway).",
             "noResponse": "Không có phản hồi từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
-            "failed": "Đăng ký thất bại. Vui lòng thử lại.",
-            "purposeRequired": "Vui lòng chọn loại hình bạn sẽ bán để chúng tôi hiển thị đúng bảng giá."
-        },
-        "purpose": {
-            "title": "Bạn sẽ bán gì?",
-            "helper": "Lựa chọn này quyết định bảng giá bạn thấy tiếp theo. Gói đặt lịch không tạo được link sản phẩm, và gói sản phẩm không tạo được trang đặt lịch.",
-            "chosen": "Đã chọn",
-            "PRODUCT": {
-                "title": "Sản phẩm thông thường",
-                "description": "Bán hàng qua trang sản phẩm: đơn hàng, số lượng và link thanh toán cho từng người mua.",
-                "afterNote": "Tiếp theo bạn chọn gói sản phẩm thông thường và chuyển khoản phí bằng chuyển khoản ngân hàng."
-            },
-            "BOOKING": {
-                "title": "Đặt lịch Yoga & Cầu lông",
-                "description": "Vận hành lịch lớp yoga hoặc sơ đồ sân cầu lông để người chơi tự đặt lịch.",
-                "afterNote": "Tiếp theo bạn chọn gói đặt lịch yoga / cầu lông và chuyển khoản phí bằng chuyển khoản ngân hàng."
-            }
+            "failed": "Đăng ký thất bại. Vui lòng thử lại."
         }
     },
     "plans": {
@@ -184,6 +171,7 @@
         "catalogEmpty": "Hiện chưa có gói nào mở bán. Vui lòng liên hệ qua chat.",
         "selected": "Đã chọn",
         "continueToPayment": "Tiếp tục đến thanh toán",
+        "orGoHome": "hoặc về trang chủ",
         "buying": "Đang mở đơn hàng…",
         "transferGuide": "Bạn sẽ nhận được mã VietQR và tài khoản nhận tiền ở bước tiếp theo.",
         "activeMessage": "Gói của bạn đang hoạt động từ {{from}} đến {{to}} với {{links}} liên kết sản phẩm.",
@@ -212,6 +200,18 @@
                 "emptyNote": "Bạn cần link sản phẩm thông thường? Hãy chuyển đổi bên dưới."
             }
         },
+        "purpose": {
+            "title": "Bạn sẽ bán gì?",
+            "helper": "Lựa chọn này quyết định bảng giá bạn thấy tiếp theo. Gói đặt lịch không tạo được link sản phẩm, và gói sản phẩm không tạo được trang đặt lịch.",
+            "PRODUCT": {
+                "title": "Sản phẩm thông thường",
+                "description": "Bán hàng qua trang sản phẩm: đơn hàng, số lượng và link thanh toán cho từng người mua."
+            },
+            "BOOKING": {
+                "title": "Đặt lịch Yoga & Cầu lông",
+                "description": "Vận hành lịch lớp yoga hoặc sơ đồ sân cầu lông để người chơi tự đặt lịch."
+            }
+        },
         "switchPurpose": {
             "link": "Bạn cần gói {{group}} thay thế?",
             "dialogTitle": "Thay đổi loại hình kinh doanh",
@@ -219,17 +219,20 @@
             "confirm": "Đồng ý, chuyển đổi",
             "switching": "Đang chuyển…",
             "failed": "Không chuyển đổi được. Vui lòng thử lại hoặc liên hệ chat."
-        }
+        },
+        "freeUsed": "Đã dùng gói miễn phí",
+        "freeAutoNote": "Kích hoạt ngay khi chọn, không cần chuyển khoản ngân hàng.",
+        "freeUsedNote": "Mỗi tài khoản chỉ được một gói miễn phí và bạn đã dùng hết. Ở đây chỉ mua được gói có phí. Hãy liên hệ quản trị viên nếu bạn cho rằng đây là nhầm lẫn."
     },
     "morePlan": {
-        "title": "Mua thêm gói",
+        "title": "Gói bán hàng",
         "subtitle": "Thêm liên kết sản phẩm hoặc thêm ngày trên nền gói bạn đang trả phí. Quản trị viên sẽ kiểm tra giao dịch và kích hoạt đơn hàng.",
         "summaryTitle": "Bạn đang trả phí cho những gì",
         "remaining": "Liên kết còn lại",
         "coverage": "Được tính đến",
         "noPlans": "Hiện không có gói nào đang chạy. Hãy mua một gói bên dưới để bắt đầu bán hàng.",
         "tabs": {
-            "buy": "Mua thêm gói",
+            "buy": "Gói bán hàng",
             "extend": "Mua thêm ngày",
             "convert": "Chuyển đổi gói"
         },
@@ -282,7 +285,8 @@
             "submitPay": "Tạo đơn cho phần chênh lệch",
             "submitAcceptLoss": "Tôi hiểu phần chênh lệch sẽ mất — vẫn chuyển đổi",
             "submitting": "Đang tạo đơn…",
-            "pickBoth": "Vui lòng chọn gói cần chuyển đổi và gói sẽ chuyển sang."
+            "pickBoth": "Vui lòng chọn gói cần chuyển đổi và gói sẽ chuyển sang.",
+            "noFreeTarget": "Các gói còn lại đều là gói miễn phí, và chuyển đổi không thể chuyển sang gói miễn phí."
         }
     },
     "saleUrl": {
@@ -793,7 +797,17 @@
         "errors": {
             "startFailed": "Không thể mở chat. Vui lòng thử lại.",
             "sendFailed": "Tin nhắn của bạn không thể gửi được.",
-            "sessionChanged": "Phiên đăng nhập đã thay đổi. Hãy mở lại khung chat để tiếp tục trong cuộc trò chuyện của riêng bạn."
+            "sessionChanged": "Phiên đăng nhập đã thay đổi. Hãy mở lại khung chat để tiếp tục trong cuộc trò chuyện của riêng bạn.",
+            "fileTooLarge": "Tệp này vượt quá giới hạn {{limit}}.",
+            "fileTypeNotAllowed": "Loại tệp không được hỗ trợ. Ảnh: PNG, JPEG, WebP, GIF. Tài liệu: PDF, TXT, CSV, Word, Excel, PowerPoint."
+        },
+        "attachment": {
+            "add": "Đính kèm ảnh hoặc tệp",
+            "remove": "Gỡ tệp đính kèm",
+            "download": "Tải xuống",
+            "uploading": "Đang tải lên…",
+            "image": "Ảnh",
+            "file": "Tệp"
         }
     },
     "adminChat": {
@@ -924,6 +938,18 @@
         "validUntil": "Hiệu lực đến",
         "linkExpiryNotice": "Link sản phẩm này sẽ ngừng hoạt động lúc {{expiry}} - hết thời gian gói đã thanh toán. Để tiếp tục bán sau thời điểm đó, vui lòng liên hệ quản trị qua chat hoặc mua gói mới."
     },
+    "planWindow": {
+        "title": "Gói {{price}} VND bắt đầu khi nào?",
+        "startLabel": "Gói bắt đầu lúc",
+        "endLabel": "Gói kết thúc lúc",
+        "update": "Cập nhật",
+        "close": "Đóng",
+        "retry": "Thử lại",
+        "daysHint": "Ngày kết thúc bằng ngày bắt đầu cộng {{planDay}} ngày của gói.",
+        "defaultNote": "Nếu giữ nguyên, gói bắt đầu ngay bây giờ. Quản trị viên vẫn phải xác nhận chuyển khoản trước khi gói có hiệu lực.",
+        "pastStart": "Ngày bắt đầu không được sớm hơn hiện tại. Vui lòng chọn ngày muộn hơn.",
+        "loadError": "Không thể tính thời hạn của gói. Vui lòng thử lại."
+    },
     "saleWindow": {
         "title": "Thời gian bán",
         "start": "Bắt đầu lúc",
@@ -1019,8 +1045,8 @@
         "search": "Tìm người bán",
         "total": "Tổng:",
         "selected": "Đã chọn",
-        "activeDate": "Ngày kích hoạt",
-        "activeDateHint": "Áp dụng khi bạn duyệt hoặc đánh dấu đã thu tiền cho các gói đã chọn. Mặc định hôm nay; ngày hết hạn tính theo độ dài gói.",
+        "start": "Ngày bắt đầu gói",
+        "startHint": "Để trống để dùng ngày bắt đầu người bán đã chọn. Giá trị ở đây sẽ ghi đè cho tất cả gói đã chọn.",
         "pendingTitle": "Chờ thanh toán",
         "pendingDesc": "Gói đã gán cho người bán nhưng chưa nhận được tiền.",
         "pendingEmpty": "Không có người bán nào đang chờ thanh toán.",
@@ -1051,7 +1077,9 @@
             "deactivate": "Hủy kích hoạt",
             "markPaid": "Đã thu tiền",
             "regenerateLink": "Tạo lại liên kết thanh toán",
-            "extend": "Gia hạn gói"
+            "extend": "Gia hạn gói",
+            "setStart": "Đặt ngày bắt đầu",
+            "changeStart": "Đổi ngày bắt đầu"
         },
         "transferTitle": "Tài khoản nhận tiền của tôi",
         "transferDesc": "Các tài khoản này hiển thị trên trang thanh toán của người bán. Chỉ có một tài khoản mặc định.",
@@ -1066,7 +1094,7 @@
             "load": "Không tải được danh sách gói thanh toán.",
             "bulkAction": "Thao tác thất bại. Vui lòng thử lại.",
             "noSelection": "Vui lòng chọn ít nhất một gói thanh toán.",
-            "activeDateRequired": "Hãy chọn ngày kích hoạt ở trên để bật thao tác này.",
+            "startFailed": "Không thể đổi ngày bắt đầu gói. Vui lòng thử lại.",
             "actionFailed": "Hành động thất bại. Vui lòng thử lại."
         },
         "links": {
@@ -1076,6 +1104,18 @@
             "copyAll": "Sao chép tất cả"
         },
         "extensionTag": "Gia hạn",
+        "requestedStart": "Người bán xin bắt đầu {{date}}",
+        "startRules": {
+            "onlyPlans": "Đơn gia hạn hoặc nâng cấp không có thời hạn riêng",
+            "onlyRunning": "Chỉ gói đang chạy mới đổi được ngày bắt đầu"
+        },
+        "startDialog": {
+            "title": "Ngày bắt đầu gói",
+            "startLabel": "Gói bắt đầu lúc",
+            "endLabel": "Gói kết thúc lúc",
+            "hint": "Người bán {{user}}: gói chạy {{planDay}} ngày kể từ ngày bạn chọn. Lưu sẽ dời gói đang chạy và giữ nguyên độ dài.",
+            "submit": "Lưu ngày bắt đầu"
+        },
         "extend": {
             "title": "Gia hạn gói",
             "hint": "Số ngày sẽ được cộng vào ngày kết thúc của gói sau khi đơn này được thanh toán.",
@@ -1090,20 +1130,57 @@
         },
         "conversionTag": "chuyển đổi gói"
     },
-    "sellerSetup": {
-        "title": "Cài đặt của tôi",
-        "subtitle": "Xem gói thanh toán của bạn và quản lý tài khoản chuyển khoản.",
+    "selfAccount": {
+        "title": "Tài khoản của tôi",
+        "subtitle": "Thông tin của bạn, các gói thanh toán đang dùng và thiết lập trang bán.",
+        "menuLabel": "Tài khoản của tôi",
+        "accountTitle": "Thông tin tài khoản",
+        "accountDesc": "Tên hiển thị là thông tin người khác nhìn thấy. Email dùng để nhận liên kết đặt mật khẩu và không đổi được sau khi đã cài.",
+        "username": "Tên đăng nhập",
+        "fullName": "Họ và tên",
+        "email": "Email",
+        "emailLockedHint": "Email đã được cài và không thể thay đổi.",
+        "emailAddHint": "Thêm email để nhận liên kết đặt và đặt lại mật khẩu.",
+        "saveProfile": "Lưu thay đổi",
+        "saved": "Đã cập nhật thông tin tài khoản.",
+        "nameRequired": "Họ và tên là bắt buộc.",
+        "passwordTitle": "Đổi mật khẩu",
+        "passwordDesc": "Xác nhận mật khẩu hiện tại, sau đó chọn mật khẩu mới.",
+        "currentPassword": "Mật khẩu hiện tại",
+        "newPassword": "Mật khẩu mới",
+        "confirmPassword": "Nhập lại mật khẩu mới",
+        "newPasswordHint": "Ít nhất 8 ký tự.",
+        "passwordPrivacyHint": "Cả hai mật khẩu được mã hóa ngay trong trình duyệt trước khi gửi đi.",
+        "passwordSubmit": "Đổi mật khẩu",
+        "passwordSaving": "Đang đổi...",
+        "passwordSuccess": "Đã đổi mật khẩu.",
         "plansTitle": "Gói thanh toán của tôi",
         "plansDesc": "Gói đang hoạt động và số link sản phẩm còn lại.",
+        "packagesTitle": "Gói thanh toán của tôi",
+        "packagesDesc": "Các gói người bán cấp cho bạn và mức bạn đã sử dụng.",
+        "package": "Trang người bán",
+        "seller": "Người bán",
         "empty": "Chưa có gói thanh toán hoạt động nào.",
+        "packagesEmpty": "Chưa có người bán nào cấp gói cho bạn.",
         "remaining": "Còn lại",
         "transferTitle": "Tài khoản chuyển khoản của tôi",
         "transferDesc": "Người mua có thể chuyển vào các tài khoản này.",
-        "errors": {
-            "load": "Không tải được gói thanh toán của bạn."
-        },
         "yogaPlansTitle": "Gói thanh toán Yoga",
-        "yogaPlansDesc": "Khai báo mỗi người mua đã trả bao nhiêu (số ngày ánh xạ tới số tiền VND) trên trang Yoga của bạn. Tạo gói sẽ lập tài khoản và liên kết mật khẩu cho người mua."
+        "yogaPlansDesc": "Khai báo mỗi người mua đã trả bao nhiêu (số ngày ánh xạ tới số tiền VND) trên trang Yoga của bạn. Tạo gói sẽ lập tài khoản và liên kết mật khẩu cho người mua.",
+        "errors": {
+            "load": "Không tải được gói thanh toán của bạn.",
+            "save": "Không lưu được thông tin tài khoản.",
+            "emailInvalid": "Vui lòng nhập email hợp lệ.",
+            "emailTooLong": "Email phải dài tối đa 100 ký tự.",
+            "currentRequired": "Vui lòng nhập mật khẩu hiện tại.",
+            "newRequired": "Vui lòng nhập mật khẩu mới.",
+            "tooShort": "Mật khẩu phải dài ít nhất 8 ký tự.",
+            "sameAsCurrent": "Mật khẩu mới phải khác mật khẩu hiện tại.",
+            "mismatch": "Mật khẩu nhập lại không khớp.",
+            "wrongCurrent": "Mật khẩu hiện tại không đúng.",
+            "encryptFailed": "Không bảo mật được mật khẩu của bạn.",
+            "passwordFailed": "Không đổi được mật khẩu."
+        }
     },
     "payment": {
         "title": "Thanh toán",
@@ -1312,6 +1389,16 @@
         "copySkipped": "Đã bỏ qua {{count}} mục tiêu:",
         "copyRowsRequired": "Mỗi mục tiêu cần ngày, giờ bắt đầu và giờ kết thúc.",
         "copyTimeOrder": "Giờ kết thúc phải sau giờ bắt đầu.",
+        "nextClass": "Lớp gần nhất",
+        "goToClass": "Đến lớp này",
+        "noClassesThisWeek": "Tuần này chưa có lớp nào.",
+        "seeNextWeek": "Xem tuần sau",
+        "weekSummary": "{{count}} lớp trong tuần",
+        "weekFree": "{{count}} lớp còn chỗ",
+        "hourClasses": "{{count}} lớp lúc {{hour}}",
+        "copyOverlapHint": "Cùng một khung giờ được tối đa 2 lớp; hãy nhập HLV khác để phân biệt hai lớp.",
+        "planBannerBookings": "Gói của bạn: đã dùng {{used}}/{{total}} lượt đặt, còn {{remaining}}.",
+        "bookingsLeft": "lượt còn lại",
         "errors": {
             "load": "Không tải được lịch.",
             "titleRequired": "Tên lớp là bắt buộc.",
@@ -1357,6 +1444,14 @@
         "noEnvironments": "Hãy tạo liên kết sản phẩm Yoga trước để quản lý gói người mua.",
         "createTitle": "Gói người mua mới",
         "editTitle": "Sửa gói người mua",
+        "quota": "Hạn mức",
+        "quotaType": "Gói tính theo",
+        "quotaTypeHint": "Ngày: nhiều lớp trong cùng một ngày chỉ tính một ngày. Lượt: mỗi lớp tính một lượt.",
+        "quotaTypeLocked": "Không đổi đơn vị được sau khi đã có lượt đặt.",
+        "quotaDays": "Số ngày",
+        "quotaBookings": "Số lượt đặt",
+        "daysUsed": "{{count}} ngày đã dùng",
+        "bookingsUsed": "{{count}} lượt đã đặt",
         "linkTitle": "Liên kết đặt mật khẩu",
         "linkHint": "Gửi liên kết này cho {{buyer}} để đặt mật khẩu. Liên kết chỉ dùng được một lần và hết hạn sau 48 giờ.",
         "errors": {
@@ -1433,5 +1528,11 @@
             "sentAll": "Đã gửi thông báo đến tất cả người bán thành công.",
             "sentCount": "Đã gửi thông báo đến {{count}} người bán thành công."
         }
+    },
+    "shareQr": {
+        "title": "Mã QR liên kết chia sẻ",
+        "tooltip": "Xem mã QR",
+        "hint": "Quét mã để mở trang sản phẩm.",
+        "error": "Không tạo được mã QR."
     }
 }

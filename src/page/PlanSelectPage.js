@@ -22,6 +22,7 @@ import PageContainer from "../components/PageContainer";
 import CardWrapper from "../components/CardWrapper";
 import OnboardingSteps from "../components/OnboardingSteps";
 import PaymentInfoPanel from "../components/PaymentInfoPanel";
+import PlanWindowDialog from "../form/PlanWindowDialog";
 import { formatVND } from "../util/clipboard";
 import {
     PLAN_GROUP_BOOKING,
@@ -33,6 +34,24 @@ import { useTranslation } from "react-i18next";
 
 /** How often the screen asks whether the admin has verified the transfer. */
 const POLL_INTERVAL_MS = 20000;
+
+/**
+ * Where "or go to home" leads. A public page the visitor left to register - a
+ * yoga calendar, for instance - hands its own URL over as ?next=, and that is
+ * where they go back to; anyone who started on this screen goes to the seller
+ * workspace, because /plans itself is seller-only.
+ *
+ * Read once from the address bar rather than through a router hook: the query
+ * cannot change while the screen is mounted, and this keeps the page free of a
+ * second routing dependency.
+ */
+const goHomeTarget = () => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/plans")) {
+        return "/sellerHome";
+    }
+    return next;
+};
 
 const STATE_PICK_PLAN = "PICK_PLAN";
 const STATE_WAITING_TRANSFER = "WAITING_TRANSFER";
@@ -62,12 +81,19 @@ const PlanSelectPage = () => {
     // already false - would otherwise not retrigger it.
     const [catalogAttempt, setCatalogAttempt] = useState(0);
     const [selectedPlan, setSelectedPlan] = useState("");
+    // The plan whose window popup is open, and the window the seller confirmed
+    // for the plan they picked. A card click opens the popup rather than
+    // selecting straight away, because the start is part of the choice.
+    const [windowPlan, setWindowPlan] = useState(null);
+    const [appliedWindow, setAppliedWindow] = useState(null);
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState("");
     const [switchOpen, setSwitchOpen] = useState(false);
     const [switching, setSwitching] = useState(false);
+    // Busy state of the one-time purpose choice a new seller owes.
+    const [choosing, setChoosing] = useState(false);
 
     const loadState = useCallback(async ({ quiet = false } = {}) => {
         if (!quiet) {
@@ -99,6 +125,9 @@ const PlanSelectPage = () => {
     const purpose = normalizeGroup(state?.planPurpose);
     const otherPurpose = purpose === PLAN_GROUP_BOOKING ? PLAN_GROUP_PRODUCT : PLAN_GROUP_BOOKING;
     const purposeColor = groupColor(purpose);
+    // The backend owns this answer, because "ever taken" includes grants an admin
+    // later rejected, which the visible plan list cannot show.
+    const freePlanUsed = Boolean(state?.freePlanUsed);
 
     useEffect(() => {
         // null: never fetched. Once the catalog is in hand the screen keeps it, so
@@ -160,8 +189,15 @@ const PlanSelectPage = () => {
         setError("");
         setBuying(true);
         try {
-            const res = await pubApi.post("/api/v1/sellerPlan/select", { planCode: selectedPlan });
+            // The chosen start travels with the order. Without one the plan
+            // starts whenever the admin confirms the money, which is the old
+            // behaviour and still the right default.
+            const res = await pubApi.post("/api/v1/sellerPlan/select", {
+                planCode: selectedPlan,
+                ...(appliedWindow?.startAt ? { startAt: appliedWindow.startAt } : {}),
+            });
             setSelectedPlan("");
+            setAppliedWindow(null);
             setState(res.data || null);
         } catch (err) {
             console.error("Failed to open the plan order", err);
@@ -198,25 +234,43 @@ const PlanSelectPage = () => {
      * action rather than a filter: buying the wrong kind of plan is the mistake
      * the split exists to prevent, so undoing it has to feel like a decision.
      */
-    const handleSwitchPurpose = async () => {
-        setSwitching(true);
+    /**
+     * Store the account's purpose and reload the state. Shared by the two ways
+     * the screen asks: the one-time choice a new seller owes (no purpose yet)
+     * and the confirmed switch an older account makes deliberately.
+     */
+    const applyPurpose = useCallback(async (chosen) => {
         setError("");
         try {
-            const res = await pubApi.post("/api/v1/sellerPlan/purpose", { planPurpose: otherPurpose });
+            const res = await pubApi.post("/api/v1/sellerPlan/purpose", { planPurpose: chosen });
             // Drop the group just shown, or the effect below would keep it cached.
             setPlans([]);
             setCatalogLoaded(false);
             setCatalogAttempt((attempt) => attempt + 1);
             setSelectedPlan("");
+            setAppliedWindow(null);
             setState(res.data || null);
-            setSwitchOpen(false);
         } catch (err) {
-            console.error("Failed to switch the plan purpose", err);
+            console.error("Failed to set the plan purpose", err);
             setError(err?.response?.data?.message || t("plans.switchPurpose.failed"));
-            setSwitchOpen(false);
-        } finally {
-            setSwitching(false);
         }
+    }, [t]);
+
+    const handleSwitchPurpose = async () => {
+        setSwitching(true);
+        await applyPurpose(otherPurpose);
+        setSwitchOpen(false);
+        setSwitching(false);
+    };
+
+    /**
+     * The question moved here from the register form: a new seller answers it
+     * before the catalog shows, and the answer is stored on the account.
+     */
+    const handleChoosePurpose = async (chosen) => {
+        setChoosing(true);
+        await applyPurpose(chosen);
+        setChoosing(false);
     };
 
     const activeStep = useMemo(() => {
@@ -323,7 +377,59 @@ const PlanSelectPage = () => {
                     </Alert>
                 )}
 
-                {state?.state === STATE_PICK_PLAN && (
+                {/* Moved here from the register form: a new seller answers the
+                    purpose question once, before any catalog is shown. */}
+                {state?.state === STATE_PICK_PLAN && state?.purposeChosen === false && (
+                    <CardWrapper>
+                        <Stack spacing={2}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                {t("plans.purpose.title")}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                {t("plans.purpose.helper")}
+                            </Typography>
+                            <Grid container spacing={1.5}>
+                                {[PLAN_GROUP_PRODUCT, PLAN_GROUP_BOOKING].map((purpose) => (
+                                    <Grid size={{ xs: 12, sm: 6 }} key={purpose}>
+                                        <Card
+                                            variant="outlined"
+                                            sx={{
+                                                height: "100%",
+                                                borderColor: `${groupColor(purpose)}.main`,
+                                                borderWidth: 1,
+                                            }}
+                                        >
+                                            <CardActionArea
+                                                disabled={choosing}
+                                                onClick={() => handleChoosePurpose(purpose)}
+                                                sx={{ height: "100%" }}
+                                            >
+                                                <Stack spacing={1} sx={{ p: 2 }}>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                                        {t(`plans.purpose.${purpose}.title`)}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        {t(`plans.purpose.${purpose}.description`)}
+                                                    </Typography>
+                                                </Stack>
+                                            </CardActionArea>
+                                        </Card>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                            {choosing && (
+                                <Stack direction="row" spacing={1.5} alignItems="center">
+                                    <CircularProgress size={16} />
+                                    <Typography variant="body2" color="text.secondary">
+                                        {t("common.loading")}
+                                    </Typography>
+                                </Stack>
+                            )}
+                        </Stack>
+                    </CardWrapper>
+                )}
+
+                {state?.state === STATE_PICK_PLAN && state?.purposeChosen !== false && (
                     <CardWrapper>
                         <Stack spacing={2}>
                             <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -385,6 +491,11 @@ const PlanSelectPage = () => {
                             <Grid container spacing={2}>
                                 {plans.map((plan) => {
                                     const isSelected = selectedPlan === plan.planCode;
+                                    const free = Number(plan.fee) === 0;
+                                    // The free plan is one per account, ever. Showing it
+                                    // as pickable only to reject the click would look like
+                                    // a bug, so it is greyed out with the reason instead.
+                                    const freeBlocked = free && freePlanUsed;
                                     return (
                                         <Grid size={{ xs: 12, sm: 6, md: 4 }} key={plan.planCode}>
                                             <Card
@@ -393,16 +504,37 @@ const PlanSelectPage = () => {
                                                     height: "100%",
                                                     borderColor: isSelected ? "primary.main" : "divider",
                                                     borderWidth: isSelected ? 2 : 1,
+                                                    opacity: freeBlocked ? 0.6 : 1,
                                                 }}
                                             >
-                                                <CardActionArea onClick={() => setSelectedPlan(plan.planCode)} sx={{ height: "100%" }}>
+                                                <CardActionArea
+                                                    disabled={freeBlocked}
+                                                    onClick={() => setWindowPlan(plan)}
+                                                    sx={{ height: "100%" }}
+                                                >
                                                     <Stack spacing={1} sx={{ p: 2 }}>
                                                         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                                                             <Typography variant="h5" sx={{ fontWeight: 700 }}>
                                                                 {formatVND(plan.fee)} VND
                                                             </Typography>
                                                             {isSelected && (
-                                                                <Chip size="small" color="primary" label={t("plans.selected")} />
+                                                                <Chip
+                                                                    size="small"
+                                                                    color="primary"
+                                                                    onClick={() => { }}
+                                                                    clickable={false}
+                                                                    label={t("plans.selected")}
+                                                                />
+                                                            )}
+                                                            {freeBlocked && (
+                                                                <Chip
+                                                                    size="small"
+                                                                    variant="outlined"
+                                                                    color="warning"
+                                                                    onClick={() => { }}
+                                                                    clickable={false}
+                                                                    label={t("plans.freeUsed")}
+                                                                />
                                                             )}
                                                         </Stack>
                                                         <Typography variant="body2" color="text.secondary">
@@ -411,6 +543,16 @@ const PlanSelectPage = () => {
                                                         {plan.planGroup && (
                                                             <Typography variant="caption" sx={{ color: `${groupColor(plan.planGroup)}.main`, fontWeight: 600 }}>
                                                                 {t(`plans.group.${normalizeGroup(plan.planGroup)}.label`)}
+                                                            </Typography>
+                                                        )}
+                                                        {free && !freeBlocked && (
+                                                            <Typography variant="caption" color="success.main">
+                                                                {t("plans.freeAutoNote")}
+                                                            </Typography>
+                                                        )}
+                                                        {freeBlocked && (
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {t("plans.freeUsedNote")}
                                                             </Typography>
                                                         )}
                                                         {plan.description && (
@@ -436,6 +578,17 @@ const PlanSelectPage = () => {
                                     disabled={buying || !selectedPlan || plans.length === 0}
                                 >
                                     {buying ? t("plans.buying") : t("plans.continueToPayment")}
+                                </Button>
+                                {/* Leaving stays possible: a visitor who only came
+                                    to book a yoga class or a court must not be
+                                    trapped by the plan gate they ran into. */}
+                                <Button
+                                    variant="outlined"
+                                    size="large"
+                                    onClick={() => navigate(goHomeTarget())}
+                                    disabled={buying}
+                                >
+                                    {t("plans.orGoHome")}
                                 </Button>
                                 <Typography variant="caption" color="text.secondary">
                                     {t("plans.transferGuide")}
@@ -489,6 +642,24 @@ const PlanSelectPage = () => {
                     </>
                 )}
             </Stack>
+
+            <PlanWindowDialog
+                open={Boolean(windowPlan)}
+                plan={windowPlan}
+                appliedStartAt={
+                    appliedWindow && appliedWindow.planCode === windowPlan?.planCode
+                        ? appliedWindow.startAt
+                        : ""
+                }
+                onApplied={(startAt, endAt) => {
+                    if (!windowPlan) {
+                        return;
+                    }
+                    setSelectedPlan(windowPlan.planCode);
+                    setAppliedWindow({ planCode: windowPlan.planCode, startAt, endAt });
+                }}
+                onClose={() => setWindowPlan(null)}
+            />
 
             <Dialog open={switchOpen} onClose={() => setSwitchOpen(false)}>
                 <DialogTitle>{t("plans.switchPurpose.dialogTitle")}</DialogTitle>

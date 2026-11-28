@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import i18n from "../i18n";
 import { pubApi } from "../api";
+import PickerProvider from "../components/PickerProvider";
 import MorePlanPage from "./MorePlanPage";
 
 jest.mock("../api", () => ({
@@ -46,7 +47,12 @@ const moreState = (activePlans) => ({
     },
 });
 
-const renderPage = () => render(<MorePlanPage />);
+const renderPage = () =>
+    render(
+        <PickerProvider>
+            <MorePlanPage />
+        </PickerProvider>
+    );
 
 const openConvertTab = async () => {
     renderPage();
@@ -207,5 +213,83 @@ describe("MorePlanPage convert tab", () => {
         await chooseSource(/15,000 VND/);
 
         expect(await screen.findByText(/No other plan of this kind is on sale/)).toBeInTheDocument();
+    });
+
+    /**
+     * The backend refuses a conversion onto a 0 fee plan, so offering one here
+     * would only produce an error after the seller committed to the choice.
+     */
+    it("never offers the free plan as a conversion target", async () => {
+        const freeTarget = { planCode: "p-free", fee: 0, planDay: 1, envCount: 1, planGroup: "BOOKING" };
+        pubApi.get.mockImplementation((url) =>
+            Promise.resolve(url.includes("moreState")
+                ? moreState([PRODUCT_15K])
+                : { data: { items: [freeTarget] } }));
+
+        await openConvertTab();
+        await chooseSource(/15,000 VND/);
+
+        expect(await screen.findByText(/cannot move onto the free plan/i)).toBeInTheDocument();
+        expect(screen.queryByText("0 VND")).toBeNull();
+    });
+
+    /**
+     * The start of the plan being bought is part of the choice: the card opens
+     * the window popup, and only the window the seller confirmed is bought.
+     */
+    it("buys from the window the seller confirmed on the buy tab", async () => {
+        const catalogPlan = { planCode: "p-15", fee: 15000, planDay: 7, envCount: 1, planGroup: "BOOKING" };
+        pubApi.get.mockImplementation((url) =>
+            Promise.resolve(url.includes("moreState")
+                ? moreState([])
+                : { data: { items: [catalogPlan] } }));
+        pubApi.post.mockImplementation((url) => {
+            if (url.includes("sellerPlan/window")) {
+                return Promise.resolve({
+                    data: { startAt: "2030-01-10T09:00", endAt: "2030-01-17T09:00", planDay: 7 },
+                });
+            }
+            return Promise.resolve({
+                data: {
+                    state: "WAITING_TRANSFER",
+                    planPurpose: "BOOKING",
+                    remainingQuota: 0,
+                    activePlans: [],
+                    pendingPayment: null,
+                },
+            });
+        });
+
+        renderPage();
+        fireEvent.click(await screen.findByText("15,000 VND"));
+
+        expect(await screen.findByText(/When should the 15,000 VND plan start/)).toBeInTheDocument();
+        await screen.findByDisplayValue("10/01/2030 09:00");
+        fireEvent.click(screen.getByRole("button", { name: "Update" }));
+        fireEvent.click(screen.getByRole("button", { name: /Continue to payment/i }));
+
+        await waitFor(() =>
+            expect(pubApi.post).toHaveBeenCalledWith("/api/v1/sellerPlan/buyMore", {
+                planCode: "p-15",
+                startAt: "2030-01-10T09:00",
+            })
+        );
+    });
+
+    it("greys the free plan out on the buy tab once the account used it", async () => {
+        const freePlan = { planCode: "p-free", fee: 0, planDay: 1, envCount: 1, planGroup: "BOOKING" };
+        pubApi.get.mockImplementation((url) => {
+            if (url.includes("moreState")) {
+                return Promise.resolve({ data: { ...moreState([PRODUCT_15K]).data, freePlanUsed: true } });
+            }
+            return Promise.resolve({ data: { items: [freePlan] } });
+        });
+
+        renderPage();
+
+        expect(await screen.findByText("Free plan already used")).toBeInTheDocument();
+        const freeCard = screen.getAllByRole("button").find((b) => b.textContent?.includes("0 VND"));
+        expect(freeCard).toBeDisabled();
+        expect(pubApi.post).not.toHaveBeenCalled();
     });
 });

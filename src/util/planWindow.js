@@ -66,7 +66,8 @@ export const formatDateTime = (date) => {
 const pad = (n) => String(n).padStart(2, "0");
 
 /**
- * Local-time "yyyy-MM-ddTHH:mm" value for an <input type="datetime-local">.
+ * Local-time "yyyy-MM-ddTHH:mm" value, the wire format the sale-window
+ * DateTimePicker and the backend both use.
  * Built from the local getters on purpose: toISOString() would render the UTC
  * day and quietly shift the chosen window by the browser offset.
  */

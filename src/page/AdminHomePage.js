@@ -29,6 +29,7 @@ import CreateSellerPlanDialog from "../form/CreateSellerPlanDialog";
 import CreateUserDialog from "../form/CreateUserDialog";
 import PaymentLinkResultDialog from "../form/PaymentLinkResultDialog";
 import { CountdownBadge } from "../components/CountdownTimer";
+import ShareLinkQrButton from "../components/ShareLinkQrButton";
 import { useTranslation } from "react-i18next";
 
 const DEFAULT_ENTRY_ROWS = 10;
@@ -625,19 +626,22 @@ const AdminHomePage = () => {
                       </TableCell>
                       <TableCell>
                         {entry.publicLink ? (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopyText(`pub-${entry.requestUUID}`, addHostToHref(entry.publicLink));
-                            }}
-                            sx={{ minWidth: 60, fontSize: "0.7rem" }}
-                          >
-                            {copiedKey === `pub-${entry.requestUUID}`
-                              ? t("common.copied")
-                              : t("common.copy")}
-                          </Button>
+                          <Stack direction="row" spacing={0.5} alignItems="center">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyText(`pub-${entry.requestUUID}`, addHostToHref(entry.publicLink));
+                              }}
+                              sx={{ minWidth: 60, fontSize: "0.7rem" }}
+                            >
+                              {copiedKey === `pub-${entry.requestUUID}`
+                                ? t("common.copied")
+                                : t("common.copy")}
+                            </Button>
+                            <ShareLinkQrButton url={addHostToHref(entry.publicLink)} />
+                          </Stack>
                         ) : (
                           "\u2014"
                         )}

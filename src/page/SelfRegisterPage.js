@@ -3,9 +3,6 @@ import {
     Alert,
     Box,
     Button,
-    Card,
-    CardActionArea,
-    Chip,
     Grid,
     Link,
     Stack,
@@ -18,18 +15,19 @@ import api, { pubApi } from "../api";
 import PageContainer from "../components/PageContainer";
 import SectionBlock from "../components/SectionBlock";
 import OnboardingSteps from "../components/OnboardingSteps";
-import {
-    PLAN_GROUP_BOOKING,
-    PLAN_GROUP_PRODUCT,
-    groupColor,
-} from "../util/planGroup";
 import { useTranslation } from "react-i18next";
 
 /**
  * Open self-registration. Unlike the invite register screen there is no
- * request uuid and no pre-created account: the visitor picks a username,
- * gives a contact email and sets their own password, then signs in and buys a
- * plan themselves.
+ * request uuid and no pre-created account: the visitor picks a username, may
+ * give a name and a contact email, and sets their own password.
+ *
+ * What happens next depends on where the visitor came from. A visitor from a
+ * public sale space (a seller's product page, a yoga timetable or a court
+ * grid) is registering as a buyer: no seller steps, and after signing in they
+ * go straight back to that page. A seller keeps the three-step onboarding,
+ * and the "what will you sell" question that used to live here is now asked
+ * on the plan screen (step 2).
  *
  * The password never leaves the browser in clear text - it is RSA-encrypted
  * with the same public key the login screen uses.
@@ -38,14 +36,32 @@ const MIN_PASSWORD_LENGTH = 8;
 const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,30}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+/**
+ * A duplicate account is answered with the input that clashes, so the refusal
+ * can be attached to that field. The wording lives here rather than in the
+ * banner: it has to name the thing the visitor should change.
+ */
+const DUPLICATE_FIELD_KEYS = {
+    username: "selfRegister.errors.duplicateUsername",
+    email: "selfRegister.errors.duplicateEmail",
+    name: "selfRegister.errors.duplicateName",
+};
+
 const SelfRegisterPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const nextPath = searchParams.get("next") || "/plans";
-    // The badminton booking page hands its own URL as next, so the account is
-    // created as a player and the copy drops the seller onboarding steps.
-    const isPlayerReturn = nextPath.startsWith("/api/v1/publish/saleUrl");
+    // Where the visitor came from, when a public page handed its own URL over.
+    // It is only a return offer - the plan step still runs first - so it is
+    // kept apart from the default post-login target.
+    const returnPath = searchParams.get("next") || "";
+    const nextPath = returnPath || "/plans";
+    // A visitor arriving from a public sale space (a seller's product page,
+    // yoga timetable or court grid) is registering as a buyer: the seller
+    // onboarding steps disappear, the account is created as BUYER, and after
+    // login they go straight back to that page - register, sign in, return.
+    const isPlayerReturn =
+        nextPath.startsWith("/api/v1/publish/saleUrl") || nextPath.startsWith("/publink");
 
     const [form, setForm] = useState({
         username: "",
@@ -53,7 +69,6 @@ const SelfRegisterPage = () => {
         email: "",
         password: "",
         repeatPassword: "",
-        planPurpose: "",
     });
     const [fieldErrors, setFieldErrors] = useState({});
     const [error, setError] = useState("");
@@ -81,20 +96,15 @@ const SelfRegisterPage = () => {
         });
     };
 
-    const choosePurpose = (purpose) => {
-        setForm((prev) => ({ ...prev, planPurpose: purpose }));
-        setFieldErrors((prev) => ({ ...prev, planPurpose: "" }));
-    };
-
     const validate = () => {
         const next = {};
         if (!USERNAME_PATTERN.test(form.username.trim())) {
             next.username = t("selfRegister.errors.usernamePattern");
         }
-        if (!form.name.trim()) {
-            next.name = t("selfRegister.errors.nameRequired");
-        }
-        if (!EMAIL_PATTERN.test(form.email.trim())) {
+        // Name and email are optional: the backend falls back to the username
+        // for the display name, and a blank email simply means no follow-up
+        // mail. What is typed still has to be well formed.
+        if (form.email.trim() && !EMAIL_PATTERN.test(form.email.trim())) {
             next.email = t("selfRegister.errors.emailInvalid");
         }
         if (form.password.length < MIN_PASSWORD_LENGTH) {
@@ -102,10 +112,6 @@ const SelfRegisterPage = () => {
         }
         if (form.repeatPassword !== form.password) {
             next.repeatPassword = t("selfRegister.errors.mismatch");
-        }
-        // A player never buys a plan, so only the seller path has to answer.
-        if (!isPlayerReturn && !form.planPurpose) {
-            next.planPurpose = t("selfRegister.errors.purposeRequired");
         }
         setFieldErrors(next);
         return Object.keys(next).length === 0;
@@ -153,19 +159,36 @@ const SelfRegisterPage = () => {
                 name: form.name.trim(),
                 email: form.email.trim(),
                 password: encryptedPassword,
-                // Court booking visitors become BUYER; the standalone
-                // seller onboarding keeps the SELLER default.
+                // A visitor from a public sale space becomes a BUYER who goes
+                // straight back to it; a standalone registration keeps the
+                // SELLER default. The plan purpose is never sent: the question
+                // moved to the plan screen, which asks it before the catalog.
                 role: isPlayerReturn ? "BUYER" : "SELLER",
-                // Which price list this account will be shown. Omitted for a
-                // player, who buys nothing.
-                planPurpose: isPlayerReturn ? undefined : form.planPurpose,
             });
 
             navigate("/login", {
-                state: { accountCreated: true, username: form.username.trim(), next: nextPath },
+                // `next` is only the page the visitor left, never the "/plans"
+                // default: the plan screen offers it as a way back out, and a
+                // default would make that button point at itself.
+                state: {
+                    accountCreated: true,
+                    username: form.username.trim(),
+                    next: returnPath || undefined,
+                },
             });
         } catch (err) {
             console.error("Self-registration failed", err);
+            // Username, email or full name already in use: mark that field with
+            // its own message instead of a banner, so the next step (the login
+            // and the plan) stays blocked until the visitor changes it.
+            const duplicateField =
+                err?.response?.status === 409 ? err.response.data?.field : "";
+            const duplicateKey = DUPLICATE_FIELD_KEYS[duplicateField];
+            if (duplicateKey) {
+                setFieldErrors((prev) => ({ ...prev, [duplicateField]: t(duplicateKey) }));
+                setError("");
+                return;
+            }
             setError(mapError(err));
         } finally {
             setSubmitting(false);
@@ -207,73 +230,6 @@ const SelfRegisterPage = () => {
 
                         <Box component="form" onSubmit={handleSubmit} noValidate>
                             <Grid container spacing={2}>
-                                {/* Asked first, because it decides which price list this
-                                    account is shown next. A booking plan cannot create a
-                                    product link and the other way round, so guessing here
-                                    costs money later. */}
-                                {!isPlayerReturn && (
-                                    <Grid size={{ xs: 12 }}>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
-                                            {t("selfRegister.purpose.title")}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                                            {t("selfRegister.purpose.helper")}
-                                        </Typography>
-                                        <Grid container spacing={1.5}>
-                                            {[PLAN_GROUP_PRODUCT, PLAN_GROUP_BOOKING].map((purpose) => {
-                                                const selected = form.planPurpose === purpose;
-                                                const color = groupColor(purpose);
-                                                return (
-                                                    <Grid size={{ xs: 12, sm: 6 }} key={purpose}>
-                                                        <Card
-                                                            variant="outlined"
-                                                            sx={{
-                                                                height: "100%",
-                                                                borderColor: selected ? `${color}.main` : "divider",
-                                                                borderWidth: selected ? 2 : 1,
-                                                            }}
-                                                        >
-                                                            <CardActionArea
-                                                                onClick={() => choosePurpose(purpose)}
-                                                                sx={{ height: "100%" }}
-                                                            >
-                                                                <Stack spacing={1} sx={{ p: 2 }}>
-                                                                    <Stack
-                                                                        direction="row"
-                                                                        justifyContent="space-between"
-                                                                        alignItems="center"
-                                                                        spacing={1}
-                                                                    >
-                                                                        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                                                                            {t(`selfRegister.purpose.${purpose}.title`)}
-                                                                        </Typography>
-                                                                        {selected && (
-                                                                            <Chip
-                                                                                size="small"
-                                                                                color={color}
-                                                                                onClick={() => { }}
-                                                                                clickable={false}
-                                                                                label={t("selfRegister.purpose.chosen")}
-                                                                            />
-                                                                        )}
-                                                                    </Stack>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        {t(`selfRegister.purpose.${purpose}.description`)}
-                                                                    </Typography>
-                                                                </Stack>
-                                                            </CardActionArea>
-                                                        </Card>
-                                                    </Grid>
-                                                );
-                                            })}
-                                        </Grid>
-                                        {fieldErrors.planPurpose && (
-                                            <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>
-                                                {fieldErrors.planPurpose}
-                                            </Typography>
-                                        )}
-                                    </Grid>
-                                )}
                                 <Grid size={{ xs: 12, md: 6 }}>
                                     <TextField
                                         label={t("selfRegister.username")}
@@ -294,7 +250,6 @@ const SelfRegisterPage = () => {
                                         onChange={update("name")}
                                         error={Boolean(fieldErrors.name)}
                                         helperText={fieldErrors.name || t("selfRegister.nameHint")}
-                                        required
                                         fullWidth
                                         autoComplete="name"
                                         disabled={submitting}
@@ -308,7 +263,6 @@ const SelfRegisterPage = () => {
                                         onChange={update("email")}
                                         error={Boolean(fieldErrors.email)}
                                         helperText={fieldErrors.email || t("selfRegister.emailHint")}
-                                        required
                                         fullWidth
                                         autoComplete="email"
                                         disabled={submitting}
@@ -360,7 +314,7 @@ const SelfRegisterPage = () => {
                             <Typography variant="body2" color="text.secondary">
                                 {isPlayerReturn
                                     ? t("selfRegister.playerAfterNote")
-                                    : t(`selfRegister.purpose.${form.planPurpose || PLAN_GROUP_PRODUCT}.afterNote`)}
+                                    : t("selfRegister.afterNote")}
                             </Typography>
                             <Typography variant="body2">
                                 <Link component={RouterLink} to={`/login?next=${encodeURIComponent(nextPath)}`}>

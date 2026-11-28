@@ -30,6 +30,8 @@ import { useAuth } from "../AuthContext";
 import CardWrapper from "./CardWrapper";
 import { copyText, formatVND } from "../util/clipboard";
 import { addDays, ISO_WEEKDAYS, isoWeekday, shortDate, todayIso } from "../util/yoga";
+import { DatePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 
 const PUBLIC = "/api/v1/publish/badminton";
 const SELLER = "/api/v1/badminton/seller";
@@ -452,14 +454,13 @@ const BadmintonSection = ({ token, transferInfo }) => {
                         alignItems={{ xs: "stretch", sm: "center" }}
                         sx={{ minWidth: 0 }}
                     >
-                        <TextField
-                            size="small"
-                            type="date"
+                        <DatePicker
                             label={t("badminton.date")}
-                            value={date}
-                            onChange={(event) => setDate(event.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ width: { xs: "100%", sm: 170 }, flexShrink: 0 }}
+                            value={date ? dayjs(date) : null}
+                            onChange={(d) => setDate(d ? d.format("YYYY-MM-DD") : "")}
+                            slotProps={{
+                                textField: { size: "small", sx: { width: { xs: "100%", sm: 170 }, flexShrink: 0 } },
+                            }}
                         />
                         <ButtonGroup size="small" variant="outlined" aria-label={t("badminton.date")}>
                             <Button

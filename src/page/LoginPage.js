@@ -122,19 +122,25 @@ const LoginPage = () => {
           navigate(`/api/v1/publish/saleUrl?requestUuid=${encodeURIComponent(authData.reqUuid)}`);
           return;
         }
-        if (isInternalPath(nextParam)) {
-          navigate(nextParam);
-          return;
-        }
         // Only sellers have a workspace. Any other role - a buyer created for a
-        // yoga plan, for instance - would be bounced back to this form by the
-        // seller route guard, so land them on the plan screen instead, which
-        // every non-admin account may open and which is where they can buy.
+        // yoga plan, for instance - goes straight back to where they came from,
+        // or to the plan screen, which every non-admin account may open.
         if (primaryRole !== "seller") {
-          navigate("/morePlan");
+          navigate(isInternalPath(nextParam) ? nextParam : "/morePlan");
           return;
         }
-        navigate((await hasUsablePlan()) ? "/sellerHome" : "/plans");
+        if (await hasUsablePlan()) {
+          navigate(isInternalPath(nextParam) ? nextParam : "/sellerHome");
+          return;
+        }
+        // No usable plan yet, so step 2 is the gate. The page the visitor left
+        // travels with them as ?next=, so "or go to home" on the plan screen can
+        // lead back to it instead of to a workspace they cannot use yet.
+        navigate(
+          isInternalPath(nextParam) && !nextParam.startsWith("/plans")
+            ? `/plans?next=${encodeURIComponent(nextParam)}`
+            : "/plans"
+        );
       } else {
         logout();
         setError(t("login.errors.noPermission"));

@@ -78,7 +78,8 @@ const EnvironmentTransferCard = ({ transferInfo, canManage, mode, requestUuid, o
     const updatePath = isAdmin
         ? "/admin/v1/environment/transferInfo"
         : "/api/v1/seller/environment/transferInfo";
-    const setupPath = isAdmin ? "/setup" : "/sellerSetup";
+    // Sellers manage their transfer accounts on their own account page now.
+    const setupPath = isAdmin ? "/setup" : "/self";
 
     useEffect(() => {
         if (!transferInfo && !canManage) return;

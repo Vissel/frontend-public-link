@@ -230,6 +230,13 @@ const AccountMenu = () => {
     navigate(CHAT_ROUTE);
   };
 
+  // The identity block is the entry to the account's own page. Admins are
+  // excluded because they have no business account row to show there.
+  const handleOpenSelf = () => {
+    closeMenu();
+    navigate("/self");
+  };
+
   const handleAvatarChanged = (nextDataUrl) => {
     const value = nextDataUrl || "";
     setDataUrl(value);
@@ -318,10 +325,16 @@ const AccountMenu = () => {
           },
         }}
       >
-        <MenuItem disabled>
+        <MenuItem
+          disabled={isAdmin}
+          onClick={isAdmin ? undefined : handleOpenSelf}
+          sx={{ cursor: isAdmin ? "default" : "pointer" }}
+        >
           <ListItemText
             primary={username || t("header.account")}
-            secondary={userRole || ""}
+            secondary={isAdmin
+              ? (userRole || "")
+              : `${userRole || ""} \u00b7 ${t("selfAccount.menuLabel")}`}
             slotProps={{
               primary: { sx: { fontWeight: 600, fontSize: "0.9rem" } },
               secondary: { sx: { fontSize: "0.75rem" } },

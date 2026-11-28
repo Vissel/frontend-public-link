@@ -85,7 +85,7 @@ if (primaryRole !== "seller") { navigate("/morePlan"); return; }
 so buyers (and any future non-admin role) land on a page they are allowed to open instead of being bounced by the SELLER-only `/sellerHome` guard.
 
 ### 5. i18n - both `src/i18n/locales/en/translation.json` and `vi/translation.json`
-- `header.morePlan`: "More plan" / "Mua thêm gói".
+- `header.morePlan`: "More plan" / "Gói bán hàng".
 - New `morePlan` namespace: `title`, `subtitle`, `summary.remaining`, `summary.coverage`, `summary.empty`, `tabs.buy`, `tabs.extend`, `catalogTitle`, `catalogHint`, `catalogEmpty`, `selected`, `continueToPayment`, `buying`, `extend.target`, `extend.days`, `extend.currentEnd`, `extend.newEnd`, `extend.amount`, `extend.amountNote`, `extend.submit`, `extend.noActivePlan`, `waitingMessage`, `pollingNote`, `activated`, `retry`, `errors.load`, `errors.catalog`, `errors.buy`, `errors.extend`, `errors.pickFirst`, `errors.daysInvalid`.
 - Reuse existing `payment.unit.day`, `payment.unit.link`, `payment.status.*`, `setup.column.*`, `common.loading`. Key parity between en and vi is mandatory.
 

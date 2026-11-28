@@ -17,11 +17,17 @@ import { useAuth } from "../AuthContext";
 import {
     clientStreamUrl,
     closeChatConversation,
+    fetchChatAttachment,
+    fetchChatHistory,
     sendChatMessage,
+    sendChatMessageWithAttachment,
     sendChatTyping,
     startChat,
 } from "../api/chatApi";
 import { collectAttributes, getDeviceId, rememberAttributes } from "../util/chatIdentity";
+import { useChatAttachmentDraft } from "../util/useChatAttachmentDraft";
+import ChatMessageContent from "./ChatMessageContent";
+import { ChatAttachmentDraftRow, ChatAttachmentPicker } from "./ChatAttachmentControls";
 
 const TYPING_BEACON_MS = 3000;
 const MAX_CONTENT_LENGTH = 2000;
@@ -110,6 +116,7 @@ const ChatWidget = () => {
     const [adminTyping, setAdminTyping] = useState(false);
     const [unread, setUnread] = useState(0);
     const [errorText, setErrorText] = useState("");
+    const attachmentDraft = useChatAttachmentDraft();
 
     const streamRef = useRef(null);
     const listRef = useRef(null);
@@ -142,12 +149,64 @@ const ChatWidget = () => {
         setAdminTyping(false);
         setUnread(0);
         setErrorText("");
+        attachmentDraft.clear();
+        // The draft holds an object URL of the previous account's file.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accountKey]);
 
     const scrollToEnd = useCallback(() => {
         const node = listRef.current;
         if (node) node.scrollTop = node.scrollHeight;
     }, []);
+
+    /**
+     * Merges server copies over the local optimistic bubbles (matched by client
+     * message id first, then by id) and appends anything unseen. Every source of
+     * truth funnels through here: the POST answer, the live stream and the
+     * reconnect catch-up, so a bubble can never stay stuck on "sending" while
+     * the server already knows better.
+     */
+    const reconcile = useCallback((incomingList) => {
+        if (!incomingList || incomingList.length === 0) return;
+        setMessages((previous) => {
+            let next = previous;
+            incomingList.forEach((incoming) => {
+                if (!incoming) return;
+                const index = next.findIndex(
+                    (item) =>
+                        (incoming.clientMessageId && item.clientMessageId === incoming.clientMessageId) ||
+                        (incoming.id != null && item.id === incoming.id),
+                );
+                if (index >= 0) {
+                    const copy = [...next];
+                    // A frame that did not load the attachment (a status patch)
+                    // must not erase the one already on screen.
+                    copy[index] = {
+                        ...copy[index],
+                        ...incoming,
+                        attachment: incoming.attachment ?? copy[index].attachment,
+                    };
+                    next = copy;
+                } else if (incoming.id != null) {
+                    next = [...next, incoming];
+                }
+            });
+            return next;
+        });
+    }, []);
+
+    // Highest server id on screen: the catch-up read after a stream outage only
+    // asks for what this tab has not seen yet.
+    const lastServerIdRef = useRef(0);
+    useEffect(() => {
+        const max = messages.reduce(
+            (acc, item) => (typeof item.id === "number" && item.id > acc ? item.id : acc),
+            0,
+        );
+        if (max > lastServerIdRef.current) {
+            lastServerIdRef.current = max;
+        }
+    }, [messages]);
 
     useEffect(() => {
         scrollToEnd();
@@ -213,35 +272,49 @@ const ChatWidget = () => {
         source.onopen = () => setConnected(true);
         source.onerror = () => setConnected(false); // EventSource reconnects itself
 
-        source.addEventListener("hello", () => setConnected(true));
+        source.addEventListener("hello", () => {
+            setConnected(true);
+            // Catch up on whatever happened while this stream was down: missed
+            // frames are exactly what left a bubble stuck on "sending".
+            fetchChatHistory({
+                conversationUuid: conversation.uuid,
+                afterMessageId: lastServerIdRef.current,
+            })
+                .then((res) => reconcile(res.data?.messages || []))
+                .catch(() => {
+                    /* the live stream stays the source of truth */
+                });
+        });
 
         source.addEventListener("message", (event) => {
             const incoming = JSON.parse(event.data);
             // Defense in depth: a frame for another conversation must never be
             // rendered here, even if a proxy or stale sink misroutes it.
             if (incoming.conversationUuid && incoming.conversationUuid !== conversation.uuid) return;
-            setMessages((previous) => {
-                // Replace the optimistic copy of a message this tab just sent.
-                const index = previous.findIndex(
-                    (item) =>
-                        (incoming.clientMessageId && item.clientMessageId === incoming.clientMessageId) ||
-                        item.id === incoming.id,
-                );
-                if (index >= 0) {
-                    const copy = [...previous];
-                    copy[index] = { ...copy[index], ...incoming };
-                    return copy;
-                }
-                if (incoming.direction === "ADMIN" && !openRef.current) setUnread((n) => n + 1);
-                return [...previous, incoming];
-            });
+            if (incoming.direction === "ADMIN" && !openRef.current && incoming.id > lastServerIdRef.current) {
+                setUnread((n) => n + 1);
+            }
+            reconcile([incoming]);
         });
 
         source.addEventListener("status", (event) => {
             const patch = JSON.parse(event.data);
             if (patch.conversationUuid && patch.conversationUuid !== conversation.uuid) return;
             setMessages((previous) =>
-                previous.map((item) => (item.id === patch.id ? { ...item, ...patch } : item)),
+                previous.map((item) =>
+                    // The clientMessageId fallback reaches an optimistic bubble
+                    // whose server copy has not arrived yet.
+                    item.id === patch.id ||
+                        (patch.clientMessageId && item.clientMessageId === patch.clientMessageId)
+                        ? {
+                            ...item,
+                            ...patch,
+                            // Status patches carry no attachment; keep the
+                            // rendered image/file instead of nulling it.
+                            attachment: patch.attachment ?? item.attachment,
+                        }
+                        : item,
+                ),
             );
         });
 
@@ -259,7 +332,7 @@ const ChatWidget = () => {
             streamRef.current = null;
             setConnected(false);
         };
-    }, [started, conversation?.uuid, streamKey]);
+    }, [started, conversation?.uuid, streamKey, reconcile]);
 
     // A hidden tab drops its stream on most mobile browsers; reopen when visible.
     useEffect(() => {
@@ -272,28 +345,49 @@ const ChatWidget = () => {
 
     const handleSend = useCallback(async () => {
         const content = input.trim();
-        if (!content || !conversation) return;
+        const staged = attachmentDraft.take();
+        if ((!content && !staged) || !conversation) return;
 
         const clientMessageId = `${deviceIdRef.current}-${Date.now()}`;
         const optimistic = {
             id: `local-${clientMessageId}`,
             conversationUuid: conversation.uuid,
             direction: "CLIENT",
-            content,
+            content:
+                staged && !content
+                    ? `${staged.kind === "IMAGE" ? "[Image]" : "[File]"} ${staged.fileName}`
+                    : content,
             status: "PENDING",
             clientMessageId,
+            attachment: staged || undefined,
         };
         setMessages((previous) => [...previous, optimistic]);
         setInput("");
         setErrorText("");
 
         try {
-            await sendChatMessage({
-                conversationUuid: conversation.uuid,
-                deviceId: deviceIdRef.current,
-                clientMessageId,
-                content,
-            });
+            let response;
+            if (staged) {
+                const form = new FormData();
+                form.append("conversationUuid", conversation.uuid);
+                form.append("deviceId", deviceIdRef.current);
+                form.append("clientMessageId", clientMessageId);
+                if (content) {
+                    form.append("caption", content);
+                }
+                form.append("file", staged.file);
+                response = await sendChatMessageWithAttachment(form);
+            } else {
+                response = await sendChatMessage({
+                    conversationUuid: conversation.uuid,
+                    deviceId: deviceIdRef.current,
+                    clientMessageId,
+                    content,
+                });
+            }
+            // The POST answer is the fastest source of truth: the bubble leaves
+            // "sending" here even when the event stream is down.
+            reconcile([response?.data]);
         } catch (error) {
             setMessages((previous) =>
                 previous.map((item) =>
@@ -312,7 +406,13 @@ const ChatWidget = () => {
                 setErrorText(error?.response?.data?.message || t("chat.errors.sendFailed"));
             }
         }
-    }, [conversation, input, t]);
+    }, [attachmentDraft, conversation, input, reconcile, t]);
+
+    /** Attachment bytes need the device credential, so they ride through axios. */
+    const fetchAttachment = useCallback(
+        (uuid) => fetchChatAttachment(uuid, deviceIdRef.current).then((res) => res.data),
+        [],
+    );
 
     const handleInputChange = useCallback(
         (event) => {
@@ -432,9 +532,7 @@ const ChatWidget = () => {
                                             color: own ? "primary.contrastText" : "text.primary",
                                         }}
                                     >
-                                        <Typography variant="body2" sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                                            {message.content}
-                                        </Typography>
+                                        <ChatMessageContent message={message} fetchAttachment={fetchAttachment} />
                                         {own ? (
                                             <Stack direction="row" spacing={0.5} alignItems="center" sx={{ justifyContent: "flex-end", mt: 0.5 }}>
                                                 <Typography variant="caption" sx={{ opacity: 0.85 }}>
@@ -465,7 +563,9 @@ const ChatWidget = () => {
                     ) : null}
 
                     <Divider />
+                    <ChatAttachmentDraftRow controller={attachmentDraft} />
                     <Stack direction="row" spacing={1} sx={{ p: 1.5 }} alignItems="flex-end">
+                        <ChatAttachmentPicker controller={attachmentDraft} disabled={!conversation} />
                         <TextField
                             size="small"
                             multiline
@@ -475,10 +575,15 @@ const ChatWidget = () => {
                             value={input}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
+                            onPaste={attachmentDraft.pickFromClipboard}
                             inputProps={{ maxLength: MAX_CONTENT_LENGTH }}
                             disabled={!conversation}
                         />
-                        <IconButton color="primary" onClick={handleSend} disabled={!input.trim() || !conversation}>
+                        <IconButton
+                            color="primary"
+                            onClick={handleSend}
+                            disabled={(!input.trim() && !attachmentDraft.draft) || !conversation}
+                        >
                             <SvgIcon viewBox="0 0 24 24">
                                 <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                             </SvgIcon>
